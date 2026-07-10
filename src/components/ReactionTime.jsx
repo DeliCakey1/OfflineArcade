@@ -31,6 +31,18 @@ export default function ReactionTime({ onPlayingChange }) {
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current) }
   }, [])
 
+  useEffect(() => {
+    if (!mode || gameOver) return
+    function handleKey(e) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault()
+        handleClick()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [mode, gameOver, phase, currentStart, times])
+
   function startGame(m) {
     setMode(m)
     setTimes([])
@@ -156,7 +168,7 @@ export default function ReactionTime({ onPlayingChange }) {
         }}
       >
         <div className="reaction-zone-text" style={{ color: phase === 'ready' ? '#000' : '#fff' }}>
-          {phase === 'idle' && !gameOver && (times.length === 0 ? 'Click to start' : 'Click for next round')}
+          {phase === 'idle' && !gameOver && (times.length === 0 ? 'Click or press Space to start' : 'Click or press Space for next round')}
           {phase === 'waiting' && 'Wait for green...'}
           {phase === 'ready' && 'CLICK NOW!'}
           {gameOver && 'Game Over!'}
