@@ -268,6 +268,54 @@ function CloakScreen({ onBack }) {
   const [favicon, setFavicon] = useState(() => getSaved('arcade-cloak-favicon', ''))
   const [saved, setSaved] = useState(false)
   const [showRevertConfirm, setShowRevertConfirm] = useState(false)
+  const [panicUrl, setPanicUrl] = useState(() => getSaved('arcade-panic-url', 'https://'))
+  const [panicSequence, setPanicSequence] = useState(() => {
+    const saved = getSaved('arcade-panic-sequence', '')
+    return saved ? saved.split(',') : []
+  })
+  const [recording, setRecording] = useState(false)
+  const recordingRef = useRef(false)
+  const panicBufRef = useRef([])
+
+  const BLOCKED_KEYS = new Set([
+    'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    'Enter', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE',
+    'Digit1', 'Digit2', 'Digit3', 'Digit4',
+  ])
+
+  function keyDisplayName(code) {
+    if (code.startsWith('Key')) return code.slice(3)
+    if (code.startsWith('Digit')) return code.slice(5)
+    if (code === 'Space') return 'Space'
+    if (code.startsWith('Arrow')) return code.slice(5) + '↑'
+    if (code === 'Escape') return 'Esc'
+    if (code === 'ShiftLeft' || code === 'ShiftRight') return 'Shift'
+    if (code === 'ControlLeft' || code === 'ControlRight') return 'Ctrl'
+    if (code === 'AltLeft' || code === 'AltRight') return 'Alt'
+    if (code === 'MetaLeft' || code === 'MetaRight') return 'Meta'
+    return code
+  }
+
+  useEffect(() => {
+    if (!recording) return
+    function handleKey(e) {
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.code === 'Escape') {
+        setRecording(false)
+        recordingRef.current = false
+        return
+      }
+      if (e.code === 'Backspace') {
+        setPanicSequence(prev => prev.slice(0, -1))
+        return
+      }
+      if (BLOCKED_KEYS.has(e.code)) return
+      setPanicSequence(prev => [...prev, e.code])
+    }
+    window.addEventListener('keydown', handleKey, true)
+    return () => window.removeEventListener('keydown', handleKey, true)
+  }, [recording])
 
   function openBlankWithArcade(cloakTitle, cloakFavicon) {
     const win = window.open('about:blank', '_blank')
@@ -306,15 +354,35 @@ function CloakScreen({ onBack }) {
     openBlankWithArcade('', '')
   }
 
+  function handleSavePanic() {
+    localStorage.setItem('arcade-panic-url', panicUrl)
+    localStorage.setItem('arcade-panic-sequence', panicSequence.join(','))
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  function handleClearPanic() {
+    localStorage.removeItem('arcade-panic-url')
+    localStorage.removeItem('arcade-panic-sequence')
+    setPanicUrl('https://')
+    setPanicSequence([])
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
   function handleRevert() {
     localStorage.removeItem('arcade-cloak')
     localStorage.removeItem('arcade-cloak-url')
     localStorage.removeItem('arcade-cloak-title')
     localStorage.removeItem('arcade-cloak-favicon')
+    localStorage.removeItem('arcade-panic-url')
+    localStorage.removeItem('arcade-panic-sequence')
     setMode('none')
     setUrl('https://')
     setTitle('')
     setFavicon('')
+    setPanicUrl('https://')
+    setPanicSequence([])
     document.title = 'Offline Arcade'
     const link = document.querySelector("link[rel~='icon']")
     if (link) link.href = '/favicon.svg'
@@ -399,6 +467,80 @@ function CloakScreen({ onBack }) {
         >
           {mode === 'blank' ? '✓ Active — Click to Re-open' : 'Open in about:blank'}
         </button>
+      </div>
+
+      <div className="cloak-section">
+        <div className="cloak-section-header">
+          <span className="cloak-section-emoji">🚨</span>
+          <div>
+            <h3 className="cloak-section-title">Panic Key</h3>
+            <p className="cloak-section-desc">Press a key or sequence of keys to instantly redirect to a safe website. Works on both the main tab and about:blank.</p>
+          </div>
+        </div>
+        <div className="cloak-inputs">
+          <label className="cloak-label">
+            Redirect URL
+            <input
+              className="cloak-input"
+              type="url"
+              value={panicUrl}
+              onChange={e => setPanicUrl(e.target.value)}
+              placeholder="https://google.com"
+            />
+          </label>
+          <div className="cloak-label">
+            Key Sequence
+            <div className="panic-sequence-display">
+              {panicSequence.length === 0 && !recording && (
+                <span className="panic-empty">No keys recorded</span>
+              )}
+              {panicSequence.map((code, i) => (
+                <span key={i} className="panic-key-chip">
+                  {keyDisplayName(code)}
+                  <button className="panic-key-remove" onClick={() => setPanicSequence(prev => prev.filter((_, j) => j !== i))}>×</button>
+                </span>
+              ))}
+            </div>
+            <div className="panic-record-row">
+              <button
+                className={`panic-record-btn ${recording ? 'recording' : ''}`}
+                onClick={() => {
+                  if (recording) {
+                    setRecording(false)
+                    recordingRef.current = false
+                  } else {
+                    setPanicSequence([])
+                    setRecording(true)
+                    recordingRef.current = true
+                  }
+                }}
+              >
+                {recording ? '● Recording... (Esc to stop)' : 'Record Sequence'}
+              </button>
+              {panicSequence.length > 0 && !recording && (
+                <button className="panic-clear-btn" onClick={() => setPanicSequence([])}>Clear</button>
+              )}
+            </div>
+            <p className="panic-hint">
+              Press keys to record. Blocked: Space, Enter, Arrows, WASD, E, 1-4. Backspace removes last key.
+            </p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            className="cloak-save-btn"
+            onClick={handleSavePanic}
+            disabled={!panicUrl || panicUrl === 'https://' || panicSequence.length === 0}
+            style={{ flex: 1 }}
+          >
+            Save Panic Key
+          </button>
+          {(panicSequence.length > 0 || (panicUrl && panicUrl !== 'https://')) && (
+            <button className="cloak-save-btn" onClick={handleClearPanic} style={{ flex: 'none', padding: '12px 20px', background: 'linear-gradient(135deg, #ef4444, #f97316)' }}>
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="cloak-section cloak-revert-section">
@@ -498,6 +640,31 @@ function App() {
     document.documentElement.classList.toggle('no-bg', !bg)
     try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {}
   }, [bg])
+
+  useEffect(() => {
+    const panicSequenceStr = getSaved('arcade-panic-sequence', '')
+    const panicUrlVal = getSaved('arcade-panic-url', '')
+    if (!panicSequenceStr || !panicUrlVal || panicUrlVal === 'https://') return
+    const sequence = panicSequenceStr.split(',')
+    let buf = []
+    let lastTime = 0
+    const TIMEOUT = 2000
+    function handleKey(e) {
+      const now = Date.now()
+      if (now - lastTime > TIMEOUT) buf = []
+      lastTime = now
+      buf.push(e.code)
+      if (buf.length >= sequence.length) {
+        const tail = buf.slice(-sequence.length)
+        if (tail.every((k, i) => k === sequence[i])) {
+          buf = []
+          window.location.replace(panicUrlVal)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [])
 
   function handleMuteToggle() {
     toggleMute()

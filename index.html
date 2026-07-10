@@ -38,9 +38,15 @@
           if (cloakTitle) head = head.replace(/<title>[^<]*<\/title>/, '<title>'+cloakTitle+'</title>');
           if (cloakFavicon) head = head.replace(/<link rel="icon"[^>]*>/, '<link rel="icon" type="image/svg+xml" href="'+cloakFavicon+'" />');
 
+          var panicSeq = localStorage.getItem('arcade-panic-sequence') || '';
+          var panicUrlVal = localStorage.getItem('arcade-panic-url') || '';
+          var panicScript = '';
+          if (panicSeq && panicUrlVal && panicUrlVal !== 'https://') {
+            panicScript = '<script>(function(){var s="' + panicSeq + '".split(","),u="' + panicUrlVal + '",b=[],t=0;document.addEventListener("keydown",function(e){var n=Date.now();if(n-t>2000)b=[];t=n;b.push(e.code);if(b.length>=s.length){var l=b.slice(-s.length);if(l.every(function(k,i){return k===s[i]})){b=[];window.location.replace(u)}})})()<\/script>';
+          }
           var modScript = document.querySelector('script[type="module"]');
           var modSrc = modScript ? modScript.outerHTML.replace(/src="\/([^"]+)"/g, 'src="'+base+'/$1"') : '';
-          var blankHtml = '<!doctype html><html><head>' + head + '</head><body><div id="root"></div><script>window.__ABOUT_BLANK__=true<\/script>' + modSrc + '</body></html>';
+          var blankHtml = '<!doctype html><html><head>' + head + '</head><body><div id="root"></div><script>window.__ABOUT_BLANK__=true<\/script>' + panicScript + modSrc + '</body></html>';
 
           document.documentElement.innerHTML = '<head>' + (cloakTitle ? '<title>'+cloakTitle+'</title>' : '') + (cloakFavicon ? '<link rel="icon" href="'+cloakFavicon+'">' : '') + '<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#111;font-family:system-ui,sans-serif}button{padding:14px 32px;border:none;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:transform .2s}button:hover{transform:scale(1.05)}</style></head><body><button id="cloak-btn">Click to Open</button></body>';
           history.replaceState(null, '', ' ');
