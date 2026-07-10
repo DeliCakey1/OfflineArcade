@@ -278,10 +278,18 @@ function CloakDropdown({ cloak, onCloakChange }) {
   const CLOAK_IDS = ['none', 'canvas', 'googleDocs', 'classroom', 'clever', 'powerschool', 'desmos', 'notion', 'github', 'slack', 'zoom', 'drive', 'pdf', 'blank']
 
   function handleOpenBlank() {
-    const html = document.documentElement.outerHTML
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    window.open(url, '_blank')
+    const win = window.open('about:blank', '_blank')
+    if (!win) return
+
+    const base = window.location.origin
+    let html = '<!doctype html>\n' + document.documentElement.outerHTML
+
+    html = html.replace(/(href|src)="(\/[^"]+)"/g, (match, attr, path) => {
+      return `${attr}="${base}${path}"`
+    })
+
+    win.document.write(html)
+    win.document.close()
   }
 
   return (
