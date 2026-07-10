@@ -64,7 +64,8 @@ export default function TypingSpeed({ onPlayingChange }) {
       const correct = typed === words[currentIdx].toLowerCase()
       sound(correct ? 'win' : 'lose')
       const elapsed = (Date.now() - startTime) / 60000
-      const currentWpm = elapsed > 0 ? Math.round(1 / elapsed) : 0
+      const charsTyped = results.reduce((sum, r) => sum + r.word.length + 1, 0) + typed.length + 1
+      const currentWpm = elapsed > 0 ? Math.round((charsTyped / 5) / elapsed) : 0
 
       setResults(r => [...r, { word: words[currentIdx], typed, correct, wpm: currentWpm }])
       if (correct) setCorrectCount(c => c + 1)
@@ -72,7 +73,10 @@ export default function TypingSpeed({ onPlayingChange }) {
 
       if (currentIdx + 1 >= words.length) {
         setGameOver(true)
-        const finalWpm = currentWpm
+        const totalChars = results.reduce((sum, r) => sum + r.word.length + 1, 0) + typed.length + 1
+        const finalElapsed = (Date.now() - startTime) / 60000
+        const finalWpm = finalElapsed > 0 ? Math.round((totalChars / 5) / finalElapsed) : 0
+        setWpm(finalWpm)
         recordGame(finalWpm > 20, finalWpm)
         sound(finalWpm > 20 ? 'victory' : 'lose')
       } else {
@@ -84,10 +88,9 @@ export default function TypingSpeed({ onPlayingChange }) {
 
   function shareResult() {
     const totalCorrect = results.filter(r => r.correct).length
-    const finalWpm = results.length > 0 ? results[results.length - 1].wpm : 0
     const lines = [
       `⌨️ Beat the bot at Typing Speed (${mode.name})!`,
-      `📊 ${finalWpm} WPM | ${totalCorrect}/${words.length} correct | ${Math.round((totalCorrect / words.length) * 100)}% accuracy`,
+      `📊 ${wpm} WPM | ${totalCorrect}/${words.length} correct | ${Math.round((totalCorrect / words.length) * 100)}% accuracy`,
       ``,
       `🎮 Offline Arcade`,
     ].filter(Boolean)
