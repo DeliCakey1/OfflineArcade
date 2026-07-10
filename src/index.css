@@ -555,6 +555,36 @@ body::before {
 .ssg-choices-row .choice-desc { font-size: 11px; opacity: 0.7; }
 
 /* ===== GUESS THE NUMBER ===== */
+.gtn-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.gtn-mode-card {
+  font-family: 'Fredoka', sans-serif;
+  background: var(--bg-card);
+  border: 2px solid color-mix(in srgb, var(--mode-color, var(--neon-purple)) 30%, transparent);
+  border-radius: 16px;
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: var(--text-light);
+  text-align: center;
+}
+
+.gtn-mode-card:hover {
+  border-color: var(--mode-color, var(--neon-purple));
+  transform: translateY(-3px);
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--mode-color, var(--neon-purple)) 30%, transparent);
+}
+
+.gtn-mode-emoji { font-size: 36px; margin-bottom: 6px; transition: transform 0.3s ease; }
+.gtn-mode-card:hover .gtn-mode-emoji { transform: scale(1.2); }
+.gtn-mode-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; color: var(--mode-color, var(--text-light)); }
+.gtn-mode-attempts { font-size: 12px; color: var(--text-dim); }
+
 .gtn-attempts { text-align: center; margin-bottom: 20px; }
 .gtn-attempts-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
 .gtn-attempts-bar { display: flex; justify-content: center; gap: 6px; margin-bottom: 8px; }
