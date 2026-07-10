@@ -275,6 +275,7 @@ function CloakScreen({ onBack }) {
     const base = window.location.origin
     let html = '<!doctype html>\n' + document.documentElement.outerHTML
     html = html.replace(/(href|src)="(\/[^"]+)"/g, (_, attr, path) => `${attr}="${base}${path}"`)
+    html = html.replace('</head>', '<script>window.__ABOUT_BLANK__ = true</script></head>')
     if (cloakTitle) {
       html = html.replace(/<title>[^<]*<\/title>/, `<title>${cloakTitle}</title>`)
     }
@@ -477,29 +478,30 @@ function App() {
 
   useEffect(() => {
     const cloakMode = getSaved('arcade-cloak', 'none')
-    const isAboutBlank = window.location.href === 'about:blank' || window.location.protocol === 'blob:'
-    if ((cloakMode === 'custom' || cloakMode === 'blank') && !isAboutBlank) {
-      const base = window.location.origin
-      let html = '<!doctype html>\n' + document.documentElement.outerHTML
-      html = html.replace(/(href|src)="(\/[^"]+)"/g, (_, attr, path) => `${attr}="${base}${path}"`)
-      const cloakTitle = getSaved('arcade-cloak-title', '')
-      const cloakFavicon = getSaved('arcade-cloak-favicon', '')
-      if (cloakTitle) {
-        html = html.replace(/<title>[^<]*<\/title>/, `<title>${cloakTitle}</title>`)
-      }
-      if (cloakFavicon) {
-        html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" type="image/svg+xml" href="${cloakFavicon}" />`)
-      }
-      const win = window.open('about:blank', '_blank')
-      if (win) {
-        win.document.write(html)
-        win.document.close()
-      }
-      if (cloakMode === 'custom') {
-        const redirectUrl = getSaved('arcade-cloak-url', '')
-        if (redirectUrl && redirectUrl !== 'https://') {
-          setTimeout(() => { window.location.href = redirectUrl }, 300)
-        }
+    if (window.__ABOUT_BLANK__) return
+    if (cloakMode !== 'custom' && cloakMode !== 'blank') return
+
+    const base = window.location.origin
+    let html = '<!doctype html>\n' + document.documentElement.outerHTML
+    html = html.replace(/(href|src)="(\/[^"]+)"/g, (_, attr, path) => `${attr}="${base}${path}"`)
+    html = html.replace('</head>', '<script>window.__ABOUT_BLANK__ = true</script></head>')
+    const cloakTitle = getSaved('arcade-cloak-title', '')
+    const cloakFavicon = getSaved('arcade-cloak-favicon', '')
+    if (cloakTitle) {
+      html = html.replace(/<title>[^<]*<\/title>/, `<title>${cloakTitle}</title>`)
+    }
+    if (cloakFavicon) {
+      html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" type="image/svg+xml" href="${cloakFavicon}" />`)
+    }
+    const win = window.open('about:blank', '_blank')
+    if (win) {
+      win.document.write(html)
+      win.document.close()
+    }
+    if (cloakMode === 'custom') {
+      const redirectUrl = getSaved('arcade-cloak-url', '')
+      if (redirectUrl && redirectUrl !== 'https://') {
+        setTimeout(() => { window.location.href = redirectUrl }, 300)
       }
     }
   }, [])
