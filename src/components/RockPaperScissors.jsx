@@ -18,8 +18,8 @@ function getResult(player, bot) {
 }
 
 const MODES = [
-  { id: 'firstTo', label: 'First to...', desc: 'First to reach X wins' },
-  { id: 'rounds', label: 'Rounds', desc: 'Play exactly X rounds' },
+  { id: 'firstTo', label: 'First to...', desc: 'First to reach X wins', icon: '🏆' },
+  { id: 'rounds', label: 'Rounds', desc: 'Play exactly X rounds', icon: '🔄' },
 ]
 
 export default function RockPaperScissors() {
@@ -38,8 +38,6 @@ export default function RockPaperScissors() {
   const [reveal, setReveal] = useState(false)
   const sound = useSound()
 
-  const playerWinsNeeded = gameMode === 'firstTo' ? target : null
-  const totalRounds = gameMode === 'rounds' ? target : null
   const progress = gameMode === 'firstTo'
     ? { player: scores.player / target, bot: scores.bot / target }
     : null
@@ -138,13 +136,13 @@ export default function RockPaperScissors() {
 
   if (!gameMode) {
     return (
-      <div className="game-card">
+      <div className="game-card slide-in">
         <h2>Rock Paper Scissors</h2>
         <p className="description">Choose your game mode!</p>
         <div className="rps-mode-grid">
           {MODES.map(m => (
             <button key={m.id} className="rps-mode-card" onClick={() => { sound('click'); setGameMode(m.id) }}>
-              <div className="rps-mode-icon">{m.id === 'firstTo' ? '🏆' : '🔄'}</div>
+              <div className="rps-mode-icon">{m.icon}</div>
               <div className="rps-mode-label">{m.label}</div>
               <div className="rps-mode-desc">{m.desc}</div>
             </button>
@@ -154,45 +152,24 @@ export default function RockPaperScissors() {
     )
   }
 
-  if (gameMode && !target) {
+  if (!target) {
     const presets = gameMode === 'firstTo' ? [3, 5, 7, 10] : [5, 10, 15, 25]
     return (
-      <div className="game-card">
+      <div className="game-card slide-in">
         <h2>Rock Paper Scissors</h2>
-        <p className="description">
-          {gameMode === 'firstTo' ? 'First to how many wins?' : 'How many rounds?'}
-        </p>
+        <p className="description">{gameMode === 'firstTo' ? 'First to how many wins?' : 'How many rounds?'}</p>
         <div className="round-picker">
           <div className="round-picker-options">
             {presets.map(n => (
-              <button key={n} className="round-picker-btn" onClick={() => { sound('click'); setTarget(n) }}>
-                {n}
-              </button>
+              <button key={n} className="round-picker-btn" onClick={() => { sound('click'); setTarget(n) }}>{n}</button>
             ))}
           </div>
           <div className="custom-target-row">
             <span className="custom-target-label">or type a number (max 100):</span>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              className="custom-target-input"
-              placeholder="1-100"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const v = parseInt(e.target.value)
-                  if (v >= 1 && v <= 100) { sound('click'); setTarget(v) }
-                }
-              }}
-            />
-            <button
-              className="custom-target-go"
-              onClick={(e) => {
-                const input = e.target.closest('.custom-target-row').querySelector('input')
-                const v = parseInt(input.value)
-                if (v >= 1 && v <= 100) { sound('click'); setTarget(v) }
-              }}
-            >
+            <input type="number" min="1" max="100" className="custom-target-input" placeholder="1-100"
+              onKeyDown={(e) => { if (e.key === 'Enter') { const v = parseInt(e.target.value); if (v >= 1 && v <= 100) { sound('click'); setTarget(v) } } }} />
+            <button className="custom-target-go"
+              onClick={(e) => { const v = parseInt(e.target.closest('.custom-target-row').querySelector('input').value); if (v >= 1 && v <= 100) { sound('click'); setTarget(v) } }}>
               Go
             </button>
           </div>
@@ -203,31 +180,19 @@ export default function RockPaperScissors() {
 
   const streakType = history.length >= 2 ? history[history.length - 1].result : null
   const streakCount = history.length >= 2
-    ? (() => {
-        let count = 0
-        for (let i = history.length - 1; i >= 0; i--) {
-          if (history[i].result === streakType) count++
-          else break
-        }
-        return count
-      })()
+    ? (() => { let c = 0; for (let i = history.length - 1; i >= 0; i--) { if (history[i].result === streakType) c++; else break } return c })()
     : 0
 
-  const botName = 'RPS-Bot'
-  const playerLabel = 'You'
-
   return (
-    <div className="game-card">
+    <div className="game-card slide-in">
       <h2>Rock Paper Scissors</h2>
       <p className="description">
-        {gameMode === 'firstTo'
-          ? `First to ${target} wins — Round ${round}`
-          : `Round ${round} of ${target}`}
+        {gameMode === 'firstTo' ? `First to ${target} wins — Round ${round}` : `Round ${round} of ${target}`}
       </p>
 
       <div className="rps-scoreboard">
-        <div className="rps-score-side player-side">
-          <div className="rps-score-label">{playerLabel}</div>
+        <div className="rps-score-side">
+          <div className="rps-score-label">You</div>
           <div className="rps-score-num player">{scores.player}</div>
           {gameMode === 'firstTo' && (
             <div className="rps-progress-bar">
@@ -235,19 +200,17 @@ export default function RockPaperScissors() {
             </div>
           )}
         </div>
-
         <div className="rps-score-center">
           <div className="rps-draws-label">Draws</div>
           <div className="rps-draws-num">{scores.draws}</div>
           {streakCount >= 2 && (
-            <div className={`rps-streak ${streakType === 'win' ? 'win' : streakType === 'lose' ? 'lose' : 'draw'}`}>
+            <div className={`rps-streak ${streakType}`}>
               {streakCount}x {streakType === 'win' ? 'Win Streak!' : streakType === 'lose' ? 'Lose Streak!' : 'Draws'}
             </div>
           )}
         </div>
-
-        <div className="rps-score-side bot-side">
-          <div className="rps-score-label">{botName}</div>
+        <div className="rps-score-side">
+          <div className="rps-score-label">Bot</div>
           <div className="rps-score-num bot">{scores.bot}</div>
           {gameMode === 'firstTo' && (
             <div className="rps-progress-bar">
@@ -259,9 +222,7 @@ export default function RockPaperScissors() {
 
       {gameOver ? (
         <div className="rps-game-over">
-          <div className="rps-game-over-emoji">
-            {gameOver === 'player' ? '🏆' : gameOver === 'bot' ? '💀' : '🤝'}
-          </div>
+          <div className="rps-game-over-emoji">{gameOver === 'player' ? '🏆' : gameOver === 'bot' ? '💀' : '🤝'}</div>
           <div className={`result-text ${gameOver === 'player' ? 'win' : gameOver === 'bot' ? 'lose' : 'draw'}`}>
             {gameOver === 'player' ? 'You Win!' : gameOver === 'bot' ? 'Bot Wins!' : "It's a Tie!"}
           </div>
@@ -270,19 +231,15 @@ export default function RockPaperScissors() {
             <span className="sep">-</span>
             <span className="bot">{scores.bot}</span>
           </div>
-          <button className="play-again-btn" onClick={reset}>
-            Play Again
-          </button>
+          <button className="play-again-btn" onClick={reset}>Play Again</button>
         </div>
       ) : (
         <>
           <div className="rps-battle-area">
-            <div className={`rps-fighter player-fighter ${reveal && result === 'win' ? 'winner-glow' : ''} ${reveal && result === 'lose' ? 'loser-dim' : ''}`}>
-              <div className="rps-fighter-label">{playerLabel}</div>
+            <div className={`rps-fighter ${reveal && result === 'win' ? 'winner-glow' : ''} ${reveal && result === 'lose' ? 'loser-dim' : ''}`}>
+              <div className="rps-fighter-label">You</div>
               {playerChoice ? (
-                <div className={`rps-fighter-emoji ${reveal ? 'revealed' : ''}`}>
-                  {playerChoice.emoji}
-                </div>
+                <div className={`rps-fighter-emoji ${reveal ? 'revealed' : ''}`}>{playerChoice.emoji}</div>
               ) : (
                 <div className="rps-fighter-emoji placeholder">❓</div>
               )}
@@ -293,20 +250,16 @@ export default function RockPaperScissors() {
               {animating && shake ? (
                 <div className="rps-vs-shake">⚔️</div>
               ) : reveal && result ? (
-                <div className={`rps-vs-result ${result}`}>
-                  {result === 'win' ? '→' : result === 'lose' ? '←' : '='}
-                </div>
+                <div className={`rps-vs-result ${result}`}>{result === 'win' ? '→' : result === 'lose' ? '←' : '='}</div>
               ) : (
                 <div className="rps-vs-text">VS</div>
               )}
             </div>
 
-            <div className={`rps-fighter bot-fighter ${reveal && result === 'lose' ? 'winner-glow' : ''} ${reveal && result === 'win' ? 'loser-dim' : ''}`}>
-              <div className="rps-fighter-label">{botName}</div>
+            <div className={`rps-fighter ${reveal && result === 'lose' ? 'winner-glow' : ''} ${reveal && result === 'win' ? 'loser-dim' : ''}`}>
+              <div className="rps-fighter-label">Bot</div>
               {botChoice ? (
-                <div className={`rps-fighter-emoji ${shake ? 'shaking' : ''} ${reveal ? 'revealed' : ''}`}>
-                  {botChoice.emoji}
-                </div>
+                <div className={`rps-fighter-emoji ${shake ? 'shaking' : ''} ${reveal ? 'revealed' : ''}`}>{botChoice.emoji}</div>
               ) : (
                 <div className="rps-fighter-emoji placeholder">❓</div>
               )}
@@ -315,43 +268,45 @@ export default function RockPaperScissors() {
           </div>
 
           {result && (
-            <div className={`result-text ${result}`} style={{ fontSize: 20 }}>
-              {result === 'win' ? 'You Win!' : result === 'lose' ? 'Bot Wins!' : "Draw!"}
+            <div className="result-area-inner">
+              <div className={`result-text ${result}`} style={{ fontSize: 20 }}>
+                {result === 'win' ? 'You Win!' : result === 'lose' ? 'Bot Wins!' : "Draw!"}
+              </div>
+              <button className="play-again-btn" onClick={nextRound}>Next Round</button>
             </div>
           )}
 
-          <div className="rps-choices-row">
-            {CHOICES.map(c => (
-              <button
-                key={c.name}
-                className={`choice-btn ${c.class} ${pendingChoice?.name === c.name ? 'selected' : ''}`}
-                onClick={() => selectChoice(c)}
-                disabled={animating}
-              >
-                <span className="choice-emoji">{c.emoji}</span>
-                <span className="choice-name">{c.name}</span>
-              </button>
-            ))}
-          </div>
+          {!result && !animating && (
+            <>
+              <div className="rps-choices-row">
+                {CHOICES.map(c => (
+                  <button key={c.name}
+                    className={`choice-btn ${c.class} ${pendingChoice?.name === c.name ? 'selected' : ''}`}
+                    onClick={() => selectChoice(c)} disabled={animating}>
+                    <span className="choice-emoji">{c.emoji}</span>
+                    <span className="choice-name">{c.name}</span>
+                  </button>
+                ))}
+              </div>
 
-          {pendingChoice && !result && !animating && (
-            <div className="confirm-area">
-              <div className="confirm-text">
-                You picked <strong>{pendingChoice.emoji} {pendingChoice.name}</strong>
-              </div>
-              <div className="confirm-buttons">
-                <button className="confirm-btn yes" onClick={confirmChoice}>
-                  Let's Go!
-                </button>
-                <button className="confirm-btn no" onClick={() => { sound('click'); setPendingChoice(null) }}>
-                  Change
-                </button>
-              </div>
-            </div>
+              {pendingChoice && (
+                <div className="confirm-area">
+                  <div className="confirm-text">You picked <strong>{pendingChoice.emoji} {pendingChoice.name}</strong></div>
+                  <div className="confirm-buttons">
+                    <button className="confirm-btn yes" onClick={confirmChoice}>Let's Go!</button>
+                    <button className="confirm-btn no" onClick={() => { sound('click'); setPendingChoice(null) }}>Change</button>
+                  </div>
+                </div>
+              )}
+
+              {!pendingChoice && (
+                <div className="result-message">Choose your weapon!</div>
+              )}
+            </>
           )}
 
-          {!playerChoice && !pendingChoice && !animating && (
-            <div className="result-message">Choose your weapon!</div>
+          {animating && (
+            <div className="result-message">Deciding...</div>
           )}
         </>
       )}
@@ -376,17 +331,7 @@ export default function RockPaperScissors() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button
-          onClick={reset}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-dim)',
-            cursor: 'pointer',
-            fontSize: 13,
-            textDecoration: 'underline',
-          }}
-        >
+        <button onClick={reset} className="quit-btn">
           {gameOver ? 'New Game' : 'Quit Game'}
         </button>
       </div>

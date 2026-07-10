@@ -32,7 +32,6 @@ function getPayoffs(player, bot, prize) {
     if (player === 'Steal') return { player: 0, bot: 0 }
     return { player: prize, bot: prize }
   }
-
   if (player === 'Split' && bot === 'Steal') return { player: 0, bot: prize }
   if (player === 'Split' && bot === 'Give Away') return { player: prize, bot: 0 }
   if (player === 'Steal' && bot === 'Split') return { player: prize, bot: 0 }
@@ -41,19 +40,19 @@ function getPayoffs(player, bot, prize) {
   if (player === 'Give Away' && bot === 'Steal') return { player: prize, bot: prize / 2 }
 }
 
-function getResultType(playerWin, botWin) {
-  if (playerWin > botWin) return 'win'
-  if (botWin > playerWin) return 'lose'
+function getResultType(a, b) {
+  if (a > b) return 'win'
+  if (b > a) return 'lose'
   return 'draw'
 }
 
-function getMessage(result, playerChoice, botChoice) {
-  if (result === 'draw' && playerChoice === 'Give Away') return "Both generous! You both get the full prize!"
-  if (result === 'draw' && playerChoice === 'Split') return "Fair split! You both get half."
-  if (result === 'draw' && playerChoice === 'Steal') return "Both tried to steal! Nobody gets anything."
-  if (result === 'win' && playerChoice === 'Give Away') return "Your generosity paid off!"
+function getMessage(result, p, b) {
+  if (result === 'draw' && p === 'Give Away') return "Both generous! You both get the full prize!"
+  if (result === 'draw' && p === 'Split') return "Fair split! You both get half."
+  if (result === 'draw' && p === 'Steal') return "Both tried to steal! Nobody gets anything."
+  if (result === 'win' && p === 'Give Away') return "Your generosity paid off!"
   if (result === 'win') return "You got the better deal!"
-  if (result === 'lose' && botChoice === 'Give Away') return "The bot's generosity cost them!"
+  if (result === 'lose' && b === 'Give Away') return "The bot's generosity cost them!"
   if (result === 'lose') return "The bot outplayed you!"
   return "It's a draw!"
 }
@@ -73,93 +72,8 @@ export default function SplitStealGiveAway() {
   const [history, setHistory] = useState([])
   const [shake, setShake] = useState(false)
   const [reveal, setReveal] = useState(false)
+  const [prizeFlash, setPrizeFlash] = useState(false)
   const sound = useSound()
-
-  if (!totalRounds) {
-    return (
-      <div className="game-card">
-        <h2>Split Steal Give Away</h2>
-        <p className="description">Your custom game! Outsmart the bot to win the prize money.</p>
-
-        <div className="prize-display">
-          <div className="prize-label">Prize Pool Changes Every Round!</div>
-          <div className="prize-amount" style={{ fontSize: 16 }}>$50 · $100 · $200 · $500 · $1,000</div>
-          <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 6 }}>$100 is most common, $1,000 is ultra rare</div>
-        </div>
-
-        <div className="round-picker">
-          <div className="round-picker-label">How many rounds?</div>
-          <div className="round-picker-options">
-            {[5, 10, 15].map(n => (
-              <button key={n} className="round-picker-btn" onClick={() => { sound('click'); setTotalRounds(n) }}>
-                {n} Rounds
-              </button>
-            ))}
-          </div>
-          <div className="custom-target-row">
-            <span className="custom-target-label">or type a number (max 100):</span>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              className="custom-target-input"
-              placeholder="1-100"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const v = parseInt(e.target.value)
-                  if (v >= 1 && v <= 100) { sound('click'); setTotalRounds(v) }
-                }
-              }}
-            />
-            <button
-              className="custom-target-go"
-              onClick={(e) => {
-                const input = e.target.closest('.custom-target-row').querySelector('input')
-                const v = parseInt(input.value)
-                if (v >= 1 && v <= 100) { sound('click'); setTotalRounds(v) }
-              }}
-            >
-              Go
-            </button>
-          </div>
-        </div>
-
-        <div className="rules-box">
-          <h3>Payoff Rules</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>You \ Bot</th>
-                <th>✂️ Split</th>
-                <th>🦹 Steal</th>
-                <th>🎁 Give Away</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>✂️ Split</th>
-                <td className="even-cell">Both half</td>
-                <td><span className="loser-cell">You nothing</span><br/><span className="winner-cell">Bot full</span></td>
-                <td><span className="winner-cell">You full</span><br/><span className="loser-cell">Bot nothing</span></td>
-              </tr>
-              <tr>
-                <th>🦹 Steal</th>
-                <td><span className="winner-cell">You full</span><br/><span className="loser-cell">Bot nothing</span></td>
-                <td className="loser-cell">Both nothing</td>
-                <td><span className="even-cell">You half</span><br/><span className="winner-cell">Bot full</span></td>
-              </tr>
-              <tr>
-                <th>🎁 Give Away</th>
-                <td><span className="loser-cell">You nothing</span><br/><span className="winner-cell">Bot full</span></td>
-                <td><span className="winner-cell">You full</span><br/><span className="even-cell">Bot half</span></td>
-                <td className="both-get">Both full</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )
-  }
 
   function selectChoice(choice) {
     if (animating || gameOver) return
@@ -180,6 +94,10 @@ export default function SplitStealGiveAway() {
 
     const prize = pickPrize()
     setCurrentPrize(prize)
+    if (prize >= 500) {
+      setPrizeFlash(true)
+      setTimeout(() => setPrizeFlash(false), 600)
+    }
     const botPick = CHOICES[Math.floor(Math.random() * 3)]
 
     setShake(true)
@@ -220,13 +138,9 @@ export default function SplitStealGiveAway() {
             return next
           })
           setHistory(prev => [...prev.slice(-19), {
-            player: pendingChoice,
-            bot: botPick,
-            playerPayoff: p.player,
-            botPayoff: p.bot,
-            prize,
-            result: res,
-            round: round + 1,
+            player: pendingChoice, bot: botPick,
+            playerPayoff: p.player, botPayoff: p.bot,
+            prize, result: res, round: round + 1,
           }])
           setAnimating(false)
         }, 300)
@@ -259,64 +173,112 @@ export default function SplitStealGiveAway() {
   }
 
   const moneyLead = totals.player - totals.bot
-  const leadPercent = totalRounds > 0 ? (round / totalRounds) * 100 : 0
-
   const streakType = history.length >= 2 ? history[history.length - 1].result : null
   const streakCount = history.length >= 2
-    ? (() => {
-        let count = 0
-        for (let i = history.length - 1; i >= 0; i--) {
-          if (history[i].result === streakType) count++
-          else break
-        }
-        return count
-      })()
+    ? (() => { let c = 0; for (let i = history.length - 1; i >= 0; i--) { if (history[i].result === streakType) c++; else break } return c })()
     : 0
 
+  if (!totalRounds) {
+    return (
+      <div className="game-card slide-in">
+        <h2>Split Steal Give Away</h2>
+        <p className="description">Your custom game! Outsmart the bot to win the prize money.</p>
+        <div className="prize-display">
+          <div className="prize-label">Prize Pool Changes Every Round!</div>
+          <div className="prize-amount" style={{ fontSize: 16 }}>$50 · $100 · $200 · $500 · $1,000</div>
+          <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 6 }}>$100 is most common, $1,000 is ultra rare</div>
+        </div>
+        <div className="round-picker">
+          <div className="round-picker-label">How many rounds?</div>
+          <div className="round-picker-options">
+            {[5, 10, 15].map(n => (
+              <button key={n} className="round-picker-btn" onClick={() => { sound('click'); setTotalRounds(n) }}>
+                {n} Rounds
+              </button>
+            ))}
+          </div>
+          <div className="custom-target-row">
+            <span className="custom-target-label">or type a number (max 100):</span>
+            <input type="number" min="1" max="100" className="custom-target-input" placeholder="1-100"
+              onKeyDown={(e) => { if (e.key === 'Enter') { const v = parseInt(e.target.value); if (v >= 1 && v <= 100) { sound('click'); setTotalRounds(v) } } }} />
+            <button className="custom-target-go"
+              onClick={(e) => { const v = parseInt(e.target.closest('.custom-target-row').querySelector('input').value); if (v >= 1 && v <= 100) { sound('click'); setTotalRounds(v) } }}>
+              Go
+            </button>
+          </div>
+        </div>
+        <div className="rules-box">
+          <h3>Payoff Rules</h3>
+          <table>
+            <thead>
+              <tr><th>You \ Bot</th><th>✂️ Split</th><th>🦹 Steal</th><th>🎁 Give Away</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>✂️ Split</th>
+                <td className="even-cell">Both half</td>
+                <td><span className="loser-cell">You nothing</span><br/><span className="winner-cell">Bot full</span></td>
+                <td><span className="winner-cell">You full</span><br/><span className="loser-cell">Bot nothing</span></td>
+              </tr>
+              <tr>
+                <th>🦹 Steal</th>
+                <td><span className="winner-cell">You full</span><br/><span className="loser-cell">Bot nothing</span></td>
+                <td className="loser-cell">Both nothing</td>
+                <td><span className="even-cell">You half</span><br/><span className="winner-cell">Bot full</span></td>
+              </tr>
+              <tr>
+                <th>🎁 Give Away</th>
+                <td><span className="loser-cell">You nothing</span><br/><span className="winner-cell">Bot full</span></td>
+                <td><span className="winner-cell">You full</span><br/><span className="even-cell">Bot half</span></td>
+                <td className="both-get">Both full</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="game-card">
+    <div className="game-card slide-in">
       <h2>Split Steal Give Away</h2>
       <p className="description">Round {round} of {totalRounds}</p>
 
-        <div className="prize-display">
-          <div className="prize-label">This Round's Prize</div>
-          <div className="prize-amount">${currentPrize.toLocaleString()}</div>
+      <div className={`prize-display ${prizeFlash ? 'prize-flash' : ''}`}>
+        <div className="prize-label">This Round's Prize</div>
+        <div className="prize-amount">${currentPrize.toLocaleString()}</div>
       </div>
 
       <div className="ssg-scoreboard">
-        <div className="rps-score-side player-side">
+        <div className="rps-score-side">
           <div className="rps-score-label">You</div>
           <div className="rps-score-num player">${totals.player.toLocaleString()}</div>
         </div>
-
         <div className="rps-score-center">
           <div className="rps-draws-label">Lead</div>
-          <div className={`rps-draws-num ${moneyLead > 0 ? 'player' : moneyLead < 0 ? 'bot' : ''}`} style={{ color: moneyLead > 0 ? 'var(--neon-blue)' : moneyLead < 0 ? 'var(--neon-pink)' : 'var(--neon-yellow)' }}>
+          <div className="rps-draws-num" style={{ color: moneyLead > 0 ? 'var(--neon-blue)' : moneyLead < 0 ? 'var(--neon-pink)' : 'var(--neon-yellow)' }}>
             {moneyLead > 0 ? `+$${moneyLead.toLocaleString()}` : moneyLead < 0 ? `-$${Math.abs(moneyLead).toLocaleString()}` : '$0'}
           </div>
           {streakCount >= 2 && (
-            <div className={`rps-streak ${streakType === 'win' ? 'win' : streakType === 'lose' ? 'lose' : 'draw'}`}>
+            <div className={`rps-streak ${streakType}`}>
               {streakCount}x {streakType === 'win' ? 'Win Streak!' : streakType === 'lose' ? 'Loss Streak!' : 'Draws'}
             </div>
           )}
         </div>
-
-        <div className="rps-score-side bot-side">
+        <div className="rps-score-side">
           <div className="rps-score-label">Bot</div>
           <div className="rps-score-num bot">${totals.bot.toLocaleString()}</div>
         </div>
       </div>
 
       <div className="ssg-progress-bar">
-        <div className="ssg-progress-fill player" style={{ width: `${Math.min((totals.player / (totals.player + totals.bot || 1)) * 100, 100)}%` }} />
-        <div className="ssg-progress-fill bot" style={{ width: `${Math.min((totals.bot / (totals.player + totals.bot || 1)) * 100, 100)}%` }} />
+        <div className="ssg-progress-fill player" style={{ width: `${totals.player + totals.bot > 0 ? (totals.player / (totals.player + totals.bot)) * 100 : 50}%` }} />
+        <div className="ssg-progress-fill bot" style={{ width: `${totals.player + totals.bot > 0 ? (totals.bot / (totals.player + totals.bot)) * 100 : 50}%` }} />
       </div>
 
       {gameOver ? (
         <div className="rps-game-over">
-          <div className="rps-game-over-emoji">
-            {totals.player > totals.bot ? '💰' : totals.bot > totals.player ? '💀' : '🤝'}
-          </div>
+          <div className="rps-game-over-emoji">{totals.player > totals.bot ? '💰' : totals.bot > totals.player ? '💀' : '🤝'}</div>
           <div className={`result-text ${totals.player > totals.bot ? 'win' : totals.bot > totals.player ? 'lose' : 'draw'}`}>
             {totals.player > totals.bot ? 'You Win!' : totals.bot > totals.player ? 'Bot Wins!' : "It's a Tie!"}
           </div>
@@ -325,19 +287,15 @@ export default function SplitStealGiveAway() {
             <span className="sep">-</span>
             <span className="bot">${totals.bot.toLocaleString()}</span>
           </div>
-          <button className="play-again-btn" onClick={reset}>
-            Play Again
-          </button>
+          <button className="play-again-btn" onClick={reset}>Play Again</button>
         </div>
       ) : (
         <>
           <div className="rps-battle-area">
-            <div className={`rps-fighter player-fighter ${reveal && result === 'win' ? 'winner-glow' : ''} ${reveal && result === 'lose' ? 'loser-dim' : ''}`}>
+            <div className={`rps-fighter ${reveal && result === 'win' ? 'winner-glow' : ''} ${reveal && result === 'lose' ? 'loser-dim' : ''}`}>
               <div className="rps-fighter-label">You</div>
               {playerChoice ? (
-                <div className={`rps-fighter-emoji ${reveal ? 'revealed' : ''}`}>
-                  {playerChoice.emoji}
-                </div>
+                <div className={`rps-fighter-emoji ${reveal ? 'revealed' : ''}`}>{playerChoice.emoji}</div>
               ) : (
                 <div className="rps-fighter-emoji placeholder">❓</div>
               )}
@@ -348,20 +306,16 @@ export default function SplitStealGiveAway() {
               {animating && shake ? (
                 <div className="rps-vs-shake">⚔️</div>
               ) : reveal && result ? (
-                <div className={`rps-vs-result ${result}`}>
-                  {result === 'win' ? '→' : result === 'lose' ? '←' : '='}
-                </div>
+                <div className={`rps-vs-result ${result}`}>{result === 'win' ? '→' : result === 'lose' ? '←' : '='}</div>
               ) : (
                 <div className="rps-vs-text">VS</div>
               )}
             </div>
 
-            <div className={`rps-fighter bot-fighter ${reveal && result === 'lose' ? 'winner-glow' : ''} ${reveal && result === 'win' ? 'loser-dim' : ''}`}>
+            <div className={`rps-fighter ${reveal && result === 'lose' ? 'winner-glow' : ''} ${reveal && result === 'win' ? 'loser-dim' : ''}`}>
               <div className="rps-fighter-label">Bot</div>
               {botChoice ? (
-                <div className={`rps-fighter-emoji ${shake ? 'shaking' : ''} ${reveal ? 'revealed' : ''}`}>
-                  {botChoice.emoji}
-                </div>
+                <div className={`rps-fighter-emoji ${shake ? 'shaking' : ''} ${reveal ? 'revealed' : ''}`}>{botChoice.emoji}</div>
               ) : (
                 <div className="rps-fighter-emoji placeholder">❓</div>
               )}
@@ -370,8 +324,8 @@ export default function SplitStealGiveAway() {
           </div>
 
           {result && payoffs && (
-            <>
-              <div className={`result-text ${result}`} style={{ fontSize: 16, marginBottom: 4 }}>
+            <div className="result-area-inner">
+              <div className={`result-text ${result}`} style={{ fontSize: 16 }}>
                 {getMessage(result, playerChoice.name, botChoice.name)}
               </div>
               <div className="winnings-display">
@@ -388,48 +342,44 @@ export default function SplitStealGiveAway() {
                   </div>
                 </div>
               </div>
-            </>
-          )}
-
-          <div className="ssg-choices-row">
-            {CHOICES.map(c => (
-              <button
-                key={c.name}
-                className={`choice-btn ${c.class} ${pendingChoice?.name === c.name ? 'selected' : ''}`}
-                onClick={() => selectChoice(c)}
-                disabled={animating}
-              >
-                <span className="choice-emoji">{c.emoji}</span>
-                <span className="choice-name">{c.name}</span>
-                <span className="choice-desc">{c.desc}</span>
+              <button className="play-again-btn" onClick={nextRound}>
+                {round >= totalRounds ? 'See Results' : 'Next Round'}
               </button>
-            ))}
-          </div>
-
-          {pendingChoice && !result && !animating && (
-            <div className="confirm-area">
-              <div className="confirm-text">
-                You picked <strong>{pendingChoice.emoji} {pendingChoice.name}</strong>
-              </div>
-              <div className="confirm-buttons">
-                <button className="confirm-btn yes" onClick={confirmChoice}>
-                  Let's Go!
-                </button>
-                <button className="confirm-btn no" onClick={() => { sound('click'); setPendingChoice(null) }}>
-                  Change
-                </button>
-              </div>
             </div>
           )}
 
-          {!playerChoice && !pendingChoice && !animating && (
-            <div className="result-message">Choose your strategy!</div>
+          {!result && !animating && (
+            <>
+              <div className="ssg-choices-row">
+                {CHOICES.map(c => (
+                  <button key={c.name}
+                    className={`choice-btn ${c.class} ${pendingChoice?.name === c.name ? 'selected' : ''}`}
+                    onClick={() => selectChoice(c)} disabled={animating}>
+                    <span className="choice-emoji">{c.emoji}</span>
+                    <span className="choice-name">{c.name}</span>
+                    <span className="choice-desc">{c.desc}</span>
+                  </button>
+                ))}
+              </div>
+
+              {pendingChoice && (
+                <div className="confirm-area">
+                  <div className="confirm-text">You picked <strong>{pendingChoice.emoji} {pendingChoice.name}</strong></div>
+                  <div className="confirm-buttons">
+                    <button className="confirm-btn yes" onClick={confirmChoice}>Let's Go!</button>
+                    <button className="confirm-btn no" onClick={() => { sound('click'); setPendingChoice(null) }}>Change</button>
+                  </div>
+                </div>
+              )}
+
+              {!pendingChoice && (
+                <div className="result-message">Choose your strategy!</div>
+              )}
+            </>
           )}
 
-          {result && (
-            <button className="play-again-btn" onClick={nextRound} style={{ marginTop: 12 }}>
-              {round >= totalRounds ? 'See Results' : 'Next Round'}
-            </button>
+          {animating && (
+            <div className="result-message">Deciding...</div>
           )}
         </>
       )}
@@ -455,17 +405,7 @@ export default function SplitStealGiveAway() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button
-          onClick={reset}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-dim)',
-            cursor: 'pointer',
-            fontSize: 13,
-            textDecoration: 'underline',
-          }}
-        >
+        <button onClick={reset} className="quit-btn">
           {gameOver ? 'New Game' : 'Quit Game'}
         </button>
       </div>
