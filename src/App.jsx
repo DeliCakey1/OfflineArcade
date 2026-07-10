@@ -2,6 +2,7 @@ import { useState } from 'react'
 import RockPaperScissors from './components/RockPaperScissors'
 import SplitStealGiveAway from './components/SplitStealGiveAway'
 import GuessTheNumber from './components/GuessTheNumber'
+import GuessTheNumberHotCold from './components/GuessTheNumberHotCold'
 import './index.css'
 
 const GAMES = [
@@ -25,9 +26,17 @@ const GAMES = [
     id: 'gtn',
     label: 'Guess The Number',
     emoji: '🔢',
-    desc: 'Can you crack the bot\'s number in 10 tries?',
+    desc: 'Can you crack the bot\'s number? Choose your difficulty!',
     color: '#22c55e',
     component: GuessTheNumber,
+  },
+  {
+    id: 'gtn-hc',
+    label: 'Hot or Cold',
+    emoji: '🌡️',
+    desc: 'Getting warmer or colder? Use the clues to find the number!',
+    color: '#ef4444',
+    component: GuessTheNumberHotCold,
   },
 ]
 
