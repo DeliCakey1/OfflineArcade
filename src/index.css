@@ -23,7 +23,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: var(--bg-dark);
+  background: var(--bg-dark) url('/Alpine-Amnesia.png') center/cover no-repeat fixed;
   color: var(--text-light);
   min-height: 100vh;
   overflow-x: hidden;
@@ -37,6 +37,15 @@ body::before {
     radial-gradient(circle at 20% 20%, var(--grad-1) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, var(--grad-2) 0%, transparent 50%),
     radial-gradient(circle at 50% 50%, var(--grad-3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
   pointer-events: none;
   z-index: 0;
 }
