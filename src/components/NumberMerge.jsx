@@ -2,12 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 
-const MODES = [
-  { name: 'Easy', emoji: '🟢', color: '#39ff14', size: 4, goal: 256, desc: 'Reach 256' },
-  { name: 'Normal', emoji: '🟡', color: '#ffe600', size: 5, goal: 512, desc: 'Reach 512' },
-  { name: 'Hard', emoji: '🟠', color: '#ff6b2b', size: 5, goal: 1024, desc: 'Reach 1024' },
-  { name: 'Expert', emoji: '💀', color: '#ff2d7b', size: 6, goal: 2048, desc: 'Reach 2048' },
-]
+const BOARD_SIZES = [3, 4, 5, 6, 7, 8]
+const GOAL_PRESETS = [128, 256, 512, 1024, 2048, 4096, 8192]
 
 let tileIdCounter = 0
 function nextId() { return ++tileIdCounter }
@@ -119,7 +115,11 @@ const DIRS = [
 const SLIDE_MS = 120
 
 export default function NumberMerge({ onPlayingChange }) {
-  const [mode, setMode] = useState(null)
+  const [screen, setScreen] = useState('menu')
+  const [boardSize, setBoardSize] = useState(4)
+  const [goal, setGoal] = useState(2048)
+  const [goalInput, setGoalInput] = useState('2048')
+  const [infinite, setInfinite] = useState(false)
   const [tiles, setTiles] = useState([])
   const [score, setScore] = useState(0)
   const [bestScore, setBestScore] = useState(0)
@@ -132,7 +132,7 @@ export default function NumberMerge({ onPlayingChange }) {
   const animTimer = useRef(null)
   const sound = useSound()
   const { recordGame } = useStats('merge')
-  const isPlaying = mode && !gameOver && !won
+  const isPlaying = screen === 'game' && !gameOver && !won
 
   useEffect(() => {
     onPlayingChange?.(isPlaying)
@@ -145,9 +145,9 @@ export default function NumberMerge({ onPlayingChange }) {
 
   const makeMove = useCallback((dir) => {
     if (gameOver || won || animating) return
-    const grid = tilesToGrid(tiles, mode.size)
-    const { tiles: slid } = slideTiles(tiles, dir, mode.size)
-    const newGrid = tilesToGrid(slid, mode.size)
+    const grid = tilesToGrid(tiles, boardSize)
+    const { tiles: slid } = slideTiles(tiles, dir, boardSize)
+    const newGrid = tilesToGrid(slid, boardSize)
     const gridsEqual = grid.every((row, r) => row.every((v, c) => v === newGrid[r][c]))
     if (gridsEqual) return
 
@@ -166,8 +166,8 @@ export default function NumberMerge({ onPlayingChange }) {
         if (t.mergedFrom) return { ...t, mergedFrom: null, isNew: false }
         return { ...t, isNew: false }
       })
-      const finalTiles = addRandomTileToTiles(mergedTiles, mode.size)
-      const finalGrid = tilesToGrid(finalTiles, mode.size)
+      const finalTiles = addRandomTileToTiles(mergedTiles, boardSize)
+      const finalGrid = tilesToGrid(finalTiles, boardSize)
       const newScore = score + gained
       setTiles(finalTiles)
       setSlideDir(null)
@@ -178,7 +178,7 @@ export default function NumberMerge({ onPlayingChange }) {
       }
       setScore(newScore)
       if (newScore > bestScore) setBestScore(newScore)
-      if (gridHasGoal(finalGrid, mode.goal)) {
+      if (!infinite && gridHasGoal(finalGrid, goal)) {
         setWon(true)
         recordGame(true, newScore)
         sound('victory')
@@ -188,10 +188,10 @@ export default function NumberMerge({ onPlayingChange }) {
         sound('lose')
       }
     }, SLIDE_MS)
-  }, [tiles, score, bestScore, gameOver, won, mode, animating, sound, recordGame])
+  }, [tiles, score, bestScore, gameOver, won, boardSize, goal, infinite, animating, sound, recordGame])
 
   useEffect(() => {
-    if (!mode || gameOver || won) return
+    if (screen !== 'game' || gameOver || won) return
     function handleKey(e) {
       const d = DIRS.find(d => d.key === e.key)
       if (!d) return
@@ -200,11 +200,13 @@ export default function NumberMerge({ onPlayingChange }) {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [mode, gameOver, won, makeMove])
+  }, [screen, gameOver, won, makeMove])
 
-  function startGame(m) {
+  function startGame(size, goalVal, isInfinite) {
     tileIdCounter = 0
-    setMode(m)
+    setBoardSize(size)
+    setGoal(goalVal)
+    setInfinite(isInfinite)
     setScore(0)
     setBestScore(0)
     setGameOver(false)
@@ -212,17 +214,19 @@ export default function NumberMerge({ onPlayingChange }) {
     setCopied(false)
     setSlideDir(null)
     setAnimating(false)
+    setScreen('game')
     let t = []
-    t = addRandomTileToTiles(t, m.size)
-    t = addRandomTileToTiles(t, m.size)
+    t = addRandomTileToTiles(t, size)
+    t = addRandomTileToTiles(t, size)
     setTiles(t)
   }
 
   function shareResult() {
+    const goalLabel = infinite ? '∞' : goal
     const lines = [
-      `🔢 Beat the bot at Number Merge (${mode.name})!`,
-      `📊 Score: ${score} | Goal: ${mode.goal}`,
-      won ? '🏆 Goal reached!' : `💀 Game over at ${tiles.length} tiles`,
+      `🔢 Number Merge (${boardSize}x${boardSize}, Goal: ${goalLabel})`,
+      `📊 Score: ${score}`,
+      won ? '🏆 Goal reached!' : infinite ? `💀 Board full` : `💀 Game over`,
       ``,
       `🎮 Offline Arcade`,
     ].filter(Boolean)
@@ -232,26 +236,128 @@ export default function NumberMerge({ onPlayingChange }) {
     })
   }
 
-  if (!mode) {
+  if (screen === 'menu') {
     return (
       <div className="game-card slide-in">
         <h2>Number Merge</h2>
-        <p className="description">Slide tiles to merge same numbers. Reach the goal!</p>
-        <div className="gtn-mode-grid">
-          {MODES.map(m => (
-            <button key={m.name} className="gtn-mode-card" style={{ '--mode-color': m.color }}
-              onClick={() => { sound('click'); startGame(m) }}>
-              <div className="gtn-mode-emoji">{m.emoji}</div>
-              <div className="gtn-mode-name">{m.name}</div>
-              <div className="gtn-mode-attempts">{m.desc}</div>
+        <p className="description">Slide tiles to merge same numbers!</p>
+
+        <div className="merge-setup-section">
+          <div className="merge-setup-title">Game Mode</div>
+          <div className="merge-setup-row">
+            <button className="merge-setup-btn" onClick={() => { sound('click'); startGame(4, 2048, false) }}>
+              <div className="merge-setup-emoji">🎮</div>
+              <div className="merge-setup-label">Classic</div>
+              <div className="merge-setup-sub">4×4, Goal 2048</div>
             </button>
-          ))}
+            <button className="merge-setup-btn" onClick={() => { sound('click'); setScreen('custom') }}>
+              <div className="merge-setup-emoji">🛠️</div>
+              <div className="merge-setup-label">Custom</div>
+              <div className="merge-setup-sub">Pick size & goal</div>
+            </button>
+            <button className="merge-setup-btn" onClick={() => { sound('click'); setScreen('infinite') }}>
+              <div className="merge-setup-emoji">♾️</div>
+              <div className="merge-setup-label">Infinite</div>
+              <div className="merge-setup-sub">No goal, play forever</div>
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-  const tileSize = 100 / mode.size
+  if (screen === 'infinite') {
+    return (
+      <div className="game-card slide-in">
+        <h2>Number Merge — Infinite</h2>
+        <p className="description">Pick your board size</p>
+        <div className="merge-setup-section">
+          <div className="merge-setup-title">Board Size</div>
+          <div className="merge-setup-row">
+            {BOARD_SIZES.map(s => (
+              <button key={s} className={`merge-size-btn ${boardSize === s ? 'selected' : ''}`}
+                onClick={() => { sound('click'); setBoardSize(s) }}>
+                {s}×{s}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button className="play-again-btn" style={{ marginTop: 16 }}
+          onClick={() => { sound('click'); startGame(boardSize, 0, true) }}>
+          Start Infinite
+        </button>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button className="quit-btn" onClick={() => setScreen('menu')}>← Back</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'custom') {
+    return (
+      <div className="game-card slide-in">
+        <h2>Number Merge — Custom</h2>
+        <p className="description">Set your own board size and goal</p>
+
+        <div className="merge-setup-section">
+          <div className="merge-setup-title">Board Size</div>
+          <div className="merge-setup-row">
+            {BOARD_SIZES.map(s => (
+              <button key={s} className={`merge-size-btn ${boardSize === s ? 'selected' : ''}`}
+                onClick={() => { sound('click'); setBoardSize(s) }}>
+                {s}×{s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="merge-setup-section">
+          <div className="merge-setup-title">Goal</div>
+          <div className="merge-setup-row">
+            {GOAL_PRESETS.map(g => (
+              <button key={g} className={`merge-size-btn ${goal === g && !infinite ? 'selected' : ''}`}
+                onClick={() => { sound('click'); setGoal(g); setInfinite(false); setGoalInput(String(g)) }}>
+                {g}
+              </button>
+            ))}
+          </div>
+          <div className="merge-custom-goal">
+            <input
+              className="merge-goal-input"
+              type="number"
+              min="4"
+              step="2"
+              value={goalInput}
+              onChange={e => { setGoalInput(e.target.value); setInfinite(false) }}
+              onBlur={() => {
+                const v = parseInt(goalInput)
+                if (v >= 4 && v % 2 === 0) setGoal(v)
+                else setGoalInput(String(goal))
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const v = parseInt(goalInput)
+                  if (v >= 4 && v % 2 === 0) { setGoal(v); setInfinite(false) }
+                  else setGoalInput(String(goal))
+                }
+              }}
+              placeholder="Custom..."
+            />
+          </div>
+        </div>
+
+        <button className="play-again-btn" style={{ marginTop: 16 }}
+          onClick={() => { sound('click'); startGame(boardSize, goal, false) }}>
+          Start Custom Game
+        </button>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button className="quit-btn" onClick={() => setScreen('menu')}>← Back</button>
+        </div>
+      </div>
+    )
+  }
+
+  const tileSize = 100 / boardSize
 
   return (
     <div className="game-card slide-in">
@@ -269,13 +375,15 @@ export default function NumberMerge({ onPlayingChange }) {
         </div>
         <div className="hol-stat">
           <div className="hol-stat-label">Goal</div>
-          <div className="hol-stat-num" style={{ color: 'var(--neon-green)' }}>{mode.goal}</div>
+          <div className="hol-stat-num" style={{ color: 'var(--neon-green)' }}>
+            {infinite ? '∞' : goal}
+          </div>
         </div>
       </div>
 
       <div className="merge-board" style={{ aspectRatio: '1' }}>
-        <div className="merge-bg-grid" style={{ gridTemplateColumns: `repeat(${mode.size}, 1fr)` }}>
-          {Array(mode.size * mode.size).fill(0).map((_, i) => (
+        <div className="merge-bg-grid" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}>
+          {Array(boardSize * boardSize).fill(0).map((_, i) => (
             <div key={i} className="merge-bg-cell" />
           ))}
         </div>
@@ -297,6 +405,7 @@ export default function NumberMerge({ onPlayingChange }) {
                 background: tileColor(t.value),
                 color: textColor(t.value),
                 zIndex: isMerged ? 2 : 1,
+                fontSize: boardSize >= 7 ? 12 : boardSize >= 6 ? 14 : 18,
               }}>
               {t.value}
             </div>
@@ -316,7 +425,7 @@ export default function NumberMerge({ onPlayingChange }) {
         <div className="rps-game-over">
           <div className="rps-game-over-emoji">{won ? '🏆' : '💀'}</div>
           <div className={`result-text ${won ? 'win' : 'lose'}`}>
-            {won ? `Reached ${mode.goal}!` : 'No Moves Left!'}
+            {won ? `Reached ${goal}!` : 'No Moves Left!'}
           </div>
           <div className="rps-final-score">
             <span className="player">{score}</span>
@@ -324,9 +433,9 @@ export default function NumberMerge({ onPlayingChange }) {
             <span className="bot">Best: {bestScore}</span>
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={() => startGame(mode)}>Play Again</button>
+            <button className="play-again-btn" onClick={() => startGame(boardSize, goal, infinite)}>Play Again</button>
             <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }}
-              onClick={() => setMode(null)}>Change Difficulty</button>
+              onClick={() => setScreen('menu')}>New Game</button>
             <button className="play-again-btn share-btn" onClick={shareResult}>
               {copied ? '✓ Copied!' : '📋 Copy Result'}
             </button>
@@ -335,7 +444,7 @@ export default function NumberMerge({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { setMode(null); onPlayingChange?.(false) }} className="quit-btn">
+        <button onClick={() => { setScreen('menu'); onPlayingChange?.(false) }} className="quit-btn">
           {(gameOver || won) ? 'New Game' : 'Quit Game'}
         </button>
       </div>
