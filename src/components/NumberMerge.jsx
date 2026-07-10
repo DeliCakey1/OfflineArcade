@@ -85,13 +85,11 @@ function slideTiles(tiles, dir, size) {
       existing.value *= 2
       existing.mergedFrom = [existing.id, tile.id]
       existing.isNew = false
+      occupied.add(key)
       mergeTargets.push(key)
     } else {
       occupied.add(key)
       newTiles.push({ ...tile, row: r, col: c, isNew: false, mergedFrom: null })
-      if (r !== tile.row || c !== tile.col) {
-        occupied.add(`${tile.row},${tile.col}`)
-      }
     }
   }
 
