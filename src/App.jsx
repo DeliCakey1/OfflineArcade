@@ -15,6 +15,7 @@ import SimonSays from './components/SimonSays'
 import { isMuted, toggleMute } from './useSound'
 import useStats from './useStats'
 import { THEMES, THEME_ORDER } from './themes'
+import CLOAK_PRESETS from './cloakPresets'
 import './index.css'
 
 const GAMES = [
@@ -261,7 +262,60 @@ function GamesDropdown({ inGame, onNavigate }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats, inGame, onHome, onNavigateGame }) {
+function CloakDropdown({ cloak, onCloakChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const CLOAK_IDS = ['none', 'canvas', 'googleDocs', 'classroom', 'clever', 'powerschool', 'desmos', 'notion', 'github', 'slack', 'zoom', 'drive', 'pdf', 'blank']
+
+  function handleOpenBlank() {
+    const html = document.documentElement.outerHTML
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+  }
+
+  return (
+    <div className="cloak-dropdown-wrap" ref={ref}>
+      <button className="settings-btn" onClick={() => setOpen(!open)} title="Tab Cloaking">
+        {cloak === 'none' ? '🎭' : '🫥'}
+      </button>
+      {open && (
+        <div className="theme-dropdown cloak-dropdown">
+          {CLOAK_IDS.map(id => {
+            const p = CLOAK_PRESETS[id]
+            return (
+              <button
+                key={id}
+                className={`theme-option ${id === cloak ? 'active' : ''}`}
+                onClick={() => { onCloakChange(id); setOpen(false) }}
+              >
+                <span className="theme-option-emoji">{p.emoji}</span>
+                <span className="theme-option-name">{p.label}</span>
+              </button>
+            )
+          })}
+          <div className="cloak-divider" />
+          <button className="theme-option cloak-blank-btn" onClick={() => { setOpen(false); handleOpenBlank() }}>
+            <span className="theme-option-emoji">🔲</span>
+            <span className="theme-option-name">Open in about:blank</span>
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats, inGame, onHome, onNavigateGame, cloak, onCloakChange }) {
   return (
     <div className="settings-bar">
       <div className="settings-bar-left">
@@ -269,6 +323,7 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
           🏠
         </button>
         <GamesDropdown inGame={inGame} onNavigate={onNavigateGame} />
+        <CloakDropdown cloak={cloak} onCloakChange={onCloakChange} />
       </div>
       <div className="settings-bar-right">
         <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'}>
@@ -303,6 +358,7 @@ function App() {
   const [confirmNav, setConfirmNav] = useState(null)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [cloak, setCloak] = useState(() => getSaved('arcade-cloak', 'none'))
   const { allStats, clearStats } = useStats('_global')
 
   useEffect(() => {
@@ -327,6 +383,25 @@ function App() {
     document.documentElement.classList.toggle('no-bg', !bg)
     try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {}
   }, [bg])
+
+  useEffect(() => {
+    const preset = CLOAK_PRESETS[cloak] || CLOAK_PRESETS.none
+    document.title = preset.title || 'Offline Arcade'
+
+    let link = document.querySelector("link[rel~='icon']")
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = 'icon'
+      document.head.appendChild(link)
+    }
+    if (preset.favicon) {
+      link.href = preset.favicon
+    } else {
+      link.href = '/favicon.svg'
+    }
+
+    try { localStorage.setItem('arcade-cloak', cloak) } catch {}
+  }, [cloak])
 
   function handleMuteToggle() {
     toggleMute()
@@ -370,6 +445,7 @@ function App() {
     inGame: !!activeGame,
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
+    cloak, onCloakChange: setCloak,
   }
 
   if (activeGame) {
