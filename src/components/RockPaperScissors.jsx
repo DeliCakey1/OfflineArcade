@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 const CHOICES = [
   { name: 'Rock', emoji: '🪨', class: 'rock' },
@@ -16,52 +16,182 @@ function getResult(player, bot) {
   return 'lose'
 }
 
-function getMessage(result) {
-  if (result === 'win') return 'You win!'
-  if (result === 'lose') return 'Bot wins!'
-  return "It's a draw!"
+function useSound() {
+  const ctxRef = useRef(null)
+  const getCtx = useCallback(() => {
+    if (!ctxRef.current) ctxRef.current = new (window.AudioContext || window.webkitAudioContext)()
+    return ctxRef.current
+  }, [])
+
+  const play = useCallback((type) => {
+    try {
+      const ctx = getCtx()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      gain.gain.value = 0.1
+
+      if (type === 'click') {
+        osc.frequency.value = 800
+        osc.type = 'sine'
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.08)
+      } else if (type === 'confirm') {
+        osc.frequency.value = 600
+        osc.type = 'sine'
+        osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.1)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.15)
+      } else if (type === 'win') {
+        osc.frequency.value = 523
+        osc.type = 'square'
+        gain.gain.value = 0.06
+        osc.frequency.setValueAtTime(523, ctx.currentTime)
+        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1)
+        osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.4)
+      } else if (type === 'lose') {
+        osc.frequency.value = 400
+        osc.type = 'sawtooth'
+        gain.gain.value = 0.04
+        osc.frequency.linearRampToValueAtTime(200, ctx.currentTime + 0.3)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.35)
+      } else if (type === 'draw') {
+        osc.frequency.value = 440
+        osc.type = 'triangle'
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.2)
+      } else if (type === 'victory') {
+        const notes = [523, 659, 784, 1047]
+        notes.forEach((freq, i) => {
+          const o = ctx.createOscillator()
+          const g = ctx.createGain()
+          o.connect(g)
+          g.connect(ctx.destination)
+          o.frequency.value = freq
+          o.type = 'square'
+          g.gain.value = 0.05
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.2)
+          o.start(ctx.currentTime + i * 0.15)
+          o.stop(ctx.currentTime + i * 0.15 + 0.2)
+        })
+      } else if (type === 'defeat') {
+        osc.frequency.value = 300
+        osc.type = 'sawtooth'
+        gain.gain.value = 0.04
+        osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.6)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.7)
+      }
+    } catch (e) {}
+  }, [getCtx])
+
+  return play
 }
 
+const MODES = [
+  { id: 'firstTo', label: 'First to...', desc: 'First to reach X wins' },
+  { id: 'rounds', label: 'Rounds', desc: 'Play exactly X rounds' },
+]
+
 export default function RockPaperScissors() {
+  const [gameMode, setGameMode] = useState(null)
+  const [target, setTarget] = useState(null)
   const [playerChoice, setPlayerChoice] = useState(null)
   const [pendingChoice, setPendingChoice] = useState(null)
   const [botChoice, setBotChoice] = useState(null)
   const [result, setResult] = useState(null)
   const [scores, setScores] = useState({ player: 0, bot: 0, draws: 0 })
+  const [round, setRound] = useState(0)
   const [animating, setAnimating] = useState(false)
+  const [history, setHistory] = useState([])
+  const [gameOver, setGameOver] = useState(null)
+  const [shake, setShake] = useState(false)
+  const [reveal, setReveal] = useState(false)
+  const sound = useSound()
+
+  const playerWinsNeeded = gameMode === 'firstTo' ? target : null
+  const totalRounds = gameMode === 'rounds' ? target : null
+  const progress = gameMode === 'firstTo'
+    ? { player: scores.player / target, bot: scores.bot / target }
+    : null
+
+  function checkGameOver(newScores, newRound) {
+    if (gameMode === 'firstTo') {
+      if (newScores.player >= target) return 'player'
+      if (newScores.bot >= target) return 'bot'
+    } else if (gameMode === 'rounds') {
+      if (newRound >= target) {
+        if (newScores.player > newScores.bot) return 'player'
+        if (newScores.bot > newScores.player) return 'bot'
+        return 'tie'
+      }
+    }
+    return null
+  }
 
   function selectChoice(choice) {
-    if (animating || result) return
+    if (animating || gameOver) return
+    sound('click')
     setPendingChoice(choice)
   }
 
   function confirmChoice() {
     if (!pendingChoice || animating) return
+    sound('confirm')
     setAnimating(true)
     setPlayerChoice(pendingChoice)
     setPendingChoice(null)
     setBotChoice(null)
     setResult(null)
+    setReveal(false)
 
     const botPick = CHOICES[Math.floor(Math.random() * 3)]
 
+    setShake(true)
     let step = 0
     const interval = setInterval(() => {
       setBotChoice(CHOICES[step % 3])
       step++
-      if (step > 6) {
+      if (step > 8) {
         clearInterval(interval)
+        setShake(false)
+        setReveal(true)
         setBotChoice(botPick)
         const res = getResult(pendingChoice.name, botPick.name)
-        setResult(res)
-        setScores(prev => ({
-          ...prev,
-          [res === 'win' ? 'player' : res === 'lose' ? 'bot' : 'draws']:
-            prev[res === 'win' ? 'player' : res === 'lose' ? 'bot' : 'draws'] + 1,
-        }))
-        setAnimating(false)
+
+        setTimeout(() => {
+          setResult(res)
+          sound(res === 'win' ? 'win' : res === 'lose' ? 'lose' : 'draw')
+
+          const newScores = {
+            ...scores,
+            [res === 'win' ? 'player' : res === 'lose' ? 'bot' : 'draws']:
+              scores[res === 'win' ? 'player' : res === 'lose' ? 'bot' : 'draws'] + 1,
+          }
+          const newRound = round + 1
+          setScores(newScores)
+          setRound(newRound)
+          setHistory(prev => [...prev.slice(-19), { player: pendingChoice, bot: botPick, result: res, round: newRound }])
+
+          const winner = checkGameOver(newScores, newRound)
+          if (winner) {
+            setGameOver(winner)
+            setTimeout(() => sound(winner === 'player' ? 'victory' : 'defeat'), 300)
+          }
+          setAnimating(false)
+        }, 300)
       }
-    }, 80)
+    }, 70)
   }
 
   function nextRound() {
@@ -69,95 +199,262 @@ export default function RockPaperScissors() {
     setPendingChoice(null)
     setBotChoice(null)
     setResult(null)
+    setReveal(false)
   }
 
   function reset() {
+    setGameMode(null)
+    setTarget(null)
     setPlayerChoice(null)
     setPendingChoice(null)
     setBotChoice(null)
     setResult(null)
     setScores({ player: 0, bot: 0, draws: 0 })
+    setRound(0)
+    setHistory([])
+    setGameOver(null)
+    setShake(false)
+    setReveal(false)
   }
+
+  if (!gameMode) {
+    return (
+      <div className="game-card">
+        <h2>Rock Paper Scissors</h2>
+        <p className="description">Choose your game mode!</p>
+        <div className="rps-mode-grid">
+          {MODES.map(m => (
+            <button key={m.id} className="rps-mode-card" onClick={() => { sound('click'); setGameMode(m.id) }}>
+              <div className="rps-mode-icon">{m.id === 'firstTo' ? '🏆' : '🔄'}</div>
+              <div className="rps-mode-label">{m.label}</div>
+              <div className="rps-mode-desc">{m.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (gameMode && !target) {
+    const presets = gameMode === 'firstTo' ? [3, 5, 7, 10] : [5, 10, 15, 25]
+    return (
+      <div className="game-card">
+        <h2>Rock Paper Scissors</h2>
+        <p className="description">
+          {gameMode === 'firstTo' ? 'First to how many wins?' : 'How many rounds?'}
+        </p>
+        <div className="round-picker">
+          <div className="round-picker-options">
+            {presets.map(n => (
+              <button key={n} className="round-picker-btn" onClick={() => { sound('click'); setTarget(n) }}>
+                {n}
+              </button>
+            ))}
+          </div>
+          <div className="custom-target-row">
+            <span className="custom-target-label">or type a number (max 100):</span>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              className="custom-target-input"
+              placeholder="1-100"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const v = parseInt(e.target.value)
+                  if (v >= 1 && v <= 100) { sound('click'); setTarget(v) }
+                }
+              }}
+            />
+            <button
+              className="custom-target-go"
+              onClick={(e) => {
+                const input = e.target.closest('.custom-target-row').querySelector('input')
+                const v = parseInt(input.value)
+                if (v >= 1 && v <= 100) { sound('click'); setTarget(v) }
+              }}
+            >
+              Go
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const streakType = history.length >= 2 ? history[history.length - 1].result : null
+  const streakCount = history.length >= 2
+    ? (() => {
+        let count = 0
+        for (let i = history.length - 1; i >= 0; i--) {
+          if (history[i].result === streakType) count++
+          else break
+        }
+        return count
+      })()
+    : 0
+
+  const botName = 'RPS-Bot'
+  const playerLabel = 'You'
 
   return (
     <div className="game-card">
       <h2>Rock Paper Scissors</h2>
-      <p className="description">Classic showdown against the bot!</p>
+      <p className="description">
+        {gameMode === 'firstTo'
+          ? `First to ${target} wins — Round ${round}`
+          : `Round ${round} of ${target}`}
+      </p>
 
-      <div className="scoreboard">
-        <div className="score-item">
-          <div className="score-label">You</div>
-          <div className="score-value player">{scores.player}</div>
+      <div className="rps-scoreboard">
+        <div className="rps-score-side player-side">
+          <div className="rps-score-label">{playerLabel}</div>
+          <div className="rps-score-num player">{scores.player}</div>
+          {gameMode === 'firstTo' && (
+            <div className="rps-progress-bar">
+              <div className="rps-progress-fill player" style={{ width: `${Math.min(progress.player * 100, 100)}%` }} />
+            </div>
+          )}
         </div>
-        <div className="score-item">
-          <div className="score-label">Draws</div>
-          <div className="score-value draws">{scores.draws}</div>
+
+        <div className="rps-score-center">
+          <div className="rps-draws-label">Draws</div>
+          <div className="rps-draws-num">{scores.draws}</div>
+          {streakCount >= 2 && (
+            <div className={`rps-streak ${streakType === 'win' ? 'win' : streakType === 'lose' ? 'lose' : 'draw'}`}>
+              {streakCount}x {streakType === 'win' ? 'Win Streak!' : streakType === 'lose' ? 'Lose Streak!' : 'Draws'}
+            </div>
+          )}
         </div>
-        <div className="score-item">
-          <div className="score-label">Bot</div>
-          <div className="score-value bot">{scores.bot}</div>
+
+        <div className="rps-score-side bot-side">
+          <div className="rps-score-label">{botName}</div>
+          <div className="rps-score-num bot">{scores.bot}</div>
+          {gameMode === 'firstTo' && (
+            <div className="rps-progress-bar">
+              <div className="rps-progress-fill bot" style={{ width: `${Math.min(progress.bot * 100, 100)}%` }} />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="choices">
-        {CHOICES.map(c => (
-          <button
-            key={c.name}
-            className={`choice-btn ${c.class} ${pendingChoice?.name === c.name ? 'selected' : ''}`}
-            onClick={() => selectChoice(c)}
-            disabled={animating}
-          >
-            {c.emoji} {c.name}
-          </button>
-        ))}
-      </div>
-
-      {pendingChoice && !result && !animating && (
-        <div className="confirm-area">
-          <div className="confirm-text">
-            You picked <strong>{pendingChoice.emoji} {pendingChoice.name}</strong>. Confirm?
+      {gameOver ? (
+        <div className="rps-game-over">
+          <div className="rps-game-over-emoji">
+            {gameOver === 'player' ? '🏆' : gameOver === 'bot' ? '💀' : '🤝'}
           </div>
-          <div className="confirm-buttons">
-            <button className="confirm-btn yes" onClick={confirmChoice}>
-              Confirm
-            </button>
-            <button className="confirm-btn no" onClick={() => setPendingChoice(null)}>
-              Change
-            </button>
+          <div className={`result-text ${gameOver === 'player' ? 'win' : gameOver === 'bot' ? 'lose' : 'draw'}`}>
+            {gameOver === 'player' ? 'You Win!' : gameOver === 'bot' ? 'Bot Wins!' : "It's a Tie!"}
+          </div>
+          <div className="rps-final-score">
+            <span className="player">{scores.player}</span>
+            <span className="sep">-</span>
+            <span className="bot">{scores.bot}</span>
+          </div>
+          <button className="play-again-btn" onClick={reset}>
+            Play Again
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="rps-battle-area">
+            <div className={`rps-fighter player-fighter ${reveal && result === 'win' ? 'winner-glow' : ''} ${reveal && result === 'lose' ? 'loser-dim' : ''}`}>
+              <div className="rps-fighter-label">{playerLabel}</div>
+              {playerChoice ? (
+                <div className={`rps-fighter-emoji ${reveal ? 'revealed' : ''}`}>
+                  {playerChoice.emoji}
+                </div>
+              ) : (
+                <div className="rps-fighter-emoji placeholder">❓</div>
+              )}
+              {playerChoice && <div className="rps-fighter-name">{playerChoice.name}</div>}
+            </div>
+
+            <div className="rps-vs">
+              {animating && shake ? (
+                <div className="rps-vs-shake">⚔️</div>
+              ) : reveal && result ? (
+                <div className={`rps-vs-result ${result}`}>
+                  {result === 'win' ? '→' : result === 'lose' ? '←' : '='}
+                </div>
+              ) : (
+                <div className="rps-vs-text">VS</div>
+              )}
+            </div>
+
+            <div className={`rps-fighter bot-fighter ${reveal && result === 'lose' ? 'winner-glow' : ''} ${reveal && result === 'win' ? 'loser-dim' : ''}`}>
+              <div className="rps-fighter-label">{botName}</div>
+              {botChoice ? (
+                <div className={`rps-fighter-emoji ${shake ? 'shaking' : ''} ${reveal ? 'revealed' : ''}`}>
+                  {botChoice.emoji}
+                </div>
+              ) : (
+                <div className="rps-fighter-emoji placeholder">❓</div>
+              )}
+              {botChoice && reveal && <div className="rps-fighter-name">{botChoice.name}</div>}
+            </div>
+          </div>
+
+          {result && (
+            <div className={`result-text ${result}`} style={{ fontSize: 20 }}>
+              {result === 'win' ? 'You Win!' : result === 'lose' ? 'Bot Wins!' : "Draw!"}
+            </div>
+          )}
+
+          <div className="rps-choices-row">
+            {CHOICES.map(c => (
+              <button
+                key={c.name}
+                className={`choice-btn ${c.class} ${pendingChoice?.name === c.name ? 'selected' : ''}`}
+                onClick={() => selectChoice(c)}
+                disabled={animating}
+              >
+                <span className="choice-emoji">{c.emoji}</span>
+                <span className="choice-name">{c.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {pendingChoice && !result && !animating && (
+            <div className="confirm-area">
+              <div className="confirm-text">
+                You picked <strong>{pendingChoice.emoji} {pendingChoice.name}</strong>
+              </div>
+              <div className="confirm-buttons">
+                <button className="confirm-btn yes" onClick={confirmChoice}>
+                  Let's Go!
+                </button>
+                <button className="confirm-btn no" onClick={() => { sound('click'); setPendingChoice(null) }}>
+                  Change
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!playerChoice && !pendingChoice && !animating && (
+            <div className="result-message">Choose your weapon!</div>
+          )}
+        </>
+      )}
+
+      {history.length > 0 && (
+        <div className="rps-history">
+          <div className="rps-history-label">Recent Rounds</div>
+          <div className="rps-history-list">
+            {history.slice(-8).map((h, i) => (
+              <div key={i} className={`rps-history-item ${h.result}`}>
+                <span className="history-round">#{h.round}</span>
+                <span className="history-pick">{h.player.emoji}</span>
+                <span className="history-vs">vs</span>
+                <span className="history-pick">{h.bot.emoji}</span>
+                <span className={`history-result ${h.result}`}>
+                  {h.result === 'win' ? 'W' : h.result === 'lose' ? 'L' : 'D'}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
-
-      <div className="result-area">
-        {playerChoice && botChoice && (
-          <>
-            <div className="versus-display">
-              <div className="player-choice-display">
-                <div className="label">You</div>
-                <div>{playerChoice.emoji}</div>
-              </div>
-              <div className="vs-text">VS</div>
-              <div className="bot-choice-display">
-                <div className="label">Bot</div>
-                <div>{botChoice.emoji}</div>
-              </div>
-            </div>
-            {result && (
-              <>
-                <div className={`result-text ${result}`}>
-                  {getMessage(result)}
-                </div>
-                <button className="play-again-btn" onClick={nextRound}>
-                  Play Again
-                </button>
-              </>
-            )}
-          </>
-        )}
-        {!playerChoice && !pendingChoice && !animating && (
-          <div className="result-message">Pick your move!</div>
-        )}
-      </div>
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
         <button
@@ -171,7 +468,7 @@ export default function RockPaperScissors() {
             textDecoration: 'underline',
           }}
         >
-          Reset Scores
+          {gameOver ? 'New Game' : 'Quit Game'}
         </button>
       </div>
     </div>
