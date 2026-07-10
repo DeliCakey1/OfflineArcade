@@ -565,6 +565,33 @@ body::before {
 }
 .ssg-prize-announce-text { font-size: 16px; color: var(--text-dim); margin-bottom: 16px; }
 
+.ssg-prize-picker { margin-top: 16px; }
+.ssg-prize-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.ssg-prize-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ssg-prize-btn:hover { border-color: var(--neon-yellow); background: rgba(255, 230, 0, 0.08); }
+.ssg-prize-btn.selected {
+  border-color: var(--neon-yellow);
+  background: rgba(255, 230, 0, 0.15);
+  color: var(--neon-yellow);
+  box-shadow: 0 0 12px rgba(255, 230, 0, 0.2);
+}
+
 /* ===== GUESS THE NUMBER ===== */
 .gtn-mode-grid {
   display: grid;
