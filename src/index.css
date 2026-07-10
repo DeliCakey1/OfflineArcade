@@ -116,6 +116,27 @@ body::after {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+.settings-bar-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.home-btn {
+  font-size: 18px;
+}
+.games-dropdown-wrap { position: relative; }
+.games-dropdown-btn { font-size: 14px; font-weight: 600; }
+.games-dropdown {
+  left: 0;
+  right: auto;
+  min-width: 220px;
+}
+.confirm-modal-text {
+  text-align: center;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+  font-size: 15px;
+}
 .settings-bar-right {
   display: flex;
   gap: 8px;

@@ -70,6 +70,21 @@ const GAMES = [
   },
 ]
 
+function ConfirmModal({ message, onConfirm, onCancel }) {
+  return (
+    <div className="stats-overlay" onClick={onCancel}>
+      <div className="stats-modal confirm-modal" onClick={e => e.stopPropagation()}>
+        <h2 className="stats-title">Are you sure?</h2>
+        <p className="confirm-modal-text">{message}</p>
+        <div className="confirm-buttons">
+          <button className="confirm-btn yes" onClick={onConfirm}>Yes, Leave</button>
+          <button className="confirm-btn no" onClick={onCancel}>Stay</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function GameCard({ game, stats, onClick }) {
   const gameStats = stats[game.id]
   return (
@@ -153,11 +168,39 @@ function ThemePicker({ current, onChange }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats }) {
+function GamesDropdown({ inGame, onNavigate }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="games-dropdown-wrap">
+      <button className="settings-btn games-dropdown-btn" onClick={() => setOpen(!open)}>
+        🕹️ Games ▾
+      </button>
+      {open && (
+        <div className="theme-dropdown games-dropdown">
+          {GAMES.map(g => (
+            <button
+              key={g.id}
+              className="theme-option"
+              onClick={() => { setOpen(false); onNavigate(g.id) }}
+            >
+              <span className="theme-option-emoji">{g.emoji}</span>
+              <span className="theme-option-name">{g.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats, inGame, onHome, onNavigateGame }) {
   return (
     <div className="settings-bar">
       <div className="settings-bar-left">
-        <span className="settings-bar-label">⚙️ Settings</span>
+        <button className="settings-btn home-btn" onClick={onHome} title="Home">
+          🏠
+        </button>
+        <GamesDropdown inGame={inGame} onNavigate={onNavigateGame} />
       </div>
       <div className="settings-bar-right">
         <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'}>
@@ -189,6 +232,7 @@ function App() {
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
   const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
   const [bg, setBg] = useState(() => getSaved('arcade-bg', 'on') === 'on')
+  const [confirmNav, setConfirmNav] = useState(null)
   const { allStats } = useStats('_global')
 
   useEffect(() => {
@@ -219,6 +263,31 @@ function App() {
     setMuted(isMuted())
   }
 
+  function handleHome() {
+    if (activeGame) {
+      setConfirmNav({ type: 'home' })
+    } else {
+      setActiveGame(null)
+    }
+  }
+
+  function handleNavigateGame(gameId) {
+    if (activeGame && activeGame !== gameId) {
+      setConfirmNav({ type: 'game', gameId })
+    } else {
+      setActiveGame(gameId)
+    }
+  }
+
+  function confirmNavAction() {
+    if (confirmNav.type === 'home') {
+      setActiveGame(null)
+    } else if (confirmNav.type === 'game') {
+      setActiveGame(confirmNav.gameId)
+    }
+    setConfirmNav(null)
+  }
+
   const settings = {
     muted, onMuteToggle: handleMuteToggle,
     theme, onThemeChange: setTheme,
@@ -226,6 +295,9 @@ function App() {
     glass, onGlassToggle: () => setGlass(g => !g),
     bg, onBgToggle: () => setBg(b => !b),
     onStats: () => setShowStats(true),
+    inGame: !!activeGame,
+    onHome: handleHome,
+    onNavigateGame: handleNavigateGame,
   }
 
   if (activeGame) {
@@ -238,14 +310,14 @@ function App() {
           <h1 className="arcade-title">ARCADE GAMES</h1>
         </header>
         <nav className="tab-bar">
-          <button className="tab-btn back-btn" onClick={() => setActiveGame(null)}>
+          <button className="tab-btn back-btn" onClick={handleHome}>
             ← Back to Games
           </button>
           {GAMES.map(g => (
             <button
               key={g.id}
               className={`tab-btn ${activeGame === g.id ? 'active' : ''}`}
-              onClick={() => setActiveGame(g.id)}
+              onClick={() => handleNavigateGame(g.id)}
             >
               {g.emoji} {g.label}
             </button>
@@ -255,6 +327,13 @@ function App() {
           <ActiveComponent key={activeGame} />
         </main>
         {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} />}
+        {confirmNav && (
+          <ConfirmModal
+            message={`You're in the middle of a game. Are you sure you want to leave?`}
+            onConfirm={confirmNavAction}
+            onCancel={() => setConfirmNav(null)}
+          />
+        )}
       </div>
     )
   }
