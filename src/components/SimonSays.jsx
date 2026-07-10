@@ -43,7 +43,7 @@ export default function SimonSays({ onPlayingChange }) {
 
   useEffect(() => {
     if (!mode || gameOver) return
-    const KEY_MAP = { q: 0, w: 1, a: 2, s: 3, '1': 0, '2': 1, '3': 2, '4': 3 }
+    const KEY_MAP = { w: 0, e: 1, s: 2, d: 3, '1': 0, '2': 1, '3': 2, '4': 3 }
     function handleKey(e) {
       const idx = KEY_MAP[e.key.toLowerCase()]
       if (idx !== undefined) {
@@ -186,11 +186,11 @@ export default function SimonSays({ onPlayingChange }) {
             onClick={() => handlePress(i)}
             disabled={phase !== 'input'}
           >
-            <span className="simon-key-hint">{['Q','W','A','S'][i]}</span>
+            <span className="simon-key-hint">{['W','E','S','D'][i]}</span>
           </button>
         ))}
       </div>
-      <div className="simon-keys-hint">Press Q W A S or 1 2 3 4</div>
+      <div className="simon-keys-hint">Press W E S D or 1 2 3 4</div>
 
       {phase === 'showing' && (
         <div className="simon-progress">
