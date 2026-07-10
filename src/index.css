@@ -43,6 +43,55 @@ body::before {
 
 #root { position: relative; z-index: 1; }
 
+.no-animations *,
+.no-animations *::before,
+.no-animations *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+
+/* ===== SETTINGS BAR ===== */
+.settings-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+}
+.settings-bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.settings-bar-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.settings-btn {
+  font-size: 18px;
+  padding: 6px 12px;
+  border: 2px solid rgba(185, 70, 255, 0.2);
+  border-radius: 10px;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-light);
+}
+.settings-btn:hover {
+  border-color: var(--neon-purple);
+  transform: translateY(-1px);
+}
+
 /* ===== HEADER ===== */
 .arcade-header { text-align: center; padding: 32px 20px 16px; }
 
@@ -806,18 +855,7 @@ body::before {
 .gtn-history-item.first { border: 1px solid rgba(155, 142, 196, 0.15); }
 
 /* ===== HEADER ACTIONS ===== */
-.header-actions { display: flex; justify-content: center; gap: 12px; padding: 0 20px 8px; }
-.header-btn {
-  font-size: 22px;
-  padding: 8px 16px;
-  border: 2px solid rgba(185, 70, 255, 0.2);
-  border-radius: 12px;
-  background: var(--bg-card);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.header-btn:hover { border-color: var(--neon-purple); transform: translateY(-2px); }
-
+/* ===== THEME PICKER ===== */
 .theme-picker { position: relative; }
 .theme-dropdown {
   position: absolute;

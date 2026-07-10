@@ -124,19 +124,15 @@ function StatsModal({ allStats, onClose }) {
   )
 }
 
-function getSavedTheme() {
-  try { return localStorage.getItem('arcade-theme') || 'neon' } catch { return 'neon' }
-}
-
-function saveTheme(id) {
-  try { localStorage.setItem('arcade-theme', id) } catch {}
+function getSaved(key, fallback) {
+  try { return localStorage.getItem(key) ?? fallback } catch { return fallback }
 }
 
 function ThemePicker({ current, onChange }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="theme-picker">
-      <button className="header-btn" onClick={() => setOpen(!open)} title="Change Theme">
+      <button className="settings-btn" onClick={() => setOpen(!open)} title="Change Theme">
         {THEMES[current].emoji}
       </button>
       {open && (
@@ -157,11 +153,34 @@ function ThemePicker({ current, onChange }) {
   )
 }
 
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, onStats }) {
+  return (
+    <div className="settings-bar">
+      <div className="settings-bar-left">
+        <span className="settings-bar-label">⚙️ Settings</span>
+      </div>
+      <div className="settings-bar-right">
+        <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'}>
+          {muted ? '🔇' : '🔊'}
+        </button>
+        <button className="settings-btn" onClick={onAnimToggle} title={animations ? 'Disable Animations' : 'Enable Animations'}>
+          {animations ? '✨' : '🚫'}
+        </button>
+        <button className="settings-btn" onClick={onStats} title="Stats">
+          📊
+        </button>
+        <ThemePicker current={theme} onChange={onThemeChange} />
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [activeGame, setActiveGame] = useState(null)
   const [muted, setMuted] = useState(isMuted())
   const [showStats, setShowStats] = useState(false)
-  const [theme, setTheme] = useState(getSavedTheme)
+  const [theme, setTheme] = useState(() => getSaved('arcade-theme', 'neon'))
+  const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
   const { allStats } = useStats('_global')
 
   useEffect(() => {
@@ -169,12 +188,24 @@ function App() {
     for (const [k, v] of Object.entries(vars)) {
       document.documentElement.style.setProperty(k, v)
     }
-    saveTheme(theme)
+    try { localStorage.setItem('arcade-theme', theme) } catch {}
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('no-animations', !animations)
+    try { localStorage.setItem('arcade-animations', animations ? 'on' : 'off') } catch {}
+  }, [animations])
 
   function handleMuteToggle() {
     toggleMute()
     setMuted(isMuted())
+  }
+
+  const settings = {
+    muted, onMuteToggle: handleMuteToggle,
+    theme, onThemeChange: setTheme,
+    animations, onAnimToggle: () => setAnimations(a => !a),
+    onStats: () => setShowStats(true),
   }
 
   if (activeGame) {
@@ -182,6 +213,7 @@ function App() {
     const ActiveComponent = game.component
     return (
       <div>
+        <SettingsBar {...settings} />
         <header className="arcade-header">
           <h1 className="arcade-title">ARCADE GAMES</h1>
         </header>
@@ -208,19 +240,11 @@ function App() {
 
   return (
     <div>
+      <SettingsBar {...settings} />
       <header className="arcade-header">
         <h1 className="arcade-title">ARCADE GAMES</h1>
         <p className="arcade-subtitle">Pick a game and challenge the bot!</p>
       </header>
-      <div className="header-actions">
-        <button className="header-btn" onClick={handleMuteToggle}>
-          {muted ? '🔇' : '🔊'}
-        </button>
-        <button className="header-btn" onClick={() => setShowStats(true)}>
-          📊
-        </button>
-        <ThemePicker current={theme} onChange={setTheme} />
-      </div>
       <main className="game-container">
         <div className="game-select-grid">
           {GAMES.map(game => (
