@@ -190,13 +190,20 @@ export default function HigherOrLower() {
       <div className="hol-card-list">
         <div className="hol-card-list-label">Deck Order</div>
         <div className="hol-card-list-scroll">
-          {deck.slice(0, maxRounds + 1).map((card, i) => {
+          {deck.slice(0, Math.min(round + 2, maxRounds + 1)).map((card, i) => {
             const isHigh = card.rank >= 9
             const isLow = card.rank <= 5
+            const isPlayed = i < round
+            const isCurrent = i === round
+            const isNext = i === round + 1
             return (
-              <div key={i} className={`hol-card-mini ${isHigh ? 'high' : isLow ? 'low' : ''} ${i < round ? 'played' : i === round ? 'current' : i === round + 1 ? 'next-up' : ''}`}>
-                <span className="hol-card-mini-val">{card.value}</span>
-                <span className="hol-card-mini-suit">{card.suit}</span>
+              <div key={i} className={`hol-card-mini ${isHigh ? 'high' : isLow ? 'low' : 'mid'} ${isPlayed ? 'played' : isCurrent ? 'current' : isNext ? 'next-up' : ''}`}>
+                {isNext && !reveal ? (
+                  <span className="hol-card-mini-val">?</span>
+                ) : (
+                  <span className="hol-card-mini-val">{card.value}</span>
+                )}
+                <span className="hol-card-mini-suit">{isNext && !reveal ? '?' : card.suit}</span>
               </div>
             )
           })}
