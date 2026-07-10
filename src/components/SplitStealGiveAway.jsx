@@ -60,8 +60,8 @@ function getMessage(result, p, b) {
 
 export default function SplitStealGiveAway() {
   const [totalRounds, setTotalRounds] = useState(null)
-  const [prizeMode, setPrizeMode] = useState(null) // null = random, or a specific amount
   const [currentPrize, setCurrentPrize] = useState(100)
+  const [prizeAnnounced, setPrizeAnnounced] = useState(false)
   const [playerChoice, setPlayerChoice] = useState(null)
   const [pendingChoice, setPendingChoice] = useState(null)
   const [botChoice, setBotChoice] = useState(null)
@@ -80,8 +80,9 @@ export default function SplitStealGiveAway() {
   const { recordGame } = useStats('ssg')
 
   function generatePrize() {
-    const prize = prizeMode !== null ? prizeMode : pickPrize()
+    const prize = pickPrize()
     setCurrentPrize(prize)
+    setPrizeAnnounced(false)
     if (prize >= 500) {
       setPrizeFlash(true)
       setTimeout(() => setPrizeFlash(false), 600)
@@ -191,7 +192,6 @@ export default function SplitStealGiveAway() {
 
   function reset() {
     setTotalRounds(null)
-    setPrizeMode(null)
     setPlayerChoice(null)
     setPendingChoice(null)
     setBotChoice(null)
@@ -217,6 +217,11 @@ export default function SplitStealGiveAway() {
       <div className="game-card slide-in">
         <h2>Split Steal Give Away</h2>
         <p className="description">Your custom game! Outsmart the bot to win the prize money.</p>
+        <div className="prize-display">
+          <div className="prize-label">Prize Pool Changes Every Round!</div>
+          <div className="prize-amount" style={{ fontSize: 16 }}>$50 · $100 · $200 · $500 · $1,000</div>
+          <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 6 }}>$100 is most common, $1,000 is ultra rare</div>
+        </div>
         <div className="round-picker">
           <div className="round-picker-label">How many rounds?</div>
           <div className="round-picker-options">
@@ -234,24 +239,6 @@ export default function SplitStealGiveAway() {
               onClick={(e) => { const v = parseInt(e.target.closest('.custom-target-row').querySelector('input').value); if (v >= 1 && v <= 100) { sound('click'); startGame(v) } }}>
               Go
             </button>
-          </div>
-        </div>
-        <div className="ssg-prize-picker">
-          <div className="round-picker-label">Prize amount per round</div>
-          <div className="ssg-prize-options">
-            <button className={`ssg-prize-btn ${prizeMode === null ? 'selected' : ''}`}
-              onClick={() => { sound('click'); setPrizeMode(null) }}>
-              🎲 Random
-            </button>
-            {[50, 100, 200, 500, 1000].map(amt => (
-              <button key={amt} className={`ssg-prize-btn ${prizeMode === amt ? 'selected' : ''}`}
-                onClick={() => { sound('click'); setPrizeMode(amt) }}>
-                ${amt.toLocaleString()}
-              </button>
-            ))}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8, textAlign: 'center' }}>
-            {prizeMode === null ? 'Weighted random: $100 most common, $1,000 ultra rare' : `Fixed $${prizeMode.toLocaleString()} every round`}
           </div>
         </div>
         <div className="rules-box">
@@ -400,7 +387,17 @@ export default function SplitStealGiveAway() {
             </div>
           )}
 
-          {!result && !animating && (
+          {!result && !animating && !prizeAnnounced && (
+            <div className="ssg-prize-announce">
+              <div className="ssg-prize-announce-amount">${currentPrize.toLocaleString()}</div>
+              <div className="ssg-prize-announce-text">This round's prize!</div>
+              <button className="play-again-btn" onClick={() => { sound('click'); setPrizeAnnounced(true) }}>
+                OK, Let's Play!
+              </button>
+            </div>
+          )}
+
+          {!result && !animating && prizeAnnounced && (
             <>
               <div className="ssg-choices-row">
                 {CHOICES.map(c => (

@@ -554,22 +554,16 @@ body::before {
 .ssg-choices-row .choice-name { font-size: 15px; }
 .ssg-choices-row .choice-desc { font-size: 11px; opacity: 0.7; }
 
-.ssg-prize-picker { margin-bottom: 20px; }
-.ssg-prize-options { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.ssg-prize-btn {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 18px;
-  border: 2px solid rgba(185, 70, 255, 0.2);
-  border-radius: 12px;
-  background: var(--bg-card);
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: all 0.2s ease;
+.ssg-prize-announce { text-align: center; padding: 20px 0; animation: slideIn 0.3s ease; }
+.ssg-prize-announce-amount {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 36px;
+  color: var(--neon-yellow);
+  margin-bottom: 8px;
+  animation: popIn 0.4s ease;
+  text-shadow: 0 0 20px rgba(255, 230, 0, 0.4);
 }
-.ssg-prize-btn:hover { border-color: var(--neon-yellow); color: var(--text-light); transform: translateY(-2px); }
-.ssg-prize-btn.selected { border-color: var(--neon-yellow); background: rgba(255, 230, 0, 0.1); color: var(--neon-yellow); box-shadow: 0 0 12px rgba(255, 230, 0, 0.2); }
+.ssg-prize-announce-text { font-size: 16px; color: var(--text-dim); margin-bottom: 16px; }
 
 /* ===== GUESS THE NUMBER ===== */
 .gtn-mode-grid {
