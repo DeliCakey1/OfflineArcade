@@ -83,11 +83,12 @@ body::after {
 .no-glass .confirm-btn.no,
 .no-glass .theme-dropdown,
 .no-glass .stats-modal,
-.no-glass .coin-progress-track {
-  background: var(--bg-card) !important;
-}
+.no-glass .coin-progress-track,
 .no-glass .settings-btn {
-  background: var(--bg-card) !important;
+  background: var(--bg-card-solid) !important;
+}
+.no-glass .game-select-card:hover {
+  background: var(--bg-card-hover-solid) !important;
 }
 
 .no-bg body::after {

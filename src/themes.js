@@ -5,7 +5,9 @@ export const THEMES = {
     vars: {
       '--bg-dark': '#1a1033',
       '--bg-card': 'rgba(42, 31, 78, 0.6)',
+      '--bg-card-solid': '#2a1f4e',
       '--bg-card-hover': 'rgba(53, 40, 99, 0.7)',
+      '--bg-card-hover-solid': '#352863',
       '--bg-glass': 'rgba(42, 31, 78, 0.45)',
       '--border-glass': 'rgba(185, 70, 255, 0.25)',
       '--neon-pink': '#ff2d7b',
@@ -27,7 +29,9 @@ export const THEMES = {
     vars: {
       '--bg-dark': '#0a1628',
       '--bg-card': 'rgba(15, 36, 64, 0.55)',
+      '--bg-card-solid': '#0f2440',
       '--bg-card-hover': 'rgba(21, 48, 85, 0.65)',
+      '--bg-card-hover-solid': '#153055',
       '--bg-glass': 'rgba(15, 36, 64, 0.4)',
       '--border-glass': 'rgba(0, 180, 216, 0.3)',
       '--neon-pink': '#ff6b9d',
@@ -49,7 +53,9 @@ export const THEMES = {
     vars: {
       '--bg-dark': '#0d0d0d',
       '--bg-card': 'rgba(26, 26, 26, 0.6)',
+      '--bg-card-solid': '#1a1a1a',
       '--bg-card-hover': 'rgba(37, 37, 37, 0.7)',
+      '--bg-card-hover-solid': '#252525',
       '--bg-glass': 'rgba(26, 26, 26, 0.45)',
       '--border-glass': 'rgba(0, 255, 136, 0.2)',
       '--neon-pink': '#ff4444',
@@ -71,7 +77,9 @@ export const THEMES = {
     vars: {
       '--bg-dark': '#2d2438',
       '--bg-card': 'rgba(61, 50, 80, 0.5)',
+      '--bg-card-solid': '#3d3250',
       '--bg-card-hover': 'rgba(77, 66, 98, 0.6)',
+      '--bg-card-hover-solid': '#4d4262',
       '--bg-glass': 'rgba(61, 50, 80, 0.35)',
       '--border-glass': 'rgba(201, 168, 255, 0.3)',
       '--neon-pink': '#ff9ecf',
@@ -93,7 +101,9 @@ export const THEMES = {
     vars: {
       '--bg-dark': '#1a0a0a',
       '--bg-card': 'rgba(45, 17, 17, 0.55)',
+      '--bg-card-solid': '#2d1111',
       '--bg-card-hover': 'rgba(61, 26, 26, 0.65)',
+      '--bg-card-hover-solid': '#3d1a1a',
       '--bg-glass': 'rgba(45, 17, 17, 0.4)',
       '--border-glass': 'rgba(255, 51, 85, 0.25)',
       '--neon-pink': '#ff3355',
@@ -115,7 +125,9 @@ export const THEMES = {
     vars: {
       '--bg-dark': '#0d1a0d',
       '--bg-card': 'rgba(26, 46, 26, 0.55)',
+      '--bg-card-solid': '#1a2e1a',
       '--bg-card-hover': 'rgba(36, 61, 36, 0.65)',
+      '--bg-card-hover-solid': '#243d24',
       '--bg-glass': 'rgba(26, 46, 26, 0.4)',
       '--border-glass': 'rgba(68, 221, 68, 0.2)',
       '--neon-pink': '#ff7eb3',
