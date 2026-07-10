@@ -955,22 +955,27 @@ body::before {
   padding: 3px 5px;
   border-radius: 4px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
+  outline: 2px solid var(--border);
+  outline-offset: 1px;
   min-width: 28px;
   font-size: 11px;
   font-weight: 700;
+  color: var(--text);
   transition: all 0.2s;
 }
-.hol-card-mini.red { color: #ff4444; }
-.hol-card-mini.black { color: var(--text); }
+.hol-card-mini.high { color: var(--neon-green); outline-color: var(--neon-green); }
+.hol-card-mini.low { color: var(--neon-pink); outline-color: var(--neon-pink); }
 .hol-card-mini.played { opacity: 0.35; }
 .hol-card-mini.current {
   border-color: var(--neon-yellow);
+  outline-color: var(--neon-yellow);
   background: rgba(255, 230, 0, 0.12);
   box-shadow: 0 0 8px rgba(255, 230, 0, 0.25);
 }
 .hol-card-mini.next-up {
   border-color: var(--neon-blue);
+  outline-color: var(--neon-blue);
   background: rgba(59, 130, 246, 0.1);
 }
 .hol-card-mini-val { line-height: 1; }
