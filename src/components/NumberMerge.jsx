@@ -441,6 +441,9 @@ export default function NumberMerge({ onPlayingChange }) {
               onClick={() => { setWon(true) }}>
               Exit
             </button>
+            <button className="play-again-btn share-btn" onClick={shareResult}>
+              {copied ? '✓ Copied!' : '📋 Copy Result'}
+            </button>
           </div>
         </div>
       )}
