@@ -14,6 +14,29 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function() {
+        try {
+          var mode = localStorage.getItem('arcade-cloak');
+          if (!mode || mode === 'none') return;
+          if (window.__ABOUT_BLANK__) return;
+          var base = window.location.origin;
+          var cloakUrl = localStorage.getItem('arcade-cloak-url') || '';
+          var cloakTitle = localStorage.getItem('arcade-cloak-title') || '';
+          var cloakFavicon = localStorage.getItem('arcade-cloak-favicon') || '';
+          var head = document.head.innerHTML;
+          head = head.replace(/(href|src)="(\/[^"]+)"/g, function(_, a, p) { return a+'="'+base+p+'"'; });
+          if (cloakTitle) head = head.replace(/<title>[^<]*<\/title>/, '<title>'+cloakTitle+'</title>');
+          if (cloakFavicon) head = head.replace(/<link rel="icon"[^>]*>/, '<link rel="icon" type="image/svg+xml" href="'+cloakFavicon+'" />');
+          var blankHtml = '<!doctype html><html><head>' + head + '</head><body><div id="root"></div><script>window.__ABOUT_BLANK__=true<\/script>' + document.querySelector('script[type="module"]').outerHTML.replace(/src="\/([^"]+)"/g, 'src="'+base+'/$1"') + '</body></html>';
+          var win = window.open('about:blank');
+          if (win) { win.document.write(blankHtml); win.document.close(); }
+          if (mode === 'custom' && cloakUrl && cloakUrl !== 'https://') {
+            window.location.href = cloakUrl;
+          }
+        } catch(e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
