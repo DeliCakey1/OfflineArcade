@@ -34,9 +34,9 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 20%, rgba(185, 70, 255, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(255, 45, 123, 0.05) 0%, transparent 70%);
+    radial-gradient(circle at 20% 20%, var(--grad-1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, var(--grad-2) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, var(--grad-3) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -58,12 +58,13 @@ body::before {
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
-  background: rgba(0, 0, 0, 0.35);
-  border-bottom: 1px solid var(--border);
+  background: var(--bg-glass);
+  border-bottom: 1px solid var(--border-glass);
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 .settings-bar-label {
   font-size: 13px;
@@ -80,9 +81,10 @@ body::before {
 .settings-btn {
   font-size: 18px;
   padding: 6px 12px;
-  border: 2px solid rgba(185, 70, 255, 0.2);
+  border: 1px solid var(--border-glass);
   border-radius: 10px;
-  background: var(--bg-card);
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
   cursor: pointer;
   transition: all 0.2s ease;
   color: var(--text-light);
@@ -90,6 +92,7 @@ body::before {
 .settings-btn:hover {
   border-color: var(--neon-purple);
   transform: translateY(-1px);
+  background: var(--bg-card-hover);
 }
 
 /* ===== HEADER ===== */
@@ -122,9 +125,10 @@ body::before {
   font-size: 16px;
   font-weight: 600;
   padding: 10px 24px;
-  border: 2px solid var(--bg-card);
+  border: 1px solid var(--border-glass);
   border-radius: 50px;
-  background: var(--bg-card);
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
   color: var(--text-dim);
   cursor: pointer;
   transition: all 0.3s ease;
@@ -139,7 +143,7 @@ body::before {
   box-shadow: 0 0 20px rgba(255, 45, 123, 0.4);
 }
 
-.back-btn { background: rgba(185, 70, 255, 0.1) !important; border-color: rgba(185, 70, 255, 0.3) !important; }
+.back-btn { background: var(--bg-glass) !important; border-color: var(--border-glass) !important; backdrop-filter: blur(8px); }
 
 /* ===== GAME CONTAINER ===== */
 .game-container { max-width: 800px; margin: 0 auto; padding: 24px 20px 60px; }
@@ -154,10 +158,12 @@ body::before {
 
 /* ===== GAME CARD ===== */
 .game-card {
-  background: var(--bg-card);
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 24px;
   padding: 32px;
-  border: 2px solid rgba(185, 70, 255, 0.2);
+  border: 1px solid var(--border-glass);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -287,7 +293,8 @@ body::before {
   text-align: center;
   margin-bottom: 20px;
   padding: 16px;
-  background: rgba(255, 230, 0, 0.1);
+  background: rgba(255, 230, 0, 0.08);
+  backdrop-filter: blur(8px);
   border-radius: 12px;
   border: 1px solid rgba(255, 230, 0, 0.2);
   transition: all 0.3s ease;
@@ -331,11 +338,11 @@ body::before {
 }
 
 /* ===== RULES BOX ===== */
-.rules-box { margin-top: 20px; padding: 16px; background: rgba(0, 0, 0, 0.2); border-radius: 12px; border: 1px solid rgba(185, 70, 255, 0.15); }
+.rules-box { margin-top: 20px; padding: 16px; background: var(--bg-glass); backdrop-filter: blur(8px); border-radius: 12px; border: 1px solid var(--border-glass); }
 .rules-box h3 { font-size: 14px; color: var(--neon-purple); margin-bottom: 8px; text-align: center; }
 .rules-box table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.rules-box th, .rules-box td { padding: 6px 8px; text-align: center; border: 1px solid rgba(185, 70, 255, 0.15); }
-.rules-box th { background: rgba(185, 70, 255, 0.15); color: var(--neon-purple); font-weight: 600; }
+.rules-box th, .rules-box td { padding: 6px 8px; text-align: center; border: 1px solid var(--border-glass); }
+.rules-box th { background: rgba(185, 70, 255, 0.12); color: var(--neon-purple); font-weight: 600; }
 .rules-box td { color: var(--text-dim); }
 .winner-cell { color: var(--win-color) !important; font-weight: 600; }
 .loser-cell { color: var(--lose-color) !important; }
@@ -347,8 +354,10 @@ body::before {
 
 .game-select-card {
   font-family: 'Fredoka', sans-serif;
-  background: var(--bg-card);
-  border: 2px solid rgba(185, 70, 255, 0.2);
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
   border-radius: 20px;
   padding: 32px 24px;
   cursor: pointer;
@@ -369,7 +378,8 @@ body::before {
 .game-select-card:hover {
   border-color: var(--card-accent, var(--neon-purple));
   transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px color-mix(in srgb, var(--card-accent, var(--neon-purple)) 30%, transparent);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px color-mix(in srgb, var(--card-accent, var(--neon-purple)) 30%, transparent);
+  background: var(--bg-card-hover);
 }
 
 .game-select-emoji { font-size: 56px; margin-bottom: 12px; transition: transform 0.3s ease; }
@@ -397,8 +407,8 @@ body::before {
 
 .confirm-btn.yes { background: linear-gradient(135deg, var(--neon-green), #16a34a); color: white; }
 .confirm-btn.yes:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(57, 255, 20, 0.3); }
-.confirm-btn.no { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); border: 1px solid rgba(255, 255, 255, 0.15); }
-.confirm-btn.no:hover { background: rgba(255, 255, 255, 0.15); color: var(--text-light); }
+.confirm-btn.no { background: var(--bg-glass); backdrop-filter: blur(8px); color: var(--text-dim); border: 1px solid var(--border-glass); }
+.confirm-btn.no:hover { background: var(--bg-card-hover); color: var(--text-light); }
 
 /* ===== ROUND PICKER ===== */
 .round-picker { text-align: center; margin-bottom: 24px; }
@@ -410,9 +420,10 @@ body::before {
   font-size: 16px;
   font-weight: 600;
   padding: 14px 28px;
-  border: 2px solid rgba(185, 70, 255, 0.3);
+  border: 1px solid var(--border-glass);
   border-radius: 16px;
-  background: var(--bg-card);
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
   color: var(--text-light);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -450,9 +461,10 @@ body::before {
   font-size: 16px;
   width: 70px;
   padding: 8px 10px;
-  border: 2px solid rgba(185, 70, 255, 0.3);
+  border: 1px solid var(--border-glass);
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
   color: var(--text-light);
   text-align: center;
   outline: none;
@@ -555,7 +567,7 @@ body::before {
 .rps-final-score .sep { color: var(--text-dim); margin: 0 12px; }
 
 /* ===== HISTORY ===== */
-.rps-history { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(185, 70, 255, 0.15); }
+.rps-history { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-glass); }
 .rps-history-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center; }
 .rps-history-list { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
 
@@ -566,7 +578,8 @@ body::before {
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 13px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--bg-glass);
+  backdrop-filter: blur(6px);
   animation: historySlide 0.25s ease-out;
 }
 
@@ -656,8 +669,10 @@ body::before {
 
 .gtn-mode-card {
   font-family: 'Fredoka', sans-serif;
-  background: var(--bg-card);
-  border: 2px solid color-mix(in srgb, var(--mode-color, var(--neon-purple)) 30%, transparent);
+  background: var(--bg-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--mode-color, var(--neon-purple)) 30%, transparent);
   border-radius: 16px;
   padding: 20px 12px;
   cursor: pointer;
@@ -862,13 +877,15 @@ body::before {
   top: 100%;
   right: 0;
   margin-top: 8px;
-  background: var(--bg-card);
-  border: 2px solid var(--border);
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
   border-radius: 12px;
   padding: 6px;
   z-index: 100;
   min-width: 160px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   animation: popIn 0.15s ease;
 }
 .theme-option {
@@ -897,7 +914,8 @@ body::before {
 .stats-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -906,8 +924,10 @@ body::before {
   padding: 20px;
 }
 .stats-modal {
-  background: var(--bg-card);
-  border: 2px solid rgba(185, 70, 255, 0.3);
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
   border-radius: 20px;
   padding: 28px;
   max-width: 420px;
@@ -1081,7 +1101,7 @@ body::before {
   color: #1e293b;
   transition: transform 0.3s ease;
 }
-.dice.placeholder { color: var(--text-dim); font-size: 32px; background: rgba(0, 0, 0, 0.3); border-color: rgba(185, 70, 255, 0.2); }
+.dice.placeholder { color: var(--text-dim); font-size: 32px; background: var(--bg-glass); backdrop-filter: blur(8px); border-color: var(--border-glass); }
 .dice.revealed { animation: popIn 0.3s ease; }
 .dice-total { font-family: 'Press Start 2P', monospace; font-size: 20px; margin-top: 8px; animation: popIn 0.3s ease; }
 .dice-total.win { color: var(--win-color); }
@@ -1094,9 +1114,10 @@ body::before {
   font-weight: 600;
   width: 52px;
   height: 52px;
-  border: 2px solid rgba(185, 70, 255, 0.3);
+  border: 1px solid var(--border-glass);
   border-radius: 12px;
-  background: var(--bg-card);
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
   color: var(--text-light);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1118,7 +1139,7 @@ body::before {
 .coin-score-num.target { color: var(--neon-yellow); }
 
 .coin-progress { margin-bottom: 24px; padding: 0 4px; }
-.coin-progress-track { position: relative; height: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 5px; border: 1px solid rgba(185, 70, 255, 0.15); }
+.coin-progress-track { position: relative; height: 10px; background: var(--bg-glass); border-radius: 5px; border: 1px solid var(--border-glass); }
 .coin-progress-fill { height: 100%; background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow)); border-radius: 5px; transition: width 0.5s ease; }
 .coin-progress-marker { position: absolute; top: -4px; transform: translateX(-50%); }
 .coin-progress-marker-label { font-size: 18px; }
