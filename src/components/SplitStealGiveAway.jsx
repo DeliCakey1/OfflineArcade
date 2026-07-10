@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 
@@ -58,7 +58,7 @@ function getMessage(result, p, b) {
   return "It's a draw!"
 }
 
-export default function SplitStealGiveAway() {
+export default function SplitStealGiveAway({ onPlayingChange }) {
   const [totalRounds, setTotalRounds] = useState(null)
   const [prizeMode, setPrizeMode] = useState(null) // null = random, or a fixed amount
   const [currentPrize, setCurrentPrize] = useState(100)
@@ -79,6 +79,12 @@ export default function SplitStealGiveAway() {
   const [copied, setCopied] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('ssg')
+
+  useEffect(() => {
+    const playing = Boolean(totalRounds)
+    onPlayingChange?.(playing)
+    return () => onPlayingChange?.(false)
+  }, [totalRounds, onPlayingChange])
 
   const isRandom = prizeMode === null
 

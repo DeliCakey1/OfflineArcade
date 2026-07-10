@@ -239,6 +239,7 @@ function App() {
   const [bg, setBg] = useState(() => getSaved('arcade-bg', 'on') === 'on')
   const [confirmNav, setConfirmNav] = useState(null)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
   const { allStats, clearStats } = useStats('_global')
 
   useEffect(() => {
@@ -270,7 +271,7 @@ function App() {
   }
 
   function handleHome() {
-    if (activeGame) {
+    if (isPlaying) {
       setConfirmNav({ type: 'home' })
     } else {
       setActiveGame(null)
@@ -278,7 +279,7 @@ function App() {
   }
 
   function handleNavigateGame(gameId) {
-    if (activeGame && activeGame !== gameId) {
+    if (isPlaying && activeGame !== gameId) {
       setConfirmNav({ type: 'game', gameId })
     } else {
       setActiveGame(gameId)
@@ -288,8 +289,10 @@ function App() {
   function confirmNavAction() {
     if (confirmNav.type === 'home') {
       setActiveGame(null)
+      setIsPlaying(false)
     } else if (confirmNav.type === 'game') {
       setActiveGame(confirmNav.gameId)
+      setIsPlaying(false)
     }
     setConfirmNav(null)
   }
@@ -330,7 +333,7 @@ function App() {
           ))}
         </nav>
         <main className="game-container">
-          <ActiveComponent key={activeGame} />
+          <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
         </main>
         {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
         {confirmNav && (

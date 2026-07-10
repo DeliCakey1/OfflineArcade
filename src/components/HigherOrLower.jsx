@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 
@@ -31,7 +31,7 @@ function isRed(suit) {
   return suit === '♥' || suit === '♦'
 }
 
-export default function HigherOrLower() {
+export default function HigherOrLower({ onPlayingChange }) {
   const [maxRounds, setMaxRounds] = useState(null)
   const [deck, setDeck] = useState(() => makeDeck())
   const [currentCard, setCurrentCard] = useState(null)
@@ -48,6 +48,12 @@ export default function HigherOrLower() {
   const [copied, setCopied] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('hol')
+
+  useEffect(() => {
+    const playing = Boolean(maxRounds)
+    onPlayingChange?.(playing)
+    return () => onPlayingChange?.(false)
+  }, [maxRounds, onPlayingChange])
 
   const startGame = useCallback(() => {
     const d = makeDeck()

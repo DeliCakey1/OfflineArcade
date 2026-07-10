@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 
@@ -15,7 +15,7 @@ function rollDice() {
   return [Math.floor(Math.random() * 6) + 1, Math.floor(Math.random() * 6) + 1]
 }
 
-export default function DiceRoll() {
+export default function DiceRoll({ onPlayingChange }) {
   const [totalRounds, setTotalRounds] = useState(null)
   const [bet, setBet] = useState(100)
   const [mode, setMode] = useState(null) // 'exact' | 'range' | 'parity'
@@ -32,6 +32,12 @@ export default function DiceRoll() {
   const [copied, setCopied] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('dice')
+
+  useEffect(() => {
+    const playing = Boolean(mode && totalRounds)
+    onPlayingChange?.(playing)
+    return () => onPlayingChange?.(false)
+  }, [mode, totalRounds, onPlayingChange])
 
   function getMultiplier() {
     if (mode === 'exact') return 5

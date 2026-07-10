@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 
@@ -9,7 +9,7 @@ const MODES = [
   { name: 'Hard', attempts: 8, emoji: '🟠', color: '#ff6b2b' },
 ]
 
-export default function GuessTheNumberHotCold() {
+export default function GuessTheNumberHotCold({ onPlayingChange }) {
   const [maxAttempts, setMaxAttempts] = useState(null)
   const [secretNumber, setSecretNumber] = useState(() => Math.floor(Math.random() * 100) + 1)
   const [guess, setGuess] = useState('')
@@ -23,6 +23,12 @@ export default function GuessTheNumberHotCold() {
   const inputRef = useRef(null)
   const sound = useSound()
   const { recordGame } = useStats('gtn-hc')
+
+  useEffect(() => {
+    const playing = Boolean(maxAttempts)
+    onPlayingChange?.(playing)
+    return () => onPlayingChange?.(false)
+  }, [maxAttempts, onPlayingChange])
 
   const attempts = guesses.length
 

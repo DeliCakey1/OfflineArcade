@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 
@@ -10,7 +10,7 @@ const MODES = [
   { name: 'Insane', target: 20, emoji: '💀', color: '#ff2d7b' },
 ]
 
-export default function CoinFlipStreak() {
+export default function CoinFlipStreak({ onPlayingChange }) {
   const [target, setTarget] = useState(null)
   const [streak, setStreak] = useState(0)
   const [highScore, setHighScore] = useState(0)
@@ -27,6 +27,12 @@ export default function CoinFlipStreak() {
   const [copied, setCopied] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('coin')
+
+  useEffect(() => {
+    const playing = Boolean(target)
+    onPlayingChange?.(playing)
+    return () => onPlayingChange?.(false)
+  }, [target, onPlayingChange])
 
   function flip() {
     if (animating || gameOver || !pendingCall) return

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 
@@ -23,7 +23,7 @@ const MODES = [
   { id: 'rounds', label: 'Rounds', desc: 'Play exactly X rounds', icon: '🔄' },
 ]
 
-export default function RockPaperScissors() {
+export default function RockPaperScissors({ onPlayingChange }) {
   const [gameMode, setGameMode] = useState(null)
   const [target, setTarget] = useState(null)
   const [playerChoice, setPlayerChoice] = useState(null)
@@ -39,6 +39,12 @@ export default function RockPaperScissors() {
   const [reveal, setReveal] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('rps')
+
+  useEffect(() => {
+    const playing = Boolean(gameMode && target)
+    onPlayingChange?.(playing)
+    return () => onPlayingChange?.(false)
+  }, [gameMode, target, onPlayingChange])
 
   const progress = gameMode === 'firstTo'
     ? { player: scores.player / target, bot: scores.bot / target }
