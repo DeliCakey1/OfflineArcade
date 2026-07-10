@@ -388,6 +388,163 @@ body::before {
 .even-cell { color: var(--neon-yellow) !important; font-weight: 600; }
 .both-get { color: var(--neon-green) !important; font-weight: 600; }
 
+.game-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.game-select-card {
+  font-family: 'Fredoka', sans-serif;
+  background: var(--bg-card);
+  border: 2px solid rgba(185, 70, 255, 0.2);
+  border-radius: 20px;
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.game-select-card:hover {
+  border-color: var(--card-accent, var(--neon-purple));
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px color-mix(in srgb, var(--card-accent, var(--neon-purple)) 30%, transparent);
+}
+
+.game-select-emoji {
+  font-size: 56px;
+  margin-bottom: 12px;
+}
+
+.game-select-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: var(--text-light);
+}
+
+.game-select-desc {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.game-select-play {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--card-accent, var(--neon-purple));
+}
+
+.back-btn {
+  background: rgba(185, 70, 255, 0.1) !important;
+  border-color: rgba(185, 70, 255, 0.3) !important;
+}
+
+.choice-btn.selected {
+  transform: translateY(-3px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  border-color: white !important;
+}
+
+.confirm-area {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.confirm-text {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: var(--text-light);
+}
+
+.confirm-text strong {
+  color: var(--neon-yellow);
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.confirm-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 28px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn.yes {
+  background: linear-gradient(135deg, var(--neon-green), #16a34a);
+  color: white;
+}
+
+.confirm-btn.yes:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(57, 255, 20, 0.3);
+}
+
+.confirm-btn.no {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.confirm-btn.no:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-light);
+}
+
+.round-picker {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.round-picker-label {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.round-picker-options {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.round-picker-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px 28px;
+  border: 2px solid rgba(185, 70, 255, 0.3);
+  border-radius: 16px;
+  background: var(--bg-card);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.round-picker-btn:hover {
+  border-color: var(--neon-purple);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(185, 70, 255, 0.3);
+}
+
+.game-over {
+  text-align: center;
+  padding: 20px 0;
+}
+
 @media (max-width: 600px) {
   .arcade-title { font-size: 18px; }
   .game-card { padding: 20px; }
@@ -396,4 +553,8 @@ body::before {
   .scoreboard { gap: 20px; }
   .rules-box table { font-size: 11px; }
   .rules-box th, .rules-box td { padding: 4px; }
+  .game-select-emoji { font-size: 40px; }
+  .game-select-label { font-size: 11px; }
+  .round-picker-options { flex-direction: column; align-items: center; }
+  .round-picker-btn { width: 200px; }
 }

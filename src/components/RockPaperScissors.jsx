@@ -24,15 +24,22 @@ function getMessage(result) {
 
 export default function RockPaperScissors() {
   const [playerChoice, setPlayerChoice] = useState(null)
+  const [pendingChoice, setPendingChoice] = useState(null)
   const [botChoice, setBotChoice] = useState(null)
   const [result, setResult] = useState(null)
   const [scores, setScores] = useState({ player: 0, bot: 0, draws: 0 })
   const [animating, setAnimating] = useState(false)
 
-  function play(choice) {
-    if (animating) return
+  function selectChoice(choice) {
+    if (animating || result) return
+    setPendingChoice(choice)
+  }
+
+  function confirmChoice() {
+    if (!pendingChoice || animating) return
     setAnimating(true)
-    setPlayerChoice(null)
+    setPlayerChoice(pendingChoice)
+    setPendingChoice(null)
     setBotChoice(null)
     setResult(null)
 
@@ -45,7 +52,7 @@ export default function RockPaperScissors() {
       if (step > 6) {
         clearInterval(interval)
         setBotChoice(botPick)
-        const res = getResult(choice.name, botPick.name)
+        const res = getResult(pendingChoice.name, botPick.name)
         setResult(res)
         setScores(prev => ({
           ...prev,
@@ -55,12 +62,18 @@ export default function RockPaperScissors() {
         setAnimating(false)
       }
     }, 80)
+  }
 
-    setPlayerChoice(choice)
+  function nextRound() {
+    setPlayerChoice(null)
+    setPendingChoice(null)
+    setBotChoice(null)
+    setResult(null)
   }
 
   function reset() {
     setPlayerChoice(null)
+    setPendingChoice(null)
     setBotChoice(null)
     setResult(null)
     setScores({ player: 0, bot: 0, draws: 0 })
@@ -90,14 +103,30 @@ export default function RockPaperScissors() {
         {CHOICES.map(c => (
           <button
             key={c.name}
-            className={`choice-btn ${c.class}`}
-            onClick={() => play(c)}
+            className={`choice-btn ${c.class} ${pendingChoice?.name === c.name ? 'selected' : ''}`}
+            onClick={() => selectChoice(c)}
             disabled={animating}
           >
             {c.emoji} {c.name}
           </button>
         ))}
       </div>
+
+      {pendingChoice && !result && !animating && (
+        <div className="confirm-area">
+          <div className="confirm-text">
+            You picked <strong>{pendingChoice.emoji} {pendingChoice.name}</strong>. Confirm?
+          </div>
+          <div className="confirm-buttons">
+            <button className="confirm-btn yes" onClick={confirmChoice}>
+              Confirm
+            </button>
+            <button className="confirm-btn no" onClick={() => setPendingChoice(null)}>
+              Change
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="result-area">
         {playerChoice && botChoice && (
@@ -118,14 +147,14 @@ export default function RockPaperScissors() {
                 <div className={`result-text ${result}`}>
                   {getMessage(result)}
                 </div>
-                <button className="play-again-btn" onClick={() => { setPlayerChoice(null); setBotChoice(null); setResult(null) }}>
+                <button className="play-again-btn" onClick={nextRound}>
                   Play Again
                 </button>
               </>
             )}
           </>
         )}
-        {!playerChoice && !animating && (
+        {!playerChoice && !pendingChoice && !animating && (
           <div className="result-message">Pick your move!</div>
         )}
       </div>
