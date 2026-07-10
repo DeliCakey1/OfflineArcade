@@ -18,22 +18,28 @@ const MODES = [
 
 const ROUNDS = [5, 10, 15]
 
-function scramble(word) {
+function scrambleWord(word) {
   const arr = word.split('')
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]]
   }
   const s = arr.join('')
-  return s === word ? scramble(word) : s
+  return s === word && arr.length > 1 ? scrambleWord(word) : s
 }
 
-function hint(word) {
+function getHint(word) {
   return word[0] + '_'.repeat(word.length - 1)
+}
+
+function pickWordFromPool(modeName) {
+  const pool = WORDS[modeName] || WORDS.Normal
+  return pool[Math.floor(Math.random() * pool.length)]
 }
 
 export default function WordScramble({ onPlayingChange }) {
   const [mode, setMode] = useState(null)
+  const [selectedRounds, setSelectedRounds] = useState(null)
   const [totalRounds, setTotalRounds] = useState(0)
   const [round, setRound] = useState(0)
   const [score, setScore] = useState(0)
@@ -49,20 +55,16 @@ export default function WordScramble({ onPlayingChange }) {
   const [showHint, setShowHint] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('word')
-  const isPlaying = mode && totalRounds && !gameOver
+  const isPlaying = mode && totalRounds > 0 && !gameOver
 
   useEffect(() => {
     onPlayingChange?.(isPlaying)
     return () => onPlayingChange?.(false)
   }, [isPlaying, onPlayingChange])
 
-  function pickWord() {
-    const pool = WORDS[mode.name] || WORDS.Normal
-    return pool[Math.floor(Math.random() * pool.length)]
-  }
-
-  function startGame(m, rounds) {
-    setMode(m)
+  function startGame(modeObj, rounds) {
+    const w = pickWordFromPool(modeObj.name)
+    setMode(modeObj)
     setTotalRounds(rounds)
     setRound(1)
     setScore(0)
@@ -72,18 +74,17 @@ export default function WordScramble({ onPlayingChange }) {
     setShowHint(false)
     setGameOver(false)
     setCopied(false)
-    const w = pickWord()
     setCurrentWord(w)
-    setScrambled(scramble(w))
+    setScrambled(scrambleWord(w))
     setGuess('')
     setResult(null)
   }
 
   function nextWord() {
     setShowHint(false)
-    const w = pickWord()
+    const w = pickWordFromPool(mode.name)
     setCurrentWord(w)
-    setScrambled(scramble(w))
+    setScrambled(scrambleWord(w))
     setGuess('')
     setResult(null)
   }
@@ -153,9 +154,9 @@ export default function WordScramble({ onPlayingChange }) {
           <div className="ssg-prize-title">Rounds</div>
           <div className="ssg-prize-grid">
             {ROUNDS.map(r => (
-              <button key={r} className="ssg-prize-card active" onClick={() => {
-                setTotalRounds(r)
-              }}>
+              <button key={r}
+                className={`ssg-prize-card ${selectedRounds === r ? 'active' : ''}`}
+                onClick={() => { sound('click'); setSelectedRounds(r) }}>
                 <div className="ssg-prize-name">{r}</div>
               </button>
             ))}
@@ -164,7 +165,7 @@ export default function WordScramble({ onPlayingChange }) {
         <div className="gtn-mode-grid">
           {MODES.map(m => (
             <button key={m.name} className="gtn-mode-card" style={{ '--mode-color': m.color }}
-              onClick={() => { sound('click'); if (totalRounds > 0) startGame(m, totalRounds) }}>
+              onClick={() => { sound('click'); if (selectedRounds) startGame(m, selectedRounds) }}>
               <div className="gtn-mode-emoji">{m.emoji}</div>
               <div className="gtn-mode-name">{m.name}</div>
               <div className="gtn-mode-attempts">{m.hint ? 'Hints available' : 'No hints'}</div>
@@ -213,7 +214,7 @@ export default function WordScramble({ onPlayingChange }) {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="play-again-btn" onClick={() => startGame(mode, totalRounds)}>Play Again</button>
             <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }}
-              onClick={() => { setMode(null); setTotalRounds(0) }}>New Game</button>
+              onClick={() => { setMode(null); setTotalRounds(0); setSelectedRounds(null) }}>New Game</button>
             <button className="play-again-btn share-btn" onClick={shareResult}>
               {copied ? '✓ Copied!' : '📋 Copy Result'}
             </button>
@@ -229,7 +230,7 @@ export default function WordScramble({ onPlayingChange }) {
 
           {showHint && (
             <div className="word-scramble-hint">
-              Hint: {hint(currentWord)}
+              Hint: {getHint(currentWord)}
             </div>
           )}
 
@@ -278,7 +279,7 @@ export default function WordScramble({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { setMode(null); setTotalRounds(0); onPlayingChange?.(false) }} className="quit-btn">
+        <button onClick={() => { setMode(null); setTotalRounds(0); setSelectedRounds(null); onPlayingChange?.(false) }} className="quit-btn">
           {gameOver ? 'New Game' : 'Quit Game'}
         </button>
       </div>
