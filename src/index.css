@@ -130,7 +130,13 @@ body::after {
   cursor: pointer;
   transition: all 0.2s ease;
   color: var(--text-light);
+  animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
+.settings-bar-right > :nth-child(1) { animation-delay: 0.1s; }
+.settings-bar-right > :nth-child(2) { animation-delay: 0.15s; }
+.settings-bar-right > :nth-child(3) { animation-delay: 0.2s; }
+.settings-bar-right > :nth-child(4) { animation-delay: 0.25s; }
+.settings-bar-right > :nth-child(5) { animation-delay: 0.3s; }
 .settings-btn:hover {
   border-color: var(--neon-purple);
   transform: translateY(-1px);
@@ -138,7 +144,7 @@ body::after {
 }
 
 /* ===== HEADER ===== */
-.arcade-header { text-align: center; padding: 32px 20px 16px; }
+.arcade-header { text-align: center; padding: 32px 20px 16px; animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
 .arcade-title {
   font-family: 'Press Start 2P', monospace;
@@ -406,15 +412,22 @@ body::after {
   transition: all 0.3s ease;
   text-align: center;
   color: var(--text-light);
-  animation: cardAppear 0.4s ease-out backwards;
+  animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 
-.game-select-card:nth-child(1) { animation-delay: 0.1s; }
-.game-select-card:nth-child(2) { animation-delay: 0.2s; }
+.game-select-card:nth-child(1) { animation-delay: 0.05s; }
+.game-select-card:nth-child(2) { animation-delay: 0.1s; }
+.game-select-card:nth-child(3) { animation-delay: 0.15s; }
+.game-select-card:nth-child(4) { animation-delay: 0.2s; }
+.game-select-card:nth-child(5) { animation-delay: 0.25s; }
+.game-select-card:nth-child(6) { animation-delay: 0.3s; }
+.game-select-card:nth-child(7) { animation-delay: 0.35s; }
 
-@keyframes cardAppear {
-  from { opacity: 0; transform: translateY(24px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes bounceIn {
+  0% { opacity: 0; transform: translateY(40px) scale(0.8); }
+  60% { opacity: 1; transform: translateY(-8px) scale(1.04); }
+  80% { transform: translateY(3px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .game-select-card:hover {
