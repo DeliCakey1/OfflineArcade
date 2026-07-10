@@ -48,10 +48,11 @@ export default function CoinFlipStreak() {
       setTimeout(() => {
         setResult(correct ? 'correct' : 'wrong')
 
-        const newFlipCount = flipCount + 1
-        setFlipCount(newFlipCount)
+      const newFlipCount = flipCount + 1
+      setFlipCount(newFlipCount)
+      let isGameOver = false
 
-        if (correct) {
+      if (correct) {
           const newStreak = streak + 1
           setStreak(newStreak)
           setHighScore(Math.max(highScore, newStreak))
@@ -60,12 +61,14 @@ export default function CoinFlipStreak() {
           if (newStreak >= target) {
             setWon(true)
             setGameOver(true)
+            isGameOver = true
             recordGame(true, newStreak)
             setTimeout(() => sound('victory'), 300)
           }
         } else {
           sound('lose')
           setGameOver(true)
+          isGameOver = true
           recordGame(false, highScore)
           setTimeout(() => sound('defeat'), 300)
         }
@@ -73,6 +76,10 @@ export default function CoinFlipStreak() {
         setHistory(prev => [...prev.slice(-19), {
           call: pendingCall, result: outcome, correct, flip: newFlipCount,
         }])
+
+        if (!isGameOver) {
+          setTimeout(() => setResult(null), 600)
+        }
 
         setAnimating(false)
       }, 400)

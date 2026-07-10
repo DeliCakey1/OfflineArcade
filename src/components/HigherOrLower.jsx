@@ -67,7 +67,6 @@ export default function HigherOrLower() {
     if (animating || gameOver || !nextCard) return
     sound('confirm')
     setAnimating(true)
-    setGuess(choice)
 
     setTimeout(() => {
       const isHigher = nextCard.rank > currentCard.rank
@@ -116,7 +115,6 @@ export default function HigherOrLower() {
           setNextCard(newNext)
           setResult(null)
           setReveal(false)
-          setGuess(null)
         }
         setAnimating(false)
       }, 800)
