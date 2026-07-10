@@ -936,6 +936,46 @@ body::before {
 .hol-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
 .hol-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.hol-card-list { margin-bottom: 16px; }
+.hol-card-list-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; text-align: center; }
+.hol-card-list-scroll {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 6px 0;
+  justify-content: center;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.hol-card-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-width: 28px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+.hol-card-mini.red { color: #ff4444; }
+.hol-card-mini.black { color: var(--text); }
+.hol-card-mini.played { opacity: 0.35; }
+.hol-card-mini.current {
+  border-color: var(--neon-yellow);
+  background: rgba(255, 230, 0, 0.12);
+  box-shadow: 0 0 8px rgba(255, 230, 0, 0.25);
+}
+.hol-card-mini.next-up {
+  border-color: var(--neon-blue);
+  background: rgba(59, 130, 246, 0.1);
+}
+.hol-card-mini-val { line-height: 1; }
+.hol-card-mini-suit { line-height: 1; font-size: 10px; }
+
 /* ===== DICE ROLL ===== */
 .dice-scoreboard { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .dice-wallet { text-align: center; }

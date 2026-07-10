@@ -187,6 +187,18 @@ export default function HigherOrLower() {
         </div>
       </div>
 
+      <div className="hol-card-list">
+        <div className="hol-card-list-label">Deck Order</div>
+        <div className="hol-card-list-scroll">
+          {deck.slice(0, maxRounds + 1).map((card, i) => (
+            <div key={i} className={`hol-card-mini ${i < round ? 'played' : i === round ? 'current' : i === round + 1 ? 'next-up' : ''} ${isRed(card.suit) ? 'red' : 'black'}`}>
+              <span className="hol-card-mini-val">{card.value}</span>
+              <span className="hol-card-mini-suit">{card.suit}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {gameOver ? (
         <div className="rps-game-over">
           <div className="rps-game-over-emoji">{correctCount > maxRounds / 2 ? '🃏' : '😔'}</div>
