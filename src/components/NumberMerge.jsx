@@ -126,6 +126,7 @@ export default function NumberMerge({ onPlayingChange }) {
   const [gameOver, setGameOver] = useState(false)
   const [won, setWon] = useState(false)
   const [goalReached, setGoalReached] = useState(false)
+  const goalShown = useRef(false)
   const [copied, setCopied] = useState(false)
   const [scorePop, setScorePop] = useState(false)
   const [slideDir, setSlideDir] = useState(null)
@@ -179,7 +180,8 @@ export default function NumberMerge({ onPlayingChange }) {
       }
       setScore(newScore)
       if (newScore > bestScore) setBestScore(newScore)
-      if (!infinite && gridHasGoal(finalGrid, goal) && !goalReached) {
+      if (!infinite && gridHasGoal(finalGrid, goal) && !goalShown.current) {
+        goalShown.current = true
         setGoalReached(true)
         recordGame(true, newScore)
         sound('victory')
@@ -213,6 +215,7 @@ export default function NumberMerge({ onPlayingChange }) {
     setGameOver(false)
     setWon(false)
     setGoalReached(false)
+    goalShown.current = false
     setCopied(false)
     setSlideDir(null)
     setAnimating(false)
