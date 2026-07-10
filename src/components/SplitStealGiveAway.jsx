@@ -7,22 +7,38 @@ const CHOICES = [
   { name: 'Give Away', emoji: '🎁', desc: 'Be generous', class: 'giveaway' },
 ]
 
-const PRIZE = 1000
+const PRIZE_OPTIONS = [
+  { amount: 50,   weight: 20 },
+  { amount: 100,  weight: 40 },
+  { amount: 200,  weight: 20 },
+  { amount: 500,  weight: 8 },
+  { amount: 1000, weight: 2 },
+]
 
-function getPayoffs(player, bot) {
+function pickPrize() {
+  const totalWeight = PRIZE_OPTIONS.reduce((sum, o) => sum + o.weight, 0)
+  let rand = Math.random() * totalWeight
+  for (const opt of PRIZE_OPTIONS) {
+    rand -= opt.weight
+    if (rand <= 0) return opt.amount
+  }
+  return PRIZE_OPTIONS[0].amount
+}
+
+function getPayoffs(player, bot, prize) {
   const same = player === bot
   if (same) {
-    if (player === 'Split') return { player: PRIZE / 2, bot: PRIZE / 2 }
+    if (player === 'Split') return { player: prize / 2, bot: prize / 2 }
     if (player === 'Steal') return { player: 0, bot: 0 }
-    return { player: PRIZE, bot: PRIZE }
+    return { player: prize, bot: prize }
   }
 
-  if (player === 'Split' && bot === 'Steal') return { player: 0, bot: PRIZE }
-  if (player === 'Split' && bot === 'Give Away') return { player: PRIZE, bot: 0 }
-  if (player === 'Steal' && bot === 'Split') return { player: PRIZE, bot: 0 }
-  if (player === 'Steal' && bot === 'Give Away') return { player: PRIZE / 2, bot: PRIZE }
-  if (player === 'Give Away' && bot === 'Split') return { player: 0, bot: PRIZE }
-  if (player === 'Give Away' && bot === 'Steal') return { player: PRIZE, bot: PRIZE / 2 }
+  if (player === 'Split' && bot === 'Steal') return { player: 0, bot: prize }
+  if (player === 'Split' && bot === 'Give Away') return { player: prize, bot: 0 }
+  if (player === 'Steal' && bot === 'Split') return { player: prize, bot: 0 }
+  if (player === 'Steal' && bot === 'Give Away') return { player: prize / 2, bot: prize }
+  if (player === 'Give Away' && bot === 'Split') return { player: 0, bot: prize }
+  if (player === 'Give Away' && bot === 'Steal') return { player: prize, bot: prize / 2 }
 }
 
 function getResultType(playerWin, botWin) {
@@ -44,6 +60,7 @@ function getMessage(result, playerChoice, botChoice) {
 
 export default function SplitStealGiveAway() {
   const [totalRounds, setTotalRounds] = useState(null)
+  const [currentPrize, setCurrentPrize] = useState(100)
   const [playerChoice, setPlayerChoice] = useState(null)
   const [pendingChoice, setPendingChoice] = useState(null)
   const [botChoice, setBotChoice] = useState(null)
@@ -65,8 +82,9 @@ export default function SplitStealGiveAway() {
         <p className="description">Your custom game! Outsmart the bot to win the prize money.</p>
 
         <div className="prize-display">
-          <div className="prize-label">Prize Pool Per Round</div>
-          <div className="prize-amount">${PRIZE.toLocaleString()}</div>
+          <div className="prize-label">Prize Pool Changes Every Round!</div>
+          <div className="prize-amount" style={{ fontSize: 16 }}>$50 · $100 · $200 · $500 · $1,000</div>
+          <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 6 }}>$100 is most common, $1,000 is ultra rare</div>
         </div>
 
         <div className="round-picker">
@@ -120,21 +138,21 @@ export default function SplitStealGiveAway() {
             <tbody>
               <tr>
                 <th>✂️ Split</th>
-                <td className="even-cell">Both $500</td>
-                <td><span className="loser-cell">You $0</span><br/><span className="winner-cell">Bot $1K</span></td>
-                <td><span className="winner-cell">You $1K</span><br/><span className="loser-cell">Bot $0</span></td>
+                <td className="even-cell">Both half</td>
+                <td><span className="loser-cell">You nothing</span><br/><span className="winner-cell">Bot full</span></td>
+                <td><span className="winner-cell">You full</span><br/><span className="loser-cell">Bot nothing</span></td>
               </tr>
               <tr>
                 <th>🦹 Steal</th>
-                <td><span className="winner-cell">You $1K</span><br/><span className="loser-cell">Bot $0</span></td>
-                <td className="loser-cell">Both $0</td>
-                <td><span className="even-cell">You $500</span><br/><span className="winner-cell">Bot $1K</span></td>
+                <td><span className="winner-cell">You full</span><br/><span className="loser-cell">Bot nothing</span></td>
+                <td className="loser-cell">Both nothing</td>
+                <td><span className="even-cell">You half</span><br/><span className="winner-cell">Bot full</span></td>
               </tr>
               <tr>
                 <th>🎁 Give Away</th>
-                <td><span className="loser-cell">You $0</span><br/><span className="winner-cell">Bot $1K</span></td>
-                <td><span className="winner-cell">You $1K</span><br/><span className="even-cell">Bot $500</span></td>
-                <td className="both-get">Both $1K</td>
+                <td><span className="loser-cell">You nothing</span><br/><span className="winner-cell">Bot full</span></td>
+                <td><span className="winner-cell">You full</span><br/><span className="even-cell">Bot half</span></td>
+                <td className="both-get">Both full</td>
               </tr>
             </tbody>
           </table>
@@ -160,6 +178,8 @@ export default function SplitStealGiveAway() {
     setPayoffs(null)
     setReveal(false)
 
+    const prize = pickPrize()
+    setCurrentPrize(prize)
     const botPick = CHOICES[Math.floor(Math.random() * 3)]
 
     setShake(true)
@@ -172,7 +192,7 @@ export default function SplitStealGiveAway() {
         setShake(false)
         setReveal(true)
         setBotChoice(botPick)
-        const p = getPayoffs(pendingChoice.name, botPick.name)
+        const p = getPayoffs(pendingChoice.name, botPick.name, prize)
         const res = getResultType(p.player, p.bot)
 
         setTimeout(() => {
@@ -204,6 +224,7 @@ export default function SplitStealGiveAway() {
             bot: botPick,
             playerPayoff: p.player,
             botPayoff: p.bot,
+            prize,
             result: res,
             round: round + 1,
           }])
@@ -257,9 +278,9 @@ export default function SplitStealGiveAway() {
       <h2>Split Steal Give Away</h2>
       <p className="description">Round {round} of {totalRounds}</p>
 
-      <div className="prize-display">
-        <div className="prize-label">Prize Pool</div>
-        <div className="prize-amount">${PRIZE.toLocaleString()}</div>
+        <div className="prize-display">
+          <div className="prize-label">This Round's Prize</div>
+          <div className="prize-amount">${currentPrize.toLocaleString()}</div>
       </div>
 
       <div className="ssg-scoreboard">
@@ -420,6 +441,7 @@ export default function SplitStealGiveAway() {
             {history.slice(-8).map((h, i) => (
               <div key={i} className={`rps-history-item ${h.result}`}>
                 <span className="history-round">#{h.round}</span>
+                <span className="history-prize">${h.prize}</span>
                 <span className="history-pick">{h.player.emoji}</span>
                 <span className="history-vs">vs</span>
                 <span className="history-pick">{h.bot.emoji}</span>

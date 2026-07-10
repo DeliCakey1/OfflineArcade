@@ -869,6 +869,14 @@ body::before {
 .rps-history-item.draw { border: 1px solid rgba(255, 230, 0, 0.25); }
 
 .history-round { color: var(--text-dim); font-size: 11px; }
+.history-prize {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--neon-yellow);
+  background: rgba(255, 230, 0, 0.1);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
 .history-pick { font-size: 16px; }
 .history-vs { color: var(--text-dim); font-size: 11px; }
 
