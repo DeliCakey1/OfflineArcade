@@ -1496,6 +1496,20 @@ body::after {
   transition: all 0.2s;
 }
 .simon-dot.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); animation: popIn 0.3s ease; }
+.simon-key-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.simon-btn.highlighted .simon-key-hint { opacity: 0; }
+.simon-keys-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  font-family: 'Press Start 2P', monospace;
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
