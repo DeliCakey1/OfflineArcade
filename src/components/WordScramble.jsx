@@ -150,17 +150,22 @@ export default function WordScramble({ onPlayingChange }) {
       <div className="game-card slide-in">
         <h2>Word Scramble</h2>
         <p className="description">Unscramble the letters to guess the word!</p>
-        <div className="ssg-prize-section">
-          <div className="ssg-prize-title">Rounds</div>
-          <div className="ssg-prize-grid">
+        <div className="ssg-prize-picker">
+          <div style={{ textAlign: 'center', fontSize: 14, color: 'var(--text-dim)', marginBottom: 8, fontWeight: 600 }}>ROUNDS</div>
+          <div className="ssg-prize-options">
             {ROUNDS.map(r => (
               <button key={r}
-                className={`ssg-prize-card ${selectedRounds === r ? 'active' : ''}`}
+                className={`ssg-prize-btn ${selectedRounds === r ? 'selected' : ''}`}
                 onClick={() => { sound('click'); setSelectedRounds(r) }}>
-                <div className="ssg-prize-name">{r}</div>
+                {r}
               </button>
             ))}
           </div>
+          {!selectedRounds && (
+            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--neon-yellow)', marginTop: 8 }}>
+              Select rounds first
+            </div>
+          )}
         </div>
         <div className="gtn-mode-grid">
           {MODES.map(m => (
