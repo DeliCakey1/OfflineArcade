@@ -90,6 +90,10 @@ body::after {
   background: var(--bg-card) !important;
 }
 
+.no-bg {
+  background-image: none !important;
+}
+
 /* ===== SETTINGS BAR ===== */
 .settings-bar {
   display: flex;

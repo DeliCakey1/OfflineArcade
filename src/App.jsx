@@ -153,7 +153,7 @@ function ThemePicker({ current, onChange }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, onStats }) {
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats }) {
   return (
     <div className="settings-bar">
       <div className="settings-bar-left">
@@ -168,6 +168,9 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
         </button>
         <button className="settings-btn" onClick={onGlassToggle} title={glass ? 'Disable Glassmorphism' : 'Enable Glassmorphism'}>
           {glass ? '💎' : '🪟'}
+        </button>
+        <button className="settings-btn" onClick={onBgToggle} title={bg ? 'Disable Background' : 'Enable Background'}>
+          {bg ? '🖼️' : '⬛'}
         </button>
         <button className="settings-btn" onClick={onStats} title="Stats">
           📊
@@ -185,6 +188,7 @@ function App() {
   const [theme, setTheme] = useState(() => getSaved('arcade-theme', 'neon'))
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
   const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
+  const [bg, setBg] = useState(() => getSaved('arcade-bg', 'on') === 'on')
   const { allStats } = useStats('_global')
 
   useEffect(() => {
@@ -205,6 +209,11 @@ function App() {
     try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {}
   }, [glass])
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('no-bg', !bg)
+    try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {}
+  }, [bg])
+
   function handleMuteToggle() {
     toggleMute()
     setMuted(isMuted())
@@ -215,6 +224,7 @@ function App() {
     theme, onThemeChange: setTheme,
     animations, onAnimToggle: () => setAnimations(a => !a),
     glass, onGlassToggle: () => setGlass(g => !g),
+    bg, onBgToggle: () => setBg(b => !b),
     onStats: () => setShowStats(true),
   }
 
