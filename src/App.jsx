@@ -107,7 +107,7 @@ function GameCard({ game, stats, onClick }) {
   )
 }
 
-function StatsModal({ allStats, onClose }) {
+function StatsModal({ allStats, onClose, onClear }) {
   const totalPlayed = Object.values(allStats).reduce((s, g) => s + g.played, 0)
   const totalWon = Object.values(allStats).reduce((s, g) => s + g.won, 0)
   return (
@@ -133,7 +133,12 @@ function StatsModal({ allStats, onClose }) {
             )
           })}
         </div>
-        <button className="stats-close" onClick={onClose}>Close</button>
+        <div className="stats-footer">
+          <button className="stats-close" onClick={onClose}>Close</button>
+          {totalPlayed > 0 && (
+            <button className="stats-clear-btn" onClick={onClear}>🗑️ Clear All Stats</button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -233,7 +238,8 @@ function App() {
   const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
   const [bg, setBg] = useState(() => getSaved('arcade-bg', 'on') === 'on')
   const [confirmNav, setConfirmNav] = useState(null)
-  const { allStats } = useStats('_global')
+  const [showConfirmClear, setShowConfirmClear] = useState(false)
+  const { allStats, clearStats } = useStats('_global')
 
   useEffect(() => {
     const vars = THEMES[theme]?.vars || THEMES.neon.vars
@@ -326,12 +332,19 @@ function App() {
         <main className="game-container">
           <ActiveComponent key={activeGame} />
         </main>
-        {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} />}
+        {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
         {confirmNav && (
           <ConfirmModal
             message={`You're in the middle of a game. Are you sure you want to leave?`}
             onConfirm={confirmNavAction}
             onCancel={() => setConfirmNav(null)}
+          />
+        )}
+        {showConfirmClear && (
+          <ConfirmModal
+            message="This will permanently delete all your stats. Are you sure?"
+            onConfirm={() => { clearStats(); setShowConfirmClear(false) }}
+            onCancel={() => setShowConfirmClear(false)}
           />
         )}
       </div>
@@ -357,7 +370,7 @@ function App() {
           ))}
         </div>
       </main>
-      {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} />}
+      {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
     </div>
   )
 }

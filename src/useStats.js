@@ -40,10 +40,16 @@ export default function useStats(gameId) {
     })
   }, [gameId])
 
+  const clearStats = useCallback(() => {
+    const empty = {}
+    saveStats(empty)
+    setStats(empty)
+  }, [])
+
   const allStats = stats
 
   const totalPlayed = Object.values(stats).reduce((s, g) => s + g.played, 0)
   const totalWon = Object.values(stats).reduce((s, g) => s + g.won, 0)
 
-  return { gameStats, recordGame, allStats, totalPlayed, totalWon }
+  return { gameStats, recordGame, clearStats, allStats, totalPlayed, totalWon }
 }
