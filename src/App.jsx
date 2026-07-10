@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RockPaperScissors from './components/RockPaperScissors'
 import SplitStealGiveAway from './components/SplitStealGiveAway'
 import GuessTheNumber from './components/GuessTheNumber'
@@ -8,6 +8,7 @@ import DiceRoll from './components/DiceRoll'
 import CoinFlipStreak from './components/CoinFlipStreak'
 import { isMuted, toggleMute } from './useSound'
 import useStats from './useStats'
+import { THEMES, THEME_ORDER } from './themes'
 import './index.css'
 
 const GAMES = [
@@ -123,11 +124,53 @@ function StatsModal({ allStats, onClose }) {
   )
 }
 
+function getSavedTheme() {
+  try { return localStorage.getItem('arcade-theme') || 'neon' } catch { return 'neon' }
+}
+
+function saveTheme(id) {
+  try { localStorage.setItem('arcade-theme', id) } catch {}
+}
+
+function ThemePicker({ current, onChange }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="theme-picker">
+      <button className="header-btn" onClick={() => setOpen(!open)} title="Change Theme">
+        {THEMES[current].emoji}
+      </button>
+      {open && (
+        <div className="theme-dropdown">
+          {THEME_ORDER.map(id => (
+            <button
+              key={id}
+              className={`theme-option ${id === current ? 'active' : ''}`}
+              onClick={() => { onChange(id); setOpen(false) }}
+            >
+              <span className="theme-option-emoji">{THEMES[id].emoji}</span>
+              <span className="theme-option-name">{THEMES[id].name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function App() {
   const [activeGame, setActiveGame] = useState(null)
   const [muted, setMuted] = useState(isMuted())
   const [showStats, setShowStats] = useState(false)
+  const [theme, setTheme] = useState(getSavedTheme)
   const { allStats } = useStats('_global')
+
+  useEffect(() => {
+    const vars = THEMES[theme]?.vars || THEMES.neon.vars
+    for (const [k, v] of Object.entries(vars)) {
+      document.documentElement.style.setProperty(k, v)
+    }
+    saveTheme(theme)
+  }, [theme])
 
   function handleMuteToggle() {
     toggleMute()
@@ -176,6 +219,7 @@ function App() {
         <button className="header-btn" onClick={() => setShowStats(true)}>
           📊
         </button>
+        <ThemePicker current={theme} onChange={setTheme} />
       </div>
       <main className="game-container">
         <div className="game-select-grid">
