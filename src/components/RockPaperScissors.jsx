@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState } from 'react'
+import useSound from '../useSound'
 
 const CHOICES = [
   { name: 'Rock', emoji: '🪨', class: 'rock' },
@@ -14,88 +15,6 @@ function getResult(player, bot) {
     (player === 'Scissors' && bot === 'Paper')
   ) return 'win'
   return 'lose'
-}
-
-function useSound() {
-  const ctxRef = useRef(null)
-  const getCtx = useCallback(() => {
-    if (!ctxRef.current) ctxRef.current = new (window.AudioContext || window.webkitAudioContext)()
-    return ctxRef.current
-  }, [])
-
-  const play = useCallback((type) => {
-    try {
-      const ctx = getCtx()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      gain.gain.value = 0.1
-
-      if (type === 'click') {
-        osc.frequency.value = 800
-        osc.type = 'sine'
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
-        osc.start(ctx.currentTime)
-        osc.stop(ctx.currentTime + 0.08)
-      } else if (type === 'confirm') {
-        osc.frequency.value = 600
-        osc.type = 'sine'
-        osc.frequency.linearRampToValueAtTime(900, ctx.currentTime + 0.1)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
-        osc.start(ctx.currentTime)
-        osc.stop(ctx.currentTime + 0.15)
-      } else if (type === 'win') {
-        osc.frequency.value = 523
-        osc.type = 'square'
-        gain.gain.value = 0.06
-        osc.frequency.setValueAtTime(523, ctx.currentTime)
-        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1)
-        osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
-        osc.start(ctx.currentTime)
-        osc.stop(ctx.currentTime + 0.4)
-      } else if (type === 'lose') {
-        osc.frequency.value = 400
-        osc.type = 'sawtooth'
-        gain.gain.value = 0.04
-        osc.frequency.linearRampToValueAtTime(200, ctx.currentTime + 0.3)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35)
-        osc.start(ctx.currentTime)
-        osc.stop(ctx.currentTime + 0.35)
-      } else if (type === 'draw') {
-        osc.frequency.value = 440
-        osc.type = 'triangle'
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2)
-        osc.start(ctx.currentTime)
-        osc.stop(ctx.currentTime + 0.2)
-      } else if (type === 'victory') {
-        const notes = [523, 659, 784, 1047]
-        notes.forEach((freq, i) => {
-          const o = ctx.createOscillator()
-          const g = ctx.createGain()
-          o.connect(g)
-          g.connect(ctx.destination)
-          o.frequency.value = freq
-          o.type = 'square'
-          g.gain.value = 0.05
-          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.2)
-          o.start(ctx.currentTime + i * 0.15)
-          o.stop(ctx.currentTime + i * 0.15 + 0.2)
-        })
-      } else if (type === 'defeat') {
-        osc.frequency.value = 300
-        osc.type = 'sawtooth'
-        gain.gain.value = 0.04
-        osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.6)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7)
-        osc.start(ctx.currentTime)
-        osc.stop(ctx.currentTime + 0.7)
-      }
-    } catch (e) {}
-  }, [getCtx])
-
-  return play
 }
 
 const MODES = [

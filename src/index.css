@@ -882,6 +882,64 @@ body::before {
 .history-result.lose { color: var(--lose-color); }
 .history-result.draw { color: var(--draw-color); }
 
+.ssg-scoreboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.ssg-progress-bar {
+  display: flex;
+  gap: 4px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.ssg-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+.ssg-progress-fill.player { background: linear-gradient(90deg, var(--neon-blue), #60a5fa); }
+.ssg-progress-fill.bot { background: linear-gradient(90deg, var(--neon-pink), #f472b6); margin-left: auto; }
+
+.ssg-choices-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.ssg-choices-row .choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.ssg-choices-row .choice-emoji { font-size: 36px; }
+.ssg-choices-row .choice-name { font-size: 15px; }
+.ssg-choices-row .choice-desc { font-size: 11px; opacity: 0.7; }
+
+.winnings-amount.has-money {
+  animation: moneyPop 0.3s ease;
+}
+
+@keyframes moneyPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
 @media (max-width: 600px) {
   .arcade-title { font-size: 18px; }
   .game-card { padding: 20px; }
@@ -901,4 +959,6 @@ body::before {
   .rps-battle-area { gap: 12px; }
   .rps-history-item { padding: 3px 7px; font-size: 11px; }
   .custom-target-row { flex-wrap: wrap; }
+  .ssg-choices-row .choice-btn { min-width: 95px; }
+  .ssg-choices-row .choice-emoji { font-size: 28px; }
 }
