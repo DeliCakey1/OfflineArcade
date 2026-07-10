@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useSound from '../useSound'
+import useStats from '../useStats'
 
 const CHOICES = [
   { name: 'Split', emoji: '✂️', desc: 'Share fairly', class: 'split' },
@@ -74,6 +75,7 @@ export default function SplitStealGiveAway() {
   const [reveal, setReveal] = useState(false)
   const [prizeFlash, setPrizeFlash] = useState(false)
   const sound = useSound()
+  const { recordGame } = useStats('ssg')
 
   function selectChoice(choice) {
     if (animating || gameOver) return
@@ -129,6 +131,7 @@ export default function SplitStealGiveAway() {
             const next = prev + 1
             if (next >= totalRounds) {
               setGameOver(true)
+              recordGame(newTotals.player > newTotals.bot, 0)
               setTimeout(() => {
                 if (newTotals.player > newTotals.bot) sound('victory')
                 else if (newTotals.bot > newTotals.player) sound('defeat')
@@ -155,6 +158,24 @@ export default function SplitStealGiveAway() {
     setResult(null)
     setPayoffs(null)
     setReveal(false)
+  }
+
+  const [copied, setCopied] = useState(false)
+
+  function shareResult() {
+    const lines = [
+      `💰 Played Split Steal Give Away (${totalRounds} rounds)!`,
+      `📊 You: $${totals.player.toLocaleString()} | Bot: $${totals.bot.toLocaleString()}`,
+      ``,
+      `Round history:`,
+      ...history.map(h => `  #${h.round}: ${h.player.emoji} vs ${h.bot.emoji} | Prize: $${h.prize} → ${h.result === 'win' ? `+$${h.playerPayoff}` : h.result === 'lose' ? `-$${h.botPayoff}` : `$${h.playerPayoff}`}`),
+      ``,
+      `🎮 Offline Arcade`,
+    ]
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
   function reset() {
@@ -287,7 +308,12 @@ export default function SplitStealGiveAway() {
             <span className="sep">-</span>
             <span className="bot">${totals.bot.toLocaleString()}</span>
           </div>
-          <button className="play-again-btn" onClick={reset}>Play Again</button>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="play-again-btn" onClick={reset}>Play Again</button>
+            <button className="play-again-btn share-btn" onClick={shareResult}>
+              {copied ? '✓ Copied!' : '📋 Copy Result'}
+            </button>
+          </div>
         </div>
       ) : (
         <>

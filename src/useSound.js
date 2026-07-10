@@ -1,5 +1,20 @@
 import { useRef, useCallback } from 'react'
 
+let globalMuted = localStorage.getItem('arcade-muted') === 'true'
+
+export function isMuted() {
+  return globalMuted
+}
+
+export function setMuted(val) {
+  globalMuted = val
+  localStorage.setItem('arcade-muted', String(val))
+}
+
+export function toggleMute() {
+  setMuted(!globalMuted)
+}
+
 export default function useSound() {
   const ctxRef = useRef(null)
   const getCtx = useCallback(() => {
@@ -8,6 +23,7 @@ export default function useSound() {
   }, [])
 
   return useCallback((type) => {
+    if (globalMuted) return
     try {
       const ctx = getCtx()
 

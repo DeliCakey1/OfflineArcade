@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import useSound from '../useSound'
+import useStats from '../useStats'
 
 const MODES = [
   { name: 'Very Easy', attempts: 25, emoji: '🟢', color: '#39ff14' },
@@ -21,6 +22,7 @@ export default function GuessTheNumberHotCold() {
   const [lastGuess, setLastGuess] = useState(null)
   const inputRef = useRef(null)
   const sound = useSound()
+  const { recordGame } = useStats('gtn-hc')
 
   const attempts = guesses.length
 
@@ -61,6 +63,7 @@ export default function GuessTheNumberHotCold() {
         setResult('correct')
         setWon(true)
         setGameOver(true)
+        recordGame(true, maxAttempts - attempts)
         sound('victory')
       } else {
         let hint
@@ -80,6 +83,7 @@ export default function GuessTheNumberHotCold() {
 
         if (newGuesses.length >= maxAttempts) {
           setGameOver(true)
+          recordGame(false, 0)
           sound('defeat')
         }
       }
@@ -88,6 +92,25 @@ export default function GuessTheNumberHotCold() {
       setAnimating(false)
       setTimeout(() => inputRef.current?.focus(), 50)
     }, 400)
+  }
+
+  const [copied, setCopied] = useState(false)
+
+  function shareResult() {
+    const modeName = MODES.find(m => m.attempts === maxAttempts)?.name || 'Custom'
+    const lines = [
+      `🌡️ Beat the bot at Hot or Cold (${modeName})!`,
+      `📊 Guessed in ${attempts}/${maxAttempts} attempts`,
+      ``,
+      `Guess history:`,
+      ...guesses.map(g => `  ${g.value} → ${g.hint === 'hot' ? '🔥 Hot' : g.hint === 'cold' ? '🧊 Cold' : g.hint === 'correct' ? '✓ Correct!' : '— First guess'}`),
+      ``,
+      `🎮 Offline Arcade`,
+    ]
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
   function reset() {
@@ -191,6 +214,9 @@ export default function GuessTheNumberHotCold() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <button className="play-again-btn" onClick={reset}>Play Again</button>
             <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }} onClick={quitToMenu}>Change Difficulty</button>
+            <button className="play-again-btn share-btn" onClick={shareResult}>
+              {copied ? '✓ Copied!' : '📋 Copy Result'}
+            </button>
           </div>
         </div>
       ) : (

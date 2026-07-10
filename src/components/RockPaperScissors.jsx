@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useSound from '../useSound'
+import useStats from '../useStats'
 
 const CHOICES = [
   { name: 'Rock', emoji: '🪨', class: 'rock' },
@@ -37,6 +38,7 @@ export default function RockPaperScissors() {
   const [shake, setShake] = useState(false)
   const [reveal, setReveal] = useState(false)
   const sound = useSound()
+  const { recordGame } = useStats('rps')
 
   const progress = gameMode === 'firstTo'
     ? { player: scores.player / target, bot: scores.bot / target }
@@ -103,6 +105,7 @@ export default function RockPaperScissors() {
           const winner = checkGameOver(newScores, newRound)
           if (winner) {
             setGameOver(winner)
+            recordGame(winner === 'player', streakCount)
             setTimeout(() => sound(winner === 'player' ? 'victory' : 'defeat'), 300)
           }
           setAnimating(false)
@@ -117,6 +120,25 @@ export default function RockPaperScissors() {
     setBotChoice(null)
     setResult(null)
     setReveal(false)
+  }
+
+  const [copied, setCopied] = useState(false)
+
+  function shareResult() {
+    const modeLabel = gameMode === 'firstTo' ? `First to ${target}` : `${target} Rounds`
+    const lines = [
+      `✊ Beat the bot at Rock Paper Scissors (${modeLabel})!`,
+      `📊 ${scores.player}-${scores.bot}-${scores.draws} (${round} rounds)`,
+      ``,
+      `Round history:`,
+      ...history.map(h => `  #${h.round}: ${h.player.emoji} vs ${h.bot.emoji} → ${h.result}`),
+      ``,
+      `🎮 Offline Arcade`,
+    ]
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
   function reset() {
@@ -231,7 +253,12 @@ export default function RockPaperScissors() {
             <span className="sep">-</span>
             <span className="bot">{scores.bot}</span>
           </div>
-          <button className="play-again-btn" onClick={reset}>Play Again</button>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="play-again-btn" onClick={reset}>Play Again</button>
+            <button className="play-again-btn share-btn" onClick={shareResult}>
+              {copied ? '✓ Copied!' : '📋 Copy Result'}
+            </button>
+          </div>
         </div>
       ) : (
         <>
