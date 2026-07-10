@@ -554,6 +554,174 @@ body::before {
 .ssg-choices-row .choice-name { font-size: 15px; }
 .ssg-choices-row .choice-desc { font-size: 11px; opacity: 0.7; }
 
+/* ===== GUESS THE NUMBER ===== */
+.gtn-attempts { text-align: center; margin-bottom: 20px; }
+.gtn-attempts-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.gtn-attempts-bar { display: flex; justify-content: center; gap: 6px; margin-bottom: 8px; }
+.gtn-attempt-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(185, 70, 255, 0.2);
+  transition: all 0.3s ease;
+}
+.gtn-attempt-dot.used { background: var(--neon-blue); border-color: var(--neon-blue); box-shadow: 0 0 8px rgba(0, 212, 255, 0.4); }
+.gtn-attempt-dot.used.correct { background: var(--neon-green); border-color: var(--neon-green); box-shadow: 0 0 12px rgba(57, 255, 20, 0.5); }
+.gtn-attempts-count { font-family: 'Press Start 2P', monospace; font-size: 14px; color: var(--neon-purple); }
+
+.gtn-range-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 0 4px;
+}
+.gtn-range-label { font-size: 11px; color: var(--text-dim); font-family: 'Press Start 2P', monospace; }
+.gtn-range-track {
+  flex: 1;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  position: relative;
+  border: 1px solid rgba(185, 70, 255, 0.15);
+}
+.gtn-range-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(185, 70, 255, 0.2), rgba(0, 212, 255, 0.3));
+  border-radius: 6px;
+  transition: all 0.5s ease;
+}
+.gtn-range-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: var(--neon-pink);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  z-index: 2;
+  transition: left 0.4s ease;
+}
+.gtn-range-marker.correct { background: var(--neon-green); box-shadow: 0 0 10px rgba(57, 255, 20, 0.6); }
+.gtn-range-marker-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-light);
+  font-size: 10px;
+  font-family: 'Press Start 2P', monospace;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.gtn-range-marker:hover .gtn-range-marker-tooltip { opacity: 1; }
+
+.gtn-battle { display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 24px; }
+.gtn-robot { text-align: center; }
+.gtn-robot-emoji { font-size: 64px; transition: transform 0.3s ease; }
+.gtn-robot-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+.gtn-feedback { flex: 1; text-align: center; max-width: 300px; }
+.gtn-thinking { font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--neon-purple); animation: thinkingPulse 0.8s ease infinite; }
+@keyframes thinkingPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+.gtn-hint {
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 12px;
+  animation: popIn 0.3s ease;
+}
+.gtn-hint.higher { background: rgba(57, 255, 20, 0.1); border: 1px solid rgba(57, 255, 20, 0.3); color: var(--neon-green); }
+.gtn-hint.lower { background: rgba(255, 45, 123, 0.1); border: 1px solid rgba(255, 45, 123, 0.3); color: var(--neon-pink); }
+.gtn-hint.correct { background: rgba(57, 255, 20, 0.15); border: 2px solid rgba(57, 255, 20, 0.5); color: var(--neon-green); font-family: 'Press Start 2P', monospace; font-size: 16px; }
+.gtn-hint.prompt { background: rgba(185, 70, 255, 0.1); border: 1px solid rgba(185, 70, 255, 0.2); color: var(--text-dim); }
+
+.gtn-input-area { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+
+.gtn-input {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  width: 140px;
+  padding: 12px 16px;
+  border: 3px solid rgba(185, 70, 255, 0.3);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--neon-yellow);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  -moz-appearance: textfield;
+}
+.gtn-input::-webkit-outer-spin-button,
+.gtn-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.gtn-input:focus { border-color: var(--neon-purple); box-shadow: 0 0 16px rgba(185, 70, 255, 0.3); }
+.gtn-input:disabled { opacity: 0.5; }
+
+.gtn-guess-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--neon-green), #16a34a);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.gtn-guess-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(57, 255, 20, 0.3); }
+.gtn-guess-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.gtn-history { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(185, 70, 255, 0.15); }
+.gtn-history-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; text-align: center; }
+.gtn-history-list { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.gtn-history-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.25);
+  animation: historySlide 0.25s ease-out;
+}
+.gtn-history-item.higher { border: 1px solid rgba(57, 255, 20, 0.25); }
+.gtn-history-item.lower { border: 1px solid rgba(255, 45, 123, 0.25); }
+.gtn-history-item.correct { border: 1px solid rgba(57, 255, 20, 0.4); background: rgba(57, 255, 20, 0.1); }
+.gtn-history-num { font-weight: 600; }
+.gtn-history-hint { font-size: 14px; font-weight: 700; }
+.gtn-history-item.higher .gtn-history-hint { color: var(--neon-green); }
+.gtn-history-item.lower .gtn-history-hint { color: var(--neon-pink); }
+.gtn-history-item.correct .gtn-history-hint { color: var(--neon-green); }
+
+.gtn-all-guesses { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 20px; }
+.gtn-final-guess {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(185, 70, 255, 0.2);
+}
+.gtn-final-guess.higher { border-color: rgba(57, 255, 20, 0.4); color: var(--neon-green); }
+.gtn-final-guess.lower { border-color: rgba(255, 45, 123, 0.4); color: var(--neon-pink); }
+.gtn-final-guess.correct { border-color: var(--neon-green); color: var(--neon-green); background: rgba(57, 255, 20, 0.15); box-shadow: 0 0 10px rgba(57, 255, 20, 0.3); }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
   .arcade-title { font-size: 18px; }
@@ -577,4 +745,10 @@ body::before {
   .ssg-choices-row .choice-btn { min-width: 95px; }
   .ssg-choices-row .choice-emoji { font-size: 28px; }
   .winnings-display { gap: 20px; }
+  .gtn-robot-emoji { font-size: 48px; }
+  .gtn-hint { font-size: 15px; padding: 10px 14px; }
+  .gtn-input { font-size: 20px; width: 110px; }
+  .gtn-guess-btn { font-size: 16px; padding: 10px 20px; }
+  .gtn-attempt-dot { width: 18px; height: 18px; }
+  .gtn-final-guess { width: 28px; height: 28px; font-size: 9px; }
 }

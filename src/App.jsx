@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import RockPaperScissors from './components/RockPaperScissors'
 import SplitStealGiveAway from './components/SplitStealGiveAway'
+import GuessTheNumber from './components/GuessTheNumber'
 import './index.css'
 
 const GAMES = [
@@ -19,6 +20,14 @@ const GAMES = [
     desc: 'Your custom game! Outsmart the bot to win the prize.',
     color: '#f59e0b',
     component: SplitStealGiveAway,
+  },
+  {
+    id: 'gtn',
+    label: 'Guess The Number',
+    emoji: '🔢',
+    desc: 'Can you crack the bot\'s number in 10 tries?',
+    color: '#22c55e',
+    component: GuessTheNumber,
   },
 ]
 
