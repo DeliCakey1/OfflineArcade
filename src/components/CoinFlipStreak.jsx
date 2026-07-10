@@ -3,6 +3,7 @@ import useSound from '../useSound'
 import useStats from '../useStats'
 
 const MODES = [
+  { name: 'Chillax', target: 3, emoji: '😎', color: '#00e5ff' },
   { name: 'Chill', target: 5, emoji: '🟢', color: '#39ff14' },
   { name: 'Normal', target: 10, emoji: '🟡', color: '#ffe600' },
   { name: 'Risky', target: 15, emoji: '🟠', color: '#ff6b2b' },
