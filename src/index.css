@@ -1288,6 +1288,197 @@ body::after {
 .coin-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
 .coin-btn.selected { box-shadow: 0 0 20px rgba(255, 255, 255, 0.4); border-color: white !important; }
 
+/* ===== MEMORY MATCH ===== */
+.memory-grid { display: grid; gap: 8px; margin: 0 auto 16px; max-width: 500px; }
+.memory-card {
+  aspect-ratio: 1;
+  border: 2px solid var(--border-glass);
+  border-radius: 10px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  perspective: 600px;
+  padding: 0;
+  transition: transform 0.2s;
+}
+.memory-card:hover:not(:disabled) { transform: translateY(-2px); }
+.memory-card:disabled { cursor: default; }
+.memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.4s; transform-style: preserve-3d; }
+.memory-card.flipped .memory-card-inner { transform: rotateY(180deg); }
+.memory-card-front, .memory-card-back {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; backface-visibility: hidden;
+  font-size: 28px;
+}
+.memory-card-front { background: var(--bg-glass); color: var(--text-dim); font-size: 22px; font-weight: 700; }
+.memory-card-back { background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)); transform: rotateY(180deg); }
+.memory-card.matched .memory-card-back { background: rgba(57, 255, 20, 0.15); border-color: var(--neon-green); animation: popIn 0.3s ease; }
+.memory-progress { height: 6px; background: var(--bg-glass); border-radius: 3px; border: 1px solid var(--border-glass); margin-bottom: 16px; overflow: hidden; }
+.memory-progress-fill { height: 100%; background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow)); border-radius: 3px; transition: width 0.4s ease; }
+
+/* ===== WORD SCRAMBLE ===== */
+.word-scramble-area { text-align: center; }
+.word-scramble-letters { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.word-scramble-tile {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  border: 2px solid var(--neon-purple);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  color: var(--neon-yellow);
+  animation: popIn 0.3s ease;
+}
+.word-scramble-hint { font-size: 16px; color: var(--neon-yellow); margin-bottom: 12px; font-family: 'Press Start 2P', monospace; }
+.word-scramble-input-area { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.word-scramble-input {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  padding: 12px 20px;
+  border: 2px solid var(--border-glass);
+  border-radius: 10px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  color: var(--text-light);
+  text-align: center;
+  outline: none;
+  min-width: 200px;
+  text-transform: lowercase;
+}
+.word-scramble-input:focus { border-color: var(--neon-purple); box-shadow: 0 0 16px rgba(139, 92, 246, 0.3); }
+.word-scramble-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.word-scramble-result { text-align: center; }
+
+/* ===== NUMBER MERGE ===== */
+.merge-grid { display: grid; gap: 6px; margin: 0 auto 16px; max-width: 420px; }
+.merge-tile {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  border: 2px solid rgba(255,255,255,0.08);
+}
+.merge-tile:not([style*="transparent"]) { animation: popIn 0.2s ease; }
+.merge-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 200px; margin: 0 auto 16px; }
+.merge-dir-btn {
+  font-size: 22px;
+  padding: 10px;
+  border: 2px solid var(--border-glass);
+  border-radius: 10px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.merge-dir-btn:hover { border-color: var(--neon-purple); transform: translateY(-2px); }
+
+/* ===== REACTION TIME ===== */
+.reaction-zone {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 16px;
+  border: 3px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  margin-bottom: 16px;
+  user-select: none;
+}
+.reaction-zone-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+.reaction-zone-ms {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 40px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+.reaction-history { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 16px; }
+.reaction-history-item {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+}
+
+/* ===== TYPING SPEED ===== */
+.typing-area { text-align: center; }
+.typing-words-display { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; padding: 12px; background: var(--bg-glass); border-radius: 10px; border: 1px solid var(--border-glass); min-height: 60px; }
+.typing-word {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.typing-word.current { color: var(--text-light); border-bottom: 2px solid var(--neon-yellow); }
+.typing-word.correct { color: var(--neon-green); text-decoration: line-through; opacity: 0.6; }
+.typing-word.wrong { color: var(--neon-red); text-decoration: line-through; opacity: 0.6; }
+.typing-current { margin-bottom: 12px; }
+.typing-cursor-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 24px;
+  color: var(--neon-yellow);
+  animation: cursorBlink 1s ease infinite;
+}
+@keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.typing-input {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  padding: 12px 20px;
+  border: 2px solid var(--border-glass);
+  border-radius: 10px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  color: var(--text-light);
+  text-align: center;
+  outline: none;
+  width: 100%;
+  max-width: 300px;
+  text-transform: lowercase;
+}
+.typing-input:focus { border-color: var(--neon-purple); box-shadow: 0 0 16px rgba(139, 92, 246, 0.3); }
+
+/* ===== SIMON SAYS ===== */
+.simon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 280px; margin: 0 auto 16px; }
+.simon-btn {
+  aspect-ratio: 1;
+  border: 3px solid;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+.simon-btn:disabled { cursor: default; }
+.simon-btn.highlighted { transform: scale(1.05); }
+.simon-progress { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 16px; }
+.simon-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+.simon-dot.active { background: var(--neon-green); color: #000; border-color: var(--neon-green); animation: popIn 0.3s ease; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
   .arcade-title { font-size: 18px; }
@@ -1332,4 +1523,16 @@ body::after {
   .coin-score-num { font-size: 14px; }
   .hol-stats-row { gap: 16px; }
   .hol-stat-num { font-size: 14px; }
+  .word-scramble-tile { width: 40px; height: 40px; font-size: 15px; }
+  .word-scramble-input { font-size: 16px; min-width: 160px; }
+  .typing-word { font-size: 12px; }
+  .typing-cursor-label { font-size: 18px; }
+  .typing-input { font-size: 14px; }
+  .merge-tile { font-size: 14px; }
+  .simon-btn { border-radius: 12px; }
+  .simon-dot { width: 22px; height: 22px; font-size: 10px; }
+  .reaction-zone { min-height: 160px; }
+  .reaction-zone-text { font-size: 14px; }
+  .reaction-zone-ms { font-size: 28px; }
+  .memory-card-front, .memory-card-back { font-size: 20px; }
 }

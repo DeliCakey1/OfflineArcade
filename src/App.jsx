@@ -6,6 +6,12 @@ import GuessTheNumberHotCold from './components/GuessTheNumberHotCold'
 import HigherOrLower from './components/HigherOrLower'
 import DiceRoll from './components/DiceRoll'
 import CoinFlipStreak from './components/CoinFlipStreak'
+import MemoryMatch from './components/MemoryMatch'
+import WordScramble from './components/WordScramble'
+import NumberMerge from './components/NumberMerge'
+import ReactionTime from './components/ReactionTime'
+import TypingSpeed from './components/TypingSpeed'
+import SimonSays from './components/SimonSays'
 import { isMuted, toggleMute } from './useSound'
 import useStats from './useStats'
 import { THEMES, THEME_ORDER } from './themes'
@@ -67,6 +73,54 @@ const GAMES = [
     desc: 'Call Heads or Tails. Build a streak to win!',
     color: '#f97316',
     component: CoinFlipStreak,
+  },
+  {
+    id: 'memory',
+    label: 'Memory Match',
+    emoji: '🧠',
+    desc: 'Find all matching pairs! Fewest moves wins.',
+    color: '#ec4899',
+    component: MemoryMatch,
+  },
+  {
+    id: 'word',
+    label: 'Word Scramble',
+    emoji: '📚',
+    desc: 'Unscramble the letters to guess the word!',
+    color: '#14b8a6',
+    component: WordScramble,
+  },
+  {
+    id: 'merge',
+    label: 'Number Merge',
+    emoji: '🔢',
+    desc: 'Slide tiles to merge same numbers. Reach the goal!',
+    color: '#f59e0b',
+    component: NumberMerge,
+  },
+  {
+    id: 'reaction',
+    label: 'Reaction Time',
+    emoji: '⚡',
+    desc: 'Click as fast as you can when it turns green!',
+    color: '#eab308',
+    component: ReactionTime,
+  },
+  {
+    id: 'typing',
+    label: 'Typing Speed',
+    emoji: '⌨️',
+    desc: 'Type each word as fast as you can!',
+    color: '#8b5cf6',
+    component: TypingSpeed,
+  },
+  {
+    id: 'simon',
+    label: 'Simon Says',
+    emoji: '🎵',
+    desc: 'Watch the sequence, then repeat it!',
+    color: '#ef4444',
+    component: SimonSays,
   },
 ]
 
