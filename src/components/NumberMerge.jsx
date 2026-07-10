@@ -125,6 +125,7 @@ export default function NumberMerge({ onPlayingChange }) {
   const [bestScore, setBestScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [won, setWon] = useState(false)
+  const [goalReached, setGoalReached] = useState(false)
   const [copied, setCopied] = useState(false)
   const [scorePop, setScorePop] = useState(false)
   const [slideDir, setSlideDir] = useState(null)
@@ -132,7 +133,7 @@ export default function NumberMerge({ onPlayingChange }) {
   const animTimer = useRef(null)
   const sound = useSound()
   const { recordGame } = useStats('merge')
-  const isPlaying = screen === 'game' && !gameOver && !won
+  const isPlaying = screen === 'game' && !gameOver && !won && !goalReached
 
   useEffect(() => {
     onPlayingChange?.(isPlaying)
@@ -178,8 +179,8 @@ export default function NumberMerge({ onPlayingChange }) {
       }
       setScore(newScore)
       if (newScore > bestScore) setBestScore(newScore)
-      if (!infinite && gridHasGoal(finalGrid, goal)) {
-        setWon(true)
+      if (!infinite && gridHasGoal(finalGrid, goal) && !goalReached) {
+        setGoalReached(true)
         recordGame(true, newScore)
         sound('victory')
       } else if (!canMoveGrid(finalGrid)) {
@@ -191,7 +192,7 @@ export default function NumberMerge({ onPlayingChange }) {
   }, [tiles, score, bestScore, gameOver, won, boardSize, goal, infinite, animating, sound, recordGame])
 
   useEffect(() => {
-    if (screen !== 'game' || gameOver || won) return
+    if (screen !== 'game' || gameOver || won || goalReached) return
     function handleKey(e) {
       const d = DIRS.find(d => d.key === e.key)
       if (!d) return
@@ -211,6 +212,7 @@ export default function NumberMerge({ onPlayingChange }) {
     setBestScore(0)
     setGameOver(false)
     setWon(false)
+    setGoalReached(false)
     setCopied(false)
     setSlideDir(null)
     setAnimating(false)
@@ -421,7 +423,29 @@ export default function NumberMerge({ onPlayingChange }) {
         ))}
       </div>
 
-      {(gameOver || won) && (
+      {goalReached && (
+        <div className="rps-game-over">
+          <div className="rps-game-over-emoji">🎉</div>
+          <div className="result-text win">
+            You made it! You got to your goal!
+          </div>
+          <div className="rps-final-score">
+            <span className="player">{score}</span>
+            <span className="sep">points</span>
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="play-again-btn" onClick={() => { sound('click'); setGoalReached(false) }}>
+              Keep Going
+            </button>
+            <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }}
+              onClick={() => { setWon(true) }}>
+              Exit
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(gameOver || won) && !goalReached && (
         <div className="rps-game-over">
           <div className="rps-game-over-emoji">{won ? '🏆' : '💀'}</div>
           <div className={`result-text ${won ? 'win' : 'lose'}`}>
