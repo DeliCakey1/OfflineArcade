@@ -153,7 +153,7 @@ function ThemePicker({ current, onChange }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, onStats }) {
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, onStats }) {
   return (
     <div className="settings-bar">
       <div className="settings-bar-left">
@@ -165,6 +165,9 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
         </button>
         <button className="settings-btn" onClick={onAnimToggle} title={animations ? 'Disable Animations' : 'Enable Animations'}>
           {animations ? '✨' : '🚫'}
+        </button>
+        <button className="settings-btn" onClick={onGlassToggle} title={glass ? 'Disable Glassmorphism' : 'Enable Glassmorphism'}>
+          {glass ? '💎' : '🪟'}
         </button>
         <button className="settings-btn" onClick={onStats} title="Stats">
           📊
@@ -181,6 +184,7 @@ function App() {
   const [showStats, setShowStats] = useState(false)
   const [theme, setTheme] = useState(() => getSaved('arcade-theme', 'neon'))
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
+  const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
   const { allStats } = useStats('_global')
 
   useEffect(() => {
@@ -196,6 +200,11 @@ function App() {
     try { localStorage.setItem('arcade-animations', animations ? 'on' : 'off') } catch {}
   }, [animations])
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('no-glass', !glass)
+    try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {}
+  }, [glass])
+
   function handleMuteToggle() {
     toggleMute()
     setMuted(isMuted())
@@ -205,6 +214,7 @@ function App() {
     muted, onMuteToggle: handleMuteToggle,
     theme, onThemeChange: setTheme,
     animations, onAnimToggle: () => setAnimations(a => !a),
+    glass, onGlassToggle: () => setGlass(g => !g),
     onStats: () => setShowStats(true),
   }
 

@@ -23,7 +23,11 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: var(--bg-dark) url('/Alpine-Amnesia.png') center/cover no-repeat fixed;
+  background-color: var(--bg-dark);
+  background-image: url('/Alpine-Amnesia.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text-light);
   min-height: 100vh;
   overflow-x: hidden;
@@ -59,6 +63,31 @@ body::after {
   animation-delay: 0s !important;
   transition-duration: 0s !important;
   transition-delay: 0s !important;
+}
+
+.no-glass,
+.no-glass * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.no-glass .settings-bar,
+.no-glass .game-select-card,
+.no-glass .game-card,
+.no-glass .tab-btn:not(.active),
+.no-glass .back-btn,
+.no-glass .gtn-mode-card,
+.no-glass .round-picker-btn,
+.no-glass .rps-history-item,
+.no-glass .dice-pick-btn,
+.no-glass .dice.placeholder,
+.no-glass .confirm-btn.no,
+.no-glass .theme-dropdown,
+.no-glass .stats-modal,
+.no-glass .coin-progress-track {
+  background: var(--bg-card) !important;
+}
+.no-glass .settings-btn {
+  background: var(--bg-card) !important;
 }
 
 /* ===== SETTINGS BAR ===== */
