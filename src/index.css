@@ -1319,6 +1319,11 @@ body::after {
   padding: 0;
   transition: transform 0.2s;
 }
+.memory-card.flipped, .memory-card.matched {
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 .memory-card:hover:not(:disabled) { transform: translateY(-2px); }
 .memory-card:disabled { cursor: default; }
 .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.4s; transform-style: preserve-3d; }
@@ -1330,8 +1335,8 @@ body::after {
   font-size: 28px;
 }
 .memory-card-front { background: var(--bg-glass); color: var(--text-dim); font-size: 22px; font-weight: 700; }
-.memory-card-back { background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)); transform: rotateY(180deg); }
-.memory-card.matched .memory-card-back { background: rgba(57, 255, 20, 0.15); border-color: var(--neon-green); animation: popIn 0.3s ease; }
+.memory-card-back { background: #2a2a3e; transform: rotateY(180deg); }
+.memory-card.matched .memory-card-back { background: #1a3a1a; border-color: var(--neon-green); animation: popIn 0.3s ease; }
 .memory-progress { height: 6px; background: var(--bg-glass); border-radius: 3px; border: 1px solid var(--border-glass); margin-bottom: 16px; overflow: hidden; }
 .memory-progress-fill { height: 100%; background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow)); border-radius: 3px; transition: width 0.4s ease; }
 
