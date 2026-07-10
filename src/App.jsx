@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import RockPaperScissors from './components/RockPaperScissors'
 import SplitStealGiveAway from './components/SplitStealGiveAway'
 import GuessTheNumber from './components/GuessTheNumber'
@@ -229,25 +229,34 @@ function ThemePicker({ current, onChange }) {
 
 function GamesDropdown({ inGame, onNavigate }) {
   const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
   return (
-    <div className="games-dropdown-wrap">
+    <div className="games-dropdown-wrap" ref={ref}>
       <button className="settings-btn games-dropdown-btn" onClick={() => setOpen(!open)}>
         🕹️ Games ▾
       </button>
-      {open && (
-        <div className="theme-dropdown games-dropdown">
-          {GAMES.map(g => (
-            <button
-              key={g.id}
-              className="theme-option"
-              onClick={() => { setOpen(false); onNavigate(g.id) }}
-            >
-              <span className="theme-option-emoji">{g.emoji}</span>
-              <span className="theme-option-name">{g.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <div className={`theme-dropdown games-dropdown ${open ? 'open' : ''}`}>
+        {GAMES.map(g => (
+          <button
+            key={g.id}
+            className="theme-option"
+            onClick={() => { setOpen(false); onNavigate(g.id) }}
+          >
+            <span className="theme-option-emoji">{g.emoji}</span>
+            <span className="theme-option-name">{g.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

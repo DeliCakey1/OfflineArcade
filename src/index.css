@@ -130,7 +130,25 @@ body::after {
   left: 0;
   right: auto;
   min-width: 220px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-8px) scaleY(0.95);
+  transform-origin: top;
+  transition: max-height 0.25s ease, opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  animation: none !important;
 }
+.games-dropdown.open {
+  max-height: 50vh;
+  overflow-y: auto;
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+  pointer-events: auto;
+}
+.games-dropdown::-webkit-scrollbar { width: 5px; }
+.games-dropdown::-webkit-scrollbar-track { background: transparent; }
+.games-dropdown::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 3px; }
 .confirm-modal-text {
   text-align: center;
   color: var(--text-dim);
