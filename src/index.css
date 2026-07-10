@@ -577,12 +577,17 @@ body::before {
   padding: 8px 14px;
   border-radius: 8px;
   border: 2px solid var(--border);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   background: var(--surface);
   color: var(--text);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+}
+.ssg-prize-btn:focus-visible {
+  outline-color: var(--neon-yellow);
 }
 .ssg-prize-btn:hover { border-color: var(--neon-yellow); background: rgba(255, 230, 0, 0.08); }
 .ssg-prize-btn.selected {
