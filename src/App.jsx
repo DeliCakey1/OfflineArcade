@@ -254,6 +254,7 @@ function App() {
         <main className="game-container">
           <ActiveComponent key={activeGame} />
         </main>
+        {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} />}
       </div>
     )
   }
