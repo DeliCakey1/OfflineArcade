@@ -54,6 +54,10 @@ export default function ReactionTime({ onPlayingChange }) {
   }
 
   function handleClick() {
+    if (phase === 'idle' && !gameOver) {
+      startRound()
+      return
+    }
     if (phase === 'waiting') {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
       setEarlyFoul(true)
