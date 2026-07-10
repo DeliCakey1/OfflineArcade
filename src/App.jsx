@@ -295,7 +295,7 @@ function CloakScreen({ onBack }) {
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
     openBlankWithArcade(title, favicon)
-    setTimeout(() => { window.location.href = url }, 500)
+    setTimeout(() => { window.location.replace(url) }, 500)
   }
 
   function handleEnableBlank() {

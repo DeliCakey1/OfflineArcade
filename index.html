@@ -43,12 +43,13 @@
           var blankHtml = '<!doctype html><html><head>' + head + '</head><body><div id="root"></div><script>window.__ABOUT_BLANK__=true<\/script>' + modSrc + '</body></html>';
 
           document.documentElement.innerHTML = '<head>' + (cloakTitle ? '<title>'+cloakTitle+'</title>' : '') + (cloakFavicon ? '<link rel="icon" href="'+cloakFavicon+'">' : '') + '<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#111;font-family:system-ui,sans-serif}button{padding:14px 32px;border:none;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:transform .2s}button:hover{transform:scale(1.05)}</style></head><body><button id="cloak-btn">Click to Open</button></body>';
+          history.replaceState(null, '', ' ');
 
           document.getElementById('cloak-btn').addEventListener('click', function() {
             var win = window.open('about:blank');
             if (win) { win.document.write(blankHtml); win.document.close(); }
             if (mode === 'custom' && cloakUrl && cloakUrl !== 'https://') {
-              window.location.href = cloakUrl;
+              window.location.replace(cloakUrl);
             }
           });
         } catch(e) {}
