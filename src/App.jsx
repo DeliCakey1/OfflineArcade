@@ -124,15 +124,15 @@ const GAMES = [
   },
 ]
 
-function ConfirmModal({ message, onConfirm, onCancel }) {
+function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave', cancelText = 'Stay' }) {
   return (
     <div className="stats-overlay" onClick={onCancel}>
       <div className="stats-modal confirm-modal" onClick={e => e.stopPropagation()}>
         <h2 className="stats-title">Are you sure?</h2>
         <p className="confirm-modal-text">{message}</p>
         <div className="confirm-buttons">
-          <button className="confirm-btn yes" onClick={onConfirm}>Yes, Leave</button>
-          <button className="confirm-btn no" onClick={onCancel}>Stay</button>
+          <button className="confirm-btn yes" onClick={onConfirm}>{confirmText}</button>
+          <button className="confirm-btn no" onClick={onCancel}>{cancelText}</button>
         </div>
       </div>
     </div>
@@ -409,6 +409,8 @@ function App() {
         {showConfirmClear && (
           <ConfirmModal
             message="This will permanently delete all your stats. Are you sure?"
+            confirmText="Clear Stats"
+            cancelText="Cancel"
             onConfirm={() => { clearStats(); setShowConfirmClear(false) }}
             onCancel={() => setShowConfirmClear(false)}
           />
