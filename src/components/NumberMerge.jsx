@@ -67,29 +67,38 @@ function slideTiles(tiles, dir, size) {
     return d.reverse ? b2 - a2 : a2 - b2
   })
 
-  const occupied = new Set()
+  const blocked = new Set()
   const newTiles = []
   const mergeTargets = []
 
   for (const tile of sorted) {
     let r = tile.row, c = tile.col
+    let mergeR = r, mergeC = c
     while (true) {
       const nr = r + d.dr, nc = c + d.dc
       if (nr < 0 || nr >= size || nc < 0 || nc >= size) break
-      if (occupied.has(`${nr},${nc}`)) break
+      if (blocked.has(`${nr},${nc}`)) break
+      const occupant = newTiles.find(t => t.row === nr && t.col === nc)
+      if (occupant) {
+        if (occupant.value === tile.value && !occupant.mergedFrom) {
+          mergeR = nr; mergeC = nc
+        }
+        break
+      }
       r = nr; c = nc
+      mergeR = r; mergeC = c
     }
-    const key = `${r},${c}`
-    const existing = newTiles.find(t => t.row === r && t.col === c)
+    const key = `${mergeR},${mergeC}`
+    const existing = newTiles.find(t => t.row === mergeR && t.col === mergeC)
     if (existing && existing.value === tile.value && !existing.mergedFrom) {
       existing.value *= 2
       existing.mergedFrom = [existing.id, tile.id]
       existing.isNew = false
-      occupied.add(key)
+      blocked.add(key)
       mergeTargets.push(key)
     } else {
-      occupied.add(key)
-      newTiles.push({ ...tile, row: r, col: c, isNew: false, mergedFrom: null })
+      blocked.add(key)
+      newTiles.push({ ...tile, row: mergeR, col: mergeC, isNew: false, mergedFrom: null })
     }
   }
 
