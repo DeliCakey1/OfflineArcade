@@ -90,8 +90,8 @@ body::after {
   background: var(--bg-card) !important;
 }
 
-.no-bg {
-  background-image: none !important;
+.no-bg body::after {
+  background: var(--bg-dark) !important;
 }
 
 /* ===== SETTINGS BAR ===== */
