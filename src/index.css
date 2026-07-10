@@ -1,0 +1,399 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap');
+
+:root {
+  --bg-dark: #1a1033;
+  --bg-card: #2a1f4e;
+  --bg-card-hover: #352863;
+  --neon-pink: #ff2d7b;
+  --neon-blue: #00d4ff;
+  --neon-green: #39ff14;
+  --neon-yellow: #ffe600;
+  --neon-purple: #b946ff;
+  --neon-orange: #ff6b2b;
+  --text-light: #f0e6ff;
+  --text-dim: #9b8ec4;
+  --win-color: #39ff14;
+  --lose-color: #ff2d7b;
+  --draw-color: #ffe600;
+
+  font-family: 'Fredoka', sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-dark);
+  color: var(--text-light);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(185, 70, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 45, 123, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+.arcade-header {
+  text-align: center;
+  padding: 32px 20px 16px;
+}
+
+.arcade-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 28px;
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-blue), var(--neon-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(255, 45, 123, 0.5));
+  margin-bottom: 8px;
+}
+
+.arcade-subtitle {
+  color: var(--text-dim);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.tab-bar {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border: 2px solid var(--bg-card);
+  border-radius: 50px;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-light);
+  border-color: var(--neon-purple);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 0 20px rgba(255, 45, 123, 0.4);
+}
+
+.game-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.game-card {
+  background: var(--bg-card);
+  border-radius: 24px;
+  padding: 32px;
+  border: 2px solid rgba(185, 70, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.game-card h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 8px;
+  color: var(--neon-blue);
+}
+
+.game-card .description {
+  text-align: center;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.score-item {
+  text-align: center;
+}
+
+.score-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.score-value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 24px;
+}
+
+.score-value.player { color: var(--neon-blue); }
+.score-value.bot { color: var(--neon-pink); }
+.score-value.draws { color: var(--neon-yellow); }
+
+.choices {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.choice-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 16px 24px;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  color: white;
+}
+
+.choice-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.choice-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.choice-btn.rock {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  border-color: #9ca3af;
+}
+.choice-btn.paper {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-color: #60a5fa;
+}
+.choice-btn.scissors {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #f87171;
+}
+
+.choice-btn.split {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-color: #4ade80;
+}
+.choice-btn.steal {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: #f87171;
+}
+.choice-btn.giveaway {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #fbbf24;
+}
+
+.result-area {
+  text-align: center;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.versus-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.player-choice-display, .bot-choice-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-choice-display .label, .bot-choice-display .label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.vs-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: var(--neon-yellow);
+}
+
+.result-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+.result-text.win { color: var(--win-color); }
+.result-text.lose { color: var(--lose-color); }
+.result-text.draw { color: var(--draw-color); }
+
+.play-again-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.play-again-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(185, 70, 255, 0.4);
+}
+
+.result-message {
+  font-size: 16px;
+  color: var(--text-dim);
+}
+
+.prize-display {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(255, 230, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 230, 0, 0.2);
+}
+
+.prize-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.prize-amount {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  color: var(--neon-yellow);
+}
+
+.winnings-display {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 16px;
+}
+
+.winnings-item {
+  text-align: center;
+}
+
+.winnings-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.winnings-amount {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+}
+
+.winnings-amount.player { color: var(--neon-blue); }
+.winnings-amount.bot { color: var(--neon-pink); }
+
+.rules-box {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(185, 70, 255, 0.15);
+}
+
+.rules-box h3 {
+  font-size: 14px;
+  color: var(--neon-purple);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.rules-box table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rules-box th, .rules-box td {
+  padding: 6px 8px;
+  text-align: center;
+  border: 1px solid rgba(185, 70, 255, 0.15);
+}
+
+.rules-box th {
+  background: rgba(185, 70, 255, 0.15);
+  color: var(--neon-purple);
+  font-weight: 600;
+}
+
+.rules-box td {
+  color: var(--text-dim);
+}
+
+.winner-cell { color: var(--win-color) !important; font-weight: 600; }
+.loser-cell { color: var(--lose-color) !important; }
+.even-cell { color: var(--neon-yellow) !important; font-weight: 600; }
+.both-get { color: var(--neon-green) !important; font-weight: 600; }
+
+@media (max-width: 600px) {
+  .arcade-title { font-size: 18px; }
+  .game-card { padding: 20px; }
+  .choice-btn { min-width: 90px; padding: 12px 16px; font-size: 15px; }
+  .versus-display { font-size: 36px; }
+  .scoreboard { gap: 20px; }
+  .rules-box table { font-size: 11px; }
+  .rules-box th, .rules-box td { padding: 4px; }
+}
