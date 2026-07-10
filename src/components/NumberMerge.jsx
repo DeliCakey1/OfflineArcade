@@ -9,93 +9,93 @@ const MODES = [
   { name: 'Expert', emoji: '💀', color: '#ff2d7b', size: 6, goal: 2048, desc: 'Reach 2048' },
 ]
 
-function createEmpty(size) {
-  return Array(size).fill(null).map(() => Array(size).fill(0))
+let tileIdCounter = 0
+function nextId() { return ++tileIdCounter }
+
+function createTile(value, row, col) {
+  return { id: nextId(), value, row, col, isNew: true, mergedFrom: null }
 }
 
-function addRandomTile(grid) {
-  const empty = []
-  for (let r = 0; r < grid.length; r++)
-    for (let c = 0; c < grid.length; c++)
-      if (grid[r][c] === 0) empty.push([r, c])
-  if (empty.length === 0) return { grid, pos: null }
-  const [r, c] = empty[Math.floor(Math.random() * empty.length)]
-  const next = grid.map(row => [...row])
-  next[r][c] = Math.random() < 0.9 ? 2 : 4
-  return { grid: next, pos: `${r}-${c}` }
+function tilesToGrid(tiles, size) {
+  const grid = Array(size).fill(null).map(() => Array(size).fill(0))
+  for (const t of tiles) grid[t.row][t.col] = t.value
+  return grid
 }
 
-function moveRow(row) {
-  const filtered = row.filter(v => v !== 0)
-  const merged = []
-  const mergedIndices = []
-  let score = 0
-  for (let i = 0; i < filtered.length; i++) {
-    if (i + 1 < filtered.length && filtered[i] === filtered[i + 1]) {
-      merged.push(filtered[i] * 2)
-      score += filtered[i] * 2
-      mergedIndices.push(merged.length - 1)
-      i++
-    } else {
-      merged.push(filtered[i])
-    }
-  }
-  while (merged.length < row.length) merged.push(0)
-  return { row: merged, score, mergedIndices }
-}
-
-function move(grid, dir) {
-  const size = grid.length
-  let g = grid.map(r => [...r])
-  let score = 0
-  const mergedPositions = new Set()
-  const rotated = (arr, times) => {
-    let a = arr.map(r => [...r])
-    for (let t = 0; t < times; t++) {
-      const n = a.map(r => [...r])
-      for (let r = 0; r < size; r++)
-        for (let c = 0; c < size; c++)
-          n[c][size - 1 - r] = a[r][c]
-      a = n
-    }
-    return a
-  }
-  const rots = { left: 0, up: 3, right: 2, down: 1 }
-  g = rotated(g, rots[dir])
-  for (let r = 0; r < size; r++) {
-    const { row: newRow, score: s, mergedIndices } = moveRow(g[r])
-    for (const mi of mergedIndices) {
-      const origR = dir === 'left' || dir === 'right' ? r : (dir === 'up' ? size - 1 - mi : mi)
-      const origC = dir === 'left' || dir === 'right' ? (dir === 'left' ? mi : size - 1 - mi) : r
-      mergedPositions.add(`${origR}-${origC}`)
-    }
-    g[r] = newRow
-    score += s
-  }
-  g = rotated(g, (4 - rots[dir]) % 4)
-  return { grid: g, score, mergedPositions }
-}
-
-function gridsEqual(a, b) {
-  for (let r = 0; r < a.length; r++)
-    for (let c = 0; c < a.length; c++)
-      if (a[r][c] !== b[r][c]) return false
-  return true
-}
-
-function canMove(grid) {
-  for (const dir of ['left', 'right', 'up', 'down']) {
-    const { grid: next } = move(grid, dir)
-    if (!gridsEqual(grid, next)) return true
-  }
-  return false
-}
-
-function hasGoal(grid, goal) {
+function gridHasGoal(grid, goal) {
   for (const row of grid)
     for (const v of row)
       if (v >= goal) return true
   return false
+}
+
+function canMoveGrid(grid) {
+  const size = grid.length
+  for (let r = 0; r < size; r++)
+    for (let c = 0; c < size; c++) {
+      if (grid[r][c] === 0) return true
+      if (c + 1 < size && grid[r][c] === grid[r][c + 1]) return true
+      if (r + 1 < size && grid[r][c] === grid[r + 1][c]) return true
+    }
+  return false
+}
+
+function addRandomTileToTiles(tiles, size) {
+  const occupied = new Set(tiles.map(t => `${t.row},${t.col}`))
+  const empty = []
+  for (let r = 0; r < size; r++)
+    for (let c = 0; c < size; c++)
+      if (!occupied.has(`${r},${c}`)) empty.push([r, c])
+  if (empty.length === 0) return tiles
+  const [r, c] = empty[Math.floor(Math.random() * empty.length)]
+  const val = Math.random() < 0.9 ? 2 : 4
+  return [...tiles, createTile(val, r, c)]
+}
+
+function slideTiles(tiles, dir, size) {
+  const dirs = {
+    left:  { dr: 0, dc: -1, sortA: 'row', sortB: 'col' },
+    right: { dr: 0, dc: 1,  sortA: 'row', sortB: 'col', reverse: true },
+    up:    { dr: -1, dc: 0, sortA: 'col', sortB: 'row' },
+    down:  { dr: 1, dc: 0, sortA: 'col', sortB: 'row', reverse: true },
+  }
+  const d = dirs[dir]
+  const sorted = [...tiles].sort((a, b) => {
+    const a1 = a[d.sortA], b1 = b[d.sortA]
+    if (a1 !== b1) return a1 - b1
+    const a2 = a[d.sortB], b2 = b[d.sortB]
+    return d.reverse ? b2 - a2 : a2 - b2
+  })
+
+  const occupied = new Set()
+  const newTiles = []
+  const mergeTargets = []
+
+  for (const tile of sorted) {
+    let r = tile.row, c = tile.col
+    while (true) {
+      const nr = r + d.dr, nc = c + d.dc
+      if (nr < 0 || nr >= size || nc < 0 || nc >= size) break
+      if (occupied.has(`${nr},${nc}`)) break
+      r = nr; c = nc
+    }
+    const key = `${r},${c}`
+    const existing = newTiles.find(t => t.row === r && t.col === c)
+    if (existing && existing.value === tile.value && !existing.mergedFrom) {
+      existing.value *= 2
+      existing.mergedFrom = [existing.id, tile.id]
+      existing.isNew = false
+      mergeTargets.push(key)
+    } else {
+      occupied.add(key)
+      newTiles.push({ ...tile, row: r, col: c, isNew: false, mergedFrom: null })
+      if (r !== tile.row || c !== tile.col) {
+        occupied.add(`${tile.row},${tile.col}`)
+      }
+    }
+  }
+
+  return { tiles: newTiles, mergeTargets }
 }
 
 function tileColor(v) {
@@ -118,18 +118,20 @@ const DIRS = [
   { key: 'ArrowDown', label: '↓', dir: 'down' },
 ]
 
+const SLIDE_MS = 120
+
 export default function NumberMerge({ onPlayingChange }) {
   const [mode, setMode] = useState(null)
-  const [grid, setGrid] = useState([])
+  const [tiles, setTiles] = useState([])
   const [score, setScore] = useState(0)
   const [bestScore, setBestScore] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [won, setWon] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [newTile, setNewTile] = useState(null)
-  const [mergedTiles, setMergedTiles] = useState(new Set())
   const [scorePop, setScorePop] = useState(false)
-  const gridKey = useRef(0)
+  const [slideDir, setSlideDir] = useState(null)
+  const [animating, setAnimating] = useState(false)
+  const animTimer = useRef(null)
   const sound = useSound()
   const { recordGame } = useStats('merge')
   const isPlaying = mode && !gameOver && !won
@@ -139,33 +141,56 @@ export default function NumberMerge({ onPlayingChange }) {
     return () => onPlayingChange?.(false)
   }, [isPlaying, onPlayingChange])
 
+  useEffect(() => {
+    return () => { if (animTimer.current) clearTimeout(animTimer.current) }
+  }, [])
+
   const makeMove = useCallback((dir) => {
-    if (gameOver || won) return
-    const { grid: next, score: gained, mergedPositions } = move(grid, dir)
-    if (gridsEqual(grid, next)) return
+    if (gameOver || won || animating) return
+    const grid = tilesToGrid(tiles, mode.size)
+    const { tiles: slid } = slideTiles(tiles, dir, mode.size)
+    const newGrid = tilesToGrid(slid, mode.size)
+    const gridsEqual = grid.every((row, r) => row.every((v, c) => v === newGrid[r][c]))
+    if (gridsEqual) return
+
     sound('click')
-    const { grid: withTile, pos } = addRandomTile(next)
-    const newScore = score + gained
-    gridKey.current++
-    setNewTile(pos)
-    setMergedTiles(mergedPositions)
-    if (gained > 0) {
-      setScorePop(true)
-      setTimeout(() => setScorePop(false), 300)
+    let gained = 0
+    for (const t of slid) {
+      if (t.mergedFrom) gained += t.value
     }
-    setGrid(withTile)
-    setScore(newScore)
-    if (newScore > bestScore) setBestScore(newScore)
-    if (hasGoal(withTile, mode.goal)) {
-      setWon(true)
-      recordGame(true, newScore)
-      sound('victory')
-    } else if (!canMove(withTile)) {
-      setGameOver(true)
-      recordGame(false, newScore)
-      sound('lose')
-    }
-  }, [grid, score, bestScore, gameOver, won, mode, sound, recordGame])
+
+    setAnimating(true)
+    setSlideDir(dir)
+    setTiles(slid)
+
+    animTimer.current = setTimeout(() => {
+      const mergedTiles = slid.map(t => {
+        if (t.mergedFrom) return { ...t, mergedFrom: null, isNew: false }
+        return { ...t, isNew: false }
+      })
+      const finalTiles = addRandomTileToTiles(mergedTiles, mode.size)
+      const finalGrid = tilesToGrid(finalTiles, mode.size)
+      const newScore = score + gained
+      setTiles(finalTiles)
+      setSlideDir(null)
+      setAnimating(false)
+      if (gained > 0) {
+        setScorePop(true)
+        setTimeout(() => setScorePop(false), 300)
+      }
+      setScore(newScore)
+      if (newScore > bestScore) setBestScore(newScore)
+      if (gridHasGoal(finalGrid, mode.goal)) {
+        setWon(true)
+        recordGame(true, newScore)
+        sound('victory')
+      } else if (!canMoveGrid(finalGrid)) {
+        setGameOver(true)
+        recordGame(false, newScore)
+        sound('lose')
+      }
+    }, SLIDE_MS)
+  }, [tiles, score, bestScore, gameOver, won, mode, animating, sound, recordGame])
 
   useEffect(() => {
     if (!mode || gameOver || won) return
@@ -180,27 +205,26 @@ export default function NumberMerge({ onPlayingChange }) {
   }, [mode, gameOver, won, makeMove])
 
   function startGame(m) {
+    tileIdCounter = 0
     setMode(m)
     setScore(0)
     setBestScore(0)
     setGameOver(false)
     setWon(false)
     setCopied(false)
-    setNewTile(null)
-    setMergedTiles(new Set())
-    gridKey.current++
-    let g = createEmpty(m.size)
-    const t1 = addRandomTile(g)
-    const t2 = addRandomTile(t1.grid)
-    setGrid(t2.grid)
-    setNewTile(t2.pos)
+    setSlideDir(null)
+    setAnimating(false)
+    let t = []
+    t = addRandomTileToTiles(t, m.size)
+    t = addRandomTileToTiles(t, m.size)
+    setTiles(t)
   }
 
   function shareResult() {
     const lines = [
       `🔢 Beat the bot at Number Merge (${mode.name})!`,
       `📊 Score: ${score} | Goal: ${mode.goal}`,
-      won ? '🏆 Goal reached!' : `💀 Game over at ${grid.flat().filter(v => v > 0).length} tiles`,
+      won ? '🏆 Goal reached!' : `💀 Game over at ${tiles.length} tiles`,
       ``,
       `🎮 Offline Arcade`,
     ].filter(Boolean)
@@ -229,6 +253,8 @@ export default function NumberMerge({ onPlayingChange }) {
     )
   }
 
+  const tileSize = 100 / mode.size
+
   return (
     <div className="game-card slide-in">
       <h2>Number Merge</h2>
@@ -249,16 +275,32 @@ export default function NumberMerge({ onPlayingChange }) {
         </div>
       </div>
 
-      <div className="merge-grid" style={{ gridTemplateColumns: `repeat(${mode.size}, 1fr)` }}>
-        {grid.flat().map((v, i) => {
-          const key = `${Math.floor(i / mode.size)}-${i % mode.size}`
-          const isNew = newTile === key
-          const isMerged = mergedTiles.has(key)
+      <div className="merge-board" style={{ aspectRatio: '1' }}>
+        <div className="merge-bg-grid" style={{ gridTemplateColumns: `repeat(${mode.size}, 1fr)` }}>
+          {Array(mode.size * mode.size).fill(0).map((_, i) => (
+            <div key={i} className="merge-bg-cell" />
+          ))}
+        </div>
+        {tiles.map(t => {
+          const left = t.col * tileSize
+          const top = t.row * tileSize
+          const isNew = t.isNew
+          const isMerged = !!t.mergedFrom
           return (
-            <div key={`${gridKey.current}-${i}`}
-              className={`merge-tile ${isNew ? 'tile-new' : ''} ${isMerged ? 'tile-merged' : ''} ${v >= 128 ? 'tile-glow' : ''}`}
-              style={{ background: tileColor(v), color: textColor(v) }}>
-              {v || ''}
+            <div key={t.id}
+              className={`merge-tile ${isNew ? 'tile-new' : ''} ${isMerged ? 'tile-merged' : ''} ${t.value >= 128 ? 'tile-glow' : ''}`}
+              style={{
+                position: 'absolute',
+                width: `calc(${tileSize}% - 6px)`,
+                height: `calc(${tileSize}% - 6px)`,
+                left: `calc(${left}% + 3px)`,
+                top: `calc(${top}% + 3px)`,
+                transition: slideDir ? `left ${SLIDE_MS}ms ease, top ${SLIDE_MS}ms ease` : 'none',
+                background: tileColor(t.value),
+                color: textColor(t.value),
+                zIndex: isMerged ? 2 : 1,
+              }}>
+              {t.value}
             </div>
           )
         })}
@@ -266,7 +308,7 @@ export default function NumberMerge({ onPlayingChange }) {
 
       <div className="merge-controls">
         {DIRS.map(d => (
-          <button key={d.key} className="merge-dir-btn" onClick={() => makeMove(d.dir)}>
+          <button key={d.key} className="merge-dir-btn" onClick={() => makeMove(d.dir)} disabled={animating}>
             {d.label}
           </button>
         ))}
