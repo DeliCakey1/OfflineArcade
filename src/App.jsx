@@ -15,7 +15,6 @@ import SimonSays from './components/SimonSays'
 import { isMuted, toggleMute } from './useSound'
 import useStats from './useStats'
 import { THEMES, THEME_ORDER } from './themes'
-import CLOAK_PRESETS from './cloakPresets'
 import './index.css'
 
 const GAMES = [
@@ -262,68 +261,173 @@ function GamesDropdown({ inGame, onNavigate }) {
   )
 }
 
-function CloakDropdown({ cloak, onCloakChange }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+function CloakScreen({ onBack }) {
+  const [mode, setMode] = useState(() => getSaved('arcade-cloak', 'none'))
+  const [url, setUrl] = useState(() => getSaved('arcade-cloak-url', 'https://'))
+  const [title, setTitle] = useState(() => getSaved('arcade-cloak-title', ''))
+  const [favicon, setFavicon] = useState(() => getSaved('arcade-cloak-favicon', ''))
+  const [saved, setSaved] = useState(false)
+  const [showRevertConfirm, setShowRevertConfirm] = useState(false)
 
-  useEffect(() => {
-    if (!open) return
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open])
-
-  const CLOAK_IDS = ['none', 'canvas', 'googleDocs', 'classroom', 'clever', 'powerschool', 'desmos', 'notion', 'github', 'slack', 'zoom', 'drive', 'pdf', 'blank']
-
-  function handleOpenBlank() {
+  function openBlankWithArcade(cloakTitle, cloakFavicon) {
     const win = window.open('about:blank', '_blank')
     if (!win) return
-
     const base = window.location.origin
     let html = '<!doctype html>\n' + document.documentElement.outerHTML
-
-    html = html.replace(/(href|src)="(\/[^"]+)"/g, (match, attr, path) => {
-      return `${attr}="${base}${path}"`
-    })
-
+    html = html.replace(/(href|src)="(\/[^"]+)"/g, (_, attr, path) => `${attr}="${base}${path}"`)
+    if (cloakTitle) {
+      html = html.replace(/<title>[^<]*<\/title>/, `<title>${cloakTitle}</title>`)
+    }
+    if (cloakFavicon) {
+      html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" type="image/svg+xml" href="${cloakFavicon}" />`)
+    }
     win.document.write(html)
     win.document.close()
   }
 
+  function handleSaveCustom() {
+    localStorage.setItem('arcade-cloak', 'custom')
+    localStorage.setItem('arcade-cloak-url', url)
+    localStorage.setItem('arcade-cloak-title', title)
+    localStorage.setItem('arcade-cloak-favicon', favicon)
+    setMode('custom')
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+    openBlankWithArcade(title, favicon)
+    setTimeout(() => { window.location.href = url }, 500)
+  }
+
+  function handleEnableBlank() {
+    localStorage.setItem('arcade-cloak', 'blank')
+    setMode('blank')
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+    openBlankWithArcade('', '')
+  }
+
+  function handleRevert() {
+    localStorage.removeItem('arcade-cloak')
+    localStorage.removeItem('arcade-cloak-url')
+    localStorage.removeItem('arcade-cloak-title')
+    localStorage.removeItem('arcade-cloak-favicon')
+    setMode('none')
+    setUrl('https://')
+    setTitle('')
+    setFavicon('')
+    document.title = 'Offline Arcade'
+    const link = document.querySelector("link[rel~='icon']")
+    if (link) link.href = '/favicon.svg'
+    setShowRevertConfirm(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const isActive = mode !== 'none'
+
   return (
-    <div className="cloak-dropdown-wrap" ref={ref}>
-      <button className="settings-btn" onClick={() => setOpen(!open)} title="Tab Cloaking">
-        {cloak === 'none' ? '🎭' : '🫥'}
-      </button>
-      {open && (
-        <div className={`theme-dropdown cloak-dropdown ${open ? 'open' : ''}`}>
-          {CLOAK_IDS.map(id => {
-            const p = CLOAK_PRESETS[id]
-            return (
-              <button
-                key={id}
-                className={`theme-option ${id === cloak ? 'active' : ''}`}
-                onClick={() => { onCloakChange(id); setOpen(false) }}
-              >
-                <span className="theme-option-emoji">{p.emoji}</span>
-                <span className="theme-option-name">{p.label}</span>
-              </button>
-            )
-          })}
-          <div className="cloak-divider" />
-          <button className="theme-option cloak-blank-btn" onClick={() => { setOpen(false); handleOpenBlank() }}>
-            <span className="theme-option-emoji">🔲</span>
-            <span className="theme-option-name">Open in about:blank</span>
-          </button>
+    <div className="cloak-screen">
+      <div className="cloak-header">
+        <button className="quit-btn" onClick={onBack}>← Back</button>
+        <h2 className="cloak-title">Tab Cloaking</h2>
+        <p className="cloak-subtitle">Disguise the tab to look like something else</p>
+      </div>
+
+      {isActive && (
+        <div className="cloak-status">
+          <span className="cloak-status-dot" />
+          <span>Active: {mode === 'custom' ? `Redirecting to ${url}` : 'about:blank mode'}</span>
+        </div>
+      )}
+
+      <div className="cloak-section">
+        <div className="cloak-section-header">
+          <span className="cloak-section-emoji">🔗</span>
+          <div>
+            <h3 className="cloak-section-title">Custom Website</h3>
+            <p className="cloak-section-desc">Redirects this tab to a website of your choice, and opens the arcade in a new about:blank tab</p>
+          </div>
+        </div>
+        <div className="cloak-inputs">
+          <label className="cloak-label">
+            Website URL
+            <input
+              className="cloak-input"
+              type="url"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://canvas.instructure.com"
+            />
+          </label>
+          <label className="cloak-label">
+            Tab Title <span className="cloak-optional">(for the about:blank tab)</span>
+            <input
+              className="cloak-input"
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Dashboard | Canvas LMS"
+            />
+          </label>
+          <label className="cloak-label">
+            Tab Favicon URL <span className="cloak-optional">(for the about:blank tab)</span>
+            <input
+              className="cloak-input"
+              type="url"
+              value={favicon}
+              onChange={e => setFavicon(e.target.value)}
+              placeholder="https://example.com/favicon.ico"
+            />
+          </label>
+        </div>
+        <button className="cloak-save-btn" onClick={handleSaveCustom} disabled={!url || url === 'https://'}>
+          {mode === 'custom' ? '✓ Saved — Click to Update' : 'Save & Activate'}
+        </button>
+      </div>
+
+      <div className="cloak-section">
+        <div className="cloak-section-header">
+          <span className="cloak-section-emoji">🔲</span>
+          <div>
+            <h3 className="cloak-section-title">about:blank</h3>
+            <p className="cloak-section-desc">Opens the arcade in an about:blank tab. Address bar shows nothing.</p>
+          </div>
+        </div>
+        <button
+          className={`cloak-save-btn ${mode === 'blank' ? 'cloak-active' : ''}`}
+          onClick={handleEnableBlank}
+        >
+          {mode === 'blank' ? '✓ Active — Click to Re-open' : 'Open in about:blank'}
+        </button>
+      </div>
+
+      <div className="cloak-section cloak-revert-section">
+        <button className="cloak-revert-btn" onClick={() => setShowRevertConfirm(true)}>
+          ↩️ Revert to Normal
+        </button>
+        <p className="cloak-revert-desc">Clear all cloaking. The site will load normally.</p>
+      </div>
+
+      {saved && (
+        <div className="cloak-saved-toast">Settings saved!</div>
+      )}
+
+      {showRevertConfirm && (
+        <div className="stats-overlay" onClick={() => setShowRevertConfirm(false)}>
+          <div className="stats-modal confirm-modal" onClick={e => e.stopPropagation()}>
+            <h2 className="stats-title">Revert to Normal?</h2>
+            <p className="confirm-modal-text">This will clear all cloaking settings. The site will load normally from now on.</p>
+            <div className="confirm-buttons">
+              <button className="confirm-btn yes" onClick={handleRevert}>Revert</button>
+              <button className="confirm-btn no" onClick={() => setShowRevertConfirm(false)}>Cancel</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats, inGame, onHome, onNavigateGame, cloak, onCloakChange }) {
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats, inGame, onHome, onNavigateGame, onCloak }) {
   return (
     <div className="settings-bar">
       <div className="settings-bar-left">
@@ -331,7 +435,9 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
           🏠
         </button>
         <GamesDropdown inGame={inGame} onNavigate={onNavigateGame} />
-        <CloakDropdown cloak={cloak} onCloakChange={onCloakChange} />
+        <button className="settings-btn" onClick={onCloak} title="Tab Cloaking">
+          🎭
+        </button>
       </div>
       <div className="settings-bar-right">
         <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'}>
@@ -366,8 +472,37 @@ function App() {
   const [confirmNav, setConfirmNav] = useState(null)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [cloak, setCloak] = useState(() => getSaved('arcade-cloak', 'none'))
+  const [showCloak, setShowCloak] = useState(false)
   const { allStats, clearStats } = useStats('_global')
+
+  useEffect(() => {
+    const cloakMode = getSaved('arcade-cloak', 'none')
+    const isAboutBlank = window.location.href === 'about:blank' || window.location.protocol === 'blob:'
+    if ((cloakMode === 'custom' || cloakMode === 'blank') && !isAboutBlank) {
+      const base = window.location.origin
+      let html = '<!doctype html>\n' + document.documentElement.outerHTML
+      html = html.replace(/(href|src)="(\/[^"]+)"/g, (_, attr, path) => `${attr}="${base}${path}"`)
+      const cloakTitle = getSaved('arcade-cloak-title', '')
+      const cloakFavicon = getSaved('arcade-cloak-favicon', '')
+      if (cloakTitle) {
+        html = html.replace(/<title>[^<]*<\/title>/, `<title>${cloakTitle}</title>`)
+      }
+      if (cloakFavicon) {
+        html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" type="image/svg+xml" href="${cloakFavicon}" />`)
+      }
+      const win = window.open('about:blank', '_blank')
+      if (win) {
+        win.document.write(html)
+        win.document.close()
+      }
+      if (cloakMode === 'custom') {
+        const redirectUrl = getSaved('arcade-cloak-url', '')
+        if (redirectUrl && redirectUrl !== 'https://') {
+          setTimeout(() => { window.location.href = redirectUrl }, 300)
+        }
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const vars = THEMES[theme]?.vars || THEMES.neon.vars
@@ -391,25 +526,6 @@ function App() {
     document.documentElement.classList.toggle('no-bg', !bg)
     try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {}
   }, [bg])
-
-  useEffect(() => {
-    const preset = CLOAK_PRESETS[cloak] || CLOAK_PRESETS.none
-    document.title = preset.title || 'Offline Arcade'
-
-    let link = document.querySelector("link[rel~='icon']")
-    if (!link) {
-      link = document.createElement('link')
-      link.rel = 'icon'
-      document.head.appendChild(link)
-    }
-    if (preset.favicon) {
-      link.href = preset.favicon
-    } else {
-      link.href = '/favicon.svg'
-    }
-
-    try { localStorage.setItem('arcade-cloak', cloak) } catch {}
-  }, [cloak])
 
   function handleMuteToggle() {
     toggleMute()
@@ -453,7 +569,7 @@ function App() {
     inGame: !!activeGame,
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
-    cloak, onCloakChange: setCloak,
+    onCloak: () => setShowCloak(true),
   }
 
   if (activeGame) {
@@ -499,6 +615,7 @@ function App() {
             onCancel={() => setShowConfirmClear(false)}
           />
         )}
+        {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
       </div>
     )
   }
@@ -523,6 +640,7 @@ function App() {
         </div>
       </main>
       {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
+      {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
     </div>
   )
 }
