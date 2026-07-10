@@ -290,7 +290,7 @@ function CloakDropdown({ cloak, onCloakChange }) {
         {cloak === 'none' ? '🎭' : '🫥'}
       </button>
       {open && (
-        <div className="theme-dropdown cloak-dropdown">
+        <div className={`theme-dropdown cloak-dropdown ${open ? 'open' : ''}`}>
           {CLOAK_IDS.map(id => {
             const p = CLOAK_PRESETS[id]
             return (
