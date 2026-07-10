@@ -201,7 +201,7 @@ export default function NumberMerge({ onPlayingChange }) {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [screen, gameOver, won, makeMove])
+  }, [screen, gameOver, won, goalReached, makeMove])
 
   function startGame(size, goalVal, isInfinite) {
     tileIdCounter = 0
@@ -434,7 +434,16 @@ export default function NumberMerge({ onPlayingChange }) {
             <span className="sep">points</span>
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={() => { sound('click'); setGoalReached(false) }}>
+            <button className="play-again-btn" onClick={() => {
+              sound('click')
+              setGoalReached(false)
+              const finalGrid = tilesToGrid(tiles, boardSize)
+              if (!canMoveGrid(finalGrid)) {
+                setGameOver(true)
+                recordGame(true, score)
+                sound('lose')
+              }
+            }}>
               Keep Going
             </button>
             <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }}
