@@ -60,6 +60,7 @@ function getMessage(result, p, b) {
 
 export default function SplitStealGiveAway() {
   const [totalRounds, setTotalRounds] = useState(null)
+  const [prizeMode, setPrizeMode] = useState(null) // null = random, or a fixed amount
   const [currentPrize, setCurrentPrize] = useState(100)
   const [prizeAnnounced, setPrizeAnnounced] = useState(false)
   const [playerChoice, setPlayerChoice] = useState(null)
@@ -79,10 +80,12 @@ export default function SplitStealGiveAway() {
   const sound = useSound()
   const { recordGame } = useStats('ssg')
 
+  const isRandom = prizeMode === null
+
   function generatePrize() {
-    const prize = pickPrize()
+    const prize = isRandom ? pickPrize() : prizeMode
     setCurrentPrize(prize)
-    setPrizeAnnounced(false)
+    setPrizeAnnounced(!isRandom)
     if (prize >= 500) {
       setPrizeFlash(true)
       setTimeout(() => setPrizeFlash(false), 600)
@@ -192,6 +195,7 @@ export default function SplitStealGiveAway() {
 
   function reset() {
     setTotalRounds(null)
+    setPrizeMode(null)
     setPlayerChoice(null)
     setPendingChoice(null)
     setBotChoice(null)
@@ -239,6 +243,24 @@ export default function SplitStealGiveAway() {
               onClick={(e) => { const v = parseInt(e.target.closest('.custom-target-row').querySelector('input').value); if (v >= 1 && v <= 100) { sound('click'); startGame(v) } }}>
               Go
             </button>
+          </div>
+        </div>
+        <div className="ssg-prize-picker">
+          <div className="round-picker-label">Prize amount per round</div>
+          <div className="ssg-prize-options">
+            <button className={`ssg-prize-btn ${isRandom ? 'selected' : ''}`}
+              onClick={() => { sound('click'); setPrizeMode(null) }}>
+              🎲 Random
+            </button>
+            {[50, 100, 200, 500, 1000].map(amt => (
+              <button key={amt} className={`ssg-prize-btn ${prizeMode === amt ? 'selected' : ''}`}
+                onClick={() => { sound('click'); setPrizeMode(amt) }}>
+                ${amt.toLocaleString()}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8, textAlign: 'center' }}>
+            {isRandom ? 'Weighted random: $100 most common, $1,000 ultra rare' : `Fixed $${prizeMode.toLocaleString()} every round`}
           </div>
         </div>
         <div className="rules-box">
