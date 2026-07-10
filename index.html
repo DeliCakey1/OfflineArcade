@@ -20,20 +20,37 @@
           var mode = localStorage.getItem('arcade-cloak');
           if (!mode || mode === 'none') return;
           if (window.__ABOUT_BLANK__) return;
-          var base = window.location.origin;
+
           var cloakUrl = localStorage.getItem('arcade-cloak-url') || '';
-          var cloakTitle = localStorage.getItem('arcade-cloak-title') || '';
+          var cloakTitle = localStorage.getItem('arcade-cloak-title') || 'Offline Arcade';
           var cloakFavicon = localStorage.getItem('arcade-cloak-favicon') || '';
+          var base = window.location.origin;
+
+          if (cloakTitle) document.title = cloakTitle;
+          if (cloakFavicon) {
+            var link = document.querySelector("link[rel~='icon']");
+            if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+            link.href = cloakFavicon;
+          }
+
           var head = document.head.innerHTML;
           head = head.replace(/(href|src)="(\/[^"]+)"/g, function(_, a, p) { return a+'="'+base+p+'"'; });
           if (cloakTitle) head = head.replace(/<title>[^<]*<\/title>/, '<title>'+cloakTitle+'</title>');
           if (cloakFavicon) head = head.replace(/<link rel="icon"[^>]*>/, '<link rel="icon" type="image/svg+xml" href="'+cloakFavicon+'" />');
-          var blankHtml = '<!doctype html><html><head>' + head + '</head><body><div id="root"></div><script>window.__ABOUT_BLANK__=true<\/script>' + document.querySelector('script[type="module"]').outerHTML.replace(/src="\/([^"]+)"/g, 'src="'+base+'/$1"') + '</body></html>';
-          var win = window.open('about:blank');
-          if (win) { win.document.write(blankHtml); win.document.close(); }
-          if (mode === 'custom' && cloakUrl && cloakUrl !== 'https://') {
-            window.location.href = cloakUrl;
-          }
+
+          var modScript = document.querySelector('script[type="module"]');
+          var modSrc = modScript ? modScript.outerHTML.replace(/src="\/([^"]+)"/g, 'src="'+base+'/$1"') : '';
+          var blankHtml = '<!doctype html><html><head>' + head + '</head><body><div id="root"></div><script>window.__ABOUT_BLANK__=true<\/script>' + modSrc + '</body></html>';
+
+          document.documentElement.innerHTML = '<head>' + (cloakTitle ? '<title>'+cloakTitle+'</title>' : '') + (cloakFavicon ? '<link rel="icon" href="'+cloakFavicon+'">' : '') + '<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#111;font-family:system-ui,sans-serif}button{padding:14px 32px;border:none;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:transform .2s}button:hover{transform:scale(1.05)}</style></head><body><button id="cloak-btn">Click to Open</button></body>';
+
+          document.getElementById('cloak-btn').addEventListener('click', function() {
+            var win = window.open('about:blank');
+            if (win) { win.document.write(blankHtml); win.document.close(); }
+            if (mode === 'custom' && cloakUrl && cloakUrl !== 'https://') {
+              window.location.href = cloakUrl;
+            }
+          });
         } catch(e) {}
       })();
     </script>
