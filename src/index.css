@@ -1919,6 +1919,266 @@ body::after {
   100% { transform: scale(1); }
 }
 
+/* ===== BLACKJACK ===== */
+.bj-stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.bj-stat {
+  text-align: center;
+  min-width: 60px;
+}
+.bj-stat-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.bj-stat-num {
+  font-size: 16px;
+  font-weight: 700;
+}
+.bj-stat-num.coins { color: var(--neon-yellow); }
+.bj-stat-num.bet { color: var(--neon-orange); }
+.bj-stat-num.fire { color: var(--neon-orange); }
+
+.bj-bet-area {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.bj-bet-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--text-light);
+}
+.bj-bet-quick {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.bj-bet-quick-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.bj-bet-quick-btn:hover {
+  border-color: var(--neon-purple);
+  background: rgba(185, 70, 255, 0.15);
+  transform: translateY(-2px);
+}
+.bj-bet-form {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.bj-bet-input {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-light);
+  width: 140px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.bj-bet-input:focus {
+  border-color: var(--neon-purple);
+}
+.bj-bet-input::placeholder {
+  color: var(--text-dim);
+}
+.bj-bet-submit {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.bj-bet-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(185, 70, 255, 0.4);
+}
+.bj-bet-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.bj-record {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+.bj-table {
+  margin-bottom: 20px;
+}
+.bj-hand {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.bj-hand-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.bj-hand-cards {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  min-height: 120px;
+  align-items: center;
+}
+.bj-hand-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+.bj-hand-value.bust {
+  color: var(--lose-color);
+}
+
+.bj-card {
+  width: 80px;
+  height: 112px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  position: relative;
+  flex-shrink: 0;
+}
+@keyframes bjDealCard {
+  0% { transform: translateY(-30px) scale(0.7); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.bj-card-anim {
+  animation: bjDealCard 0.25s ease-out both;
+}
+.bj-card.red {
+  background: linear-gradient(135deg, #fff, #f0f0f0);
+  color: #dc2626;
+  border: 2px solid #f87171;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+.bj-card.black {
+  background: linear-gradient(135deg, #fff, #f0f0f0);
+  color: #1e293b;
+  border: 2px solid #64748b;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.2);
+}
+.bj-card-back {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: 3px solid #60a5fa;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.bj-card-back-pattern {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  font-size: 14px;
+  opacity: 0.5;
+}
+.bj-card-top {
+  position: absolute;
+  top: 6px;
+  left: 7px;
+  font-size: 11px;
+  line-height: 1.1;
+  text-align: left;
+}
+.bj-card-center {
+  font-size: 28px;
+}
+.bj-card-bottom {
+  position: absolute;
+  bottom: 6px;
+  right: 7px;
+  font-size: 11px;
+  line-height: 1.1;
+  text-align: right;
+  transform: rotate(180deg);
+}
+
+.bj-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.bj-action-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+.bj-action-btn.hit {
+  background: linear-gradient(135deg, var(--neon-green), #16a34a);
+}
+.bj-action-btn.stand {
+  background: linear-gradient(135deg, var(--neon-blue), #0284c7);
+}
+.bj-action-btn.double {
+  background: linear-gradient(135deg, var(--neon-yellow), var(--neon-orange));
+  color: #1e293b;
+}
+.bj-action-btn.surrender {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+.bj-action-btn:hover:not(.disabled):not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.bj-action-btn.disabled,
+.bj-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.bj-coins-after {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--neon-yellow);
+  margin: 8px 0 12px;
+  text-align: center;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
   .arcade-title { font-size: 18px; }
@@ -1975,4 +2235,10 @@ body::after {
   .reaction-zone-text { font-size: 14px; }
   .reaction-zone-ms { font-size: 28px; }
   .memory-card-front, .memory-card-back { font-size: 20px; }
+  .bj-card { width: 64px; height: 90px; font-size: 13px; }
+  .bj-card-center { font-size: 22px; }
+  .bj-card-top, .bj-card-bottom { font-size: 9px; }
+  .bj-action-btn { padding: 10px 16px; font-size: 14px; }
+  .bj-hand-cards { gap: 6px; min-height: 100px; }
+  .bj-stat-num { font-size: 13px; }
 }

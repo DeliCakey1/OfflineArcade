@@ -12,6 +12,10 @@ import NumberMerge from './components/NumberMerge'
 import ReactionTime from './components/ReactionTime'
 import TypingSpeed from './components/TypingSpeed'
 import SimonSays from './components/SimonSays'
+import Slots from './components/Slots'
+import Blackjack from './components/Blackjack'
+import WhackAMole from './components/WhackAMole'
+import SnakeGame from './components/SnakeGame'
 import { isMuted, toggleMute } from './useSound'
 import useStats from './useStats'
 import { THEMES, THEME_ORDER } from './themes'
@@ -121,6 +125,38 @@ const GAMES = [
     desc: 'Watch the sequence, then repeat it!',
     color: '#ef4444',
     component: SimonSays,
+  },
+  {
+    id: 'slots',
+    label: 'Slots',
+    emoji: '🎰',
+    desc: 'Spin the reels! Match symbols to win big!',
+    color: '#f59e0b',
+    component: Slots,
+  },
+  {
+    id: 'blackjack',
+    label: 'Blackjack',
+    emoji: '🃏',
+    desc: 'Get as close to 21 as you can without going over!',
+    color: '#22c55e',
+    component: Blackjack,
+  },
+  {
+    id: 'whack',
+    label: 'Whack-a-Mole',
+    emoji: '🔨',
+    desc: 'Whack the moles as fast as you can!',
+    color: '#8b5cf6',
+    component: WhackAMole,
+  },
+  {
+    id: 'snake',
+    label: 'Snake',
+    emoji: '🐍',
+    desc: 'Eat food, grow longer, don\'t hit yourself!',
+    color: '#22c55e',
+    component: SnakeGame,
   },
 ]
 
