@@ -316,7 +316,7 @@ function CloakScreen({ onBack }) {
   const BLOCKED_KEYS = new Set([
     'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
     'Enter', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE',
-    'Digit1', 'Digit2', 'Digit3', 'Digit4',
+    'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Escape',
   ])
 
   function keyDisplayName(code) {
@@ -558,7 +558,7 @@ function CloakScreen({ onBack }) {
               )}
             </div>
             <p className="panic-hint">
-              Press keys to record. Blocked: Space, Enter, Arrows, WASD, E, 1-4. Backspace removes last key.
+              Press keys to record. Blocked: Space, Enter, Escape, Arrows, WASD, E, 1-4. Backspace removes last key.
             </p>
           </div>
         </div>
@@ -678,14 +678,14 @@ function App() {
   }, [bg])
 
   useEffect(() => {
-    const panicSequenceStr = getSaved('arcade-panic-sequence', '')
-    const panicUrlVal = getSaved('arcade-panic-url', '')
-    if (!panicSequenceStr || !panicUrlVal || panicUrlVal === 'https://') return
-    const sequence = panicSequenceStr.split(',')
     let buf = []
     let lastTime = 0
     const TIMEOUT = 2000
     function handleKey(e) {
+      const seq = getSaved('arcade-panic-sequence', '')
+      const url = getSaved('arcade-panic-url', '')
+      if (!seq || !url || url === 'https://') return
+      const sequence = seq.split(',')
       const now = Date.now()
       if (now - lastTime > TIMEOUT) buf = []
       lastTime = now
@@ -694,7 +694,7 @@ function App() {
         const tail = buf.slice(-sequence.length)
         if (tail.every((k, i) => k === sequence[i])) {
           buf = []
-          window.location.replace(panicUrlVal)
+          window.location.replace(url)
         }
       }
     }
