@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const WORDS = {
   Easy: ['cat','dog','sun','hat','pen','box','red','top','fun','run','cup','jam','map','sky','bee','pie','fox','owl','bus','rug'],
@@ -284,9 +285,7 @@ export default function WordScramble({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { setMode(null); setTotalRounds(0); setSelectedRounds(null); onPlayingChange?.(false) }} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={() => { setMode(null); setTotalRounds(0); setSelectedRounds(null); onPlayingChange?.(false) }} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

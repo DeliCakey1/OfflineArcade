@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const MODES = [
   { name: 'Easy', emoji: '🟢', color: '#39ff14', words: ['the','cat','sun','run','big','red','hat','dog','pen','cup','top','fun','map','box','sky','bee','fox','owl','jam','bus'], rounds: 10 },
@@ -197,9 +198,7 @@ export default function TypingSpeed({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { setMode(null); onPlayingChange?.(false) }} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={() => { setMode(null); onPlayingChange?.(false) }} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

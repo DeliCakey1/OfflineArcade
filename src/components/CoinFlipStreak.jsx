@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const MODES = [
   { name: 'Chillax', target: 3, emoji: '😎', color: '#00e5ff' },
@@ -270,9 +271,7 @@ export default function CoinFlipStreak({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={reset} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={reset} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

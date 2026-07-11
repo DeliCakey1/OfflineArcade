@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const MODES = [
   { name: 'Very Easy', attempts: 25, emoji: '🟢', color: '#39ff14' },
@@ -275,9 +276,7 @@ export default function GuessTheNumber({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={quitToMenu} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={quitToMenu} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

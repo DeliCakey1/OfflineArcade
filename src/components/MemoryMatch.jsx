@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const MODES = [
   { name: 'Easy', rows: 3, cols: 4, emoji: '🟢', color: '#39ff14' },
@@ -204,9 +205,7 @@ export default function MemoryMatch({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { setMode(null); onPlayingChange?.(false) }} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={() => { setMode(null); onPlayingChange?.(false) }} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

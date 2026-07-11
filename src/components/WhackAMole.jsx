@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const DIFFICULTIES = [
   { name: 'Easy', emoji: '🟢', color: '#39ff14', time: 30, moleStay: 1500, spawnInterval: 1200, desc: '30s — Relaxed pace' },
@@ -314,9 +315,7 @@ export default function WhackAMole({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { clearAllTimers(); setDifficulty(null); onPlayingChange?.(false) }} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={() => { clearAllTimers(); setDifficulty(null); onPlayingChange?.(false) }} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

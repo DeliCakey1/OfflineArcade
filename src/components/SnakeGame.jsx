@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const GRID_SIZE = 20
 const INITIAL_SPEED = 150
@@ -385,27 +386,7 @@ export default function SnakeGame({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        {gameState !== 'idle' && gameState !== 'gameover' && (
-          <button
-            onClick={() => {
-              if (gameRef.current.intervalId) clearInterval(gameRef.current.intervalId)
-              gameRef.current.running = false
-              setGameState('idle')
-              onPlayingChange?.(false)
-            }}
-            className="quit-btn"
-          >
-            Quit Game
-          </button>
-        )}
-        {gameState === 'gameover' && (
-          <button
-            onClick={() => { setGameState('idle'); onPlayingChange?.(false) }}
-            className="quit-btn"
-          >
-            New Game
-          </button>
-        )}
+        <QuitConfirmButton onQuit={() => { if (gameRef.current.intervalId) clearInterval(gameRef.current.intervalId); gameRef.current.running = false; setGameState('idle'); onPlayingChange?.(false) }} gameOver={gameState === 'gameover'} className="quit-btn" />
       </div>
     </div>
   )

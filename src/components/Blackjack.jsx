@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const SUITS = ['♠', '♥', '♦', '♣']
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
@@ -586,9 +587,7 @@ export default function Blackjack({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={reset} className="quit-btn">
-          {coins <= 0 ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={reset} gameOver={coins <= 0} className="quit-btn" />
       </div>
     </div>
   )

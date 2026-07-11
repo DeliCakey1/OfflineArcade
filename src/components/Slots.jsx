@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const SYMBOLS = ['🍒', '🍋', '🍊', '🍇', '⭐', '💎']
 
@@ -352,9 +353,7 @@ export default function Slots({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={reset} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={reset} gameOver={gameOver} className="quit-btn" />
       </div>
 
       <style>{`

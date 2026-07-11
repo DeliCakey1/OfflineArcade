@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const ROUND_OPTIONS = [5, 10, 15]
 const RANGE_OPTIONS = [
@@ -371,9 +372,7 @@ export default function DiceRoll({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={reset} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={reset} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

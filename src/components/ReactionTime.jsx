@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const MODES = [
   { name: 'Classic', emoji: '⚡', color: '#39ff14', rounds: 5, desc: '5 rounds - average speed' },
@@ -219,9 +220,7 @@ export default function ReactionTime({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); setMode(null); onPlayingChange?.(false) }} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); setMode(null); onPlayingChange?.(false) }} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

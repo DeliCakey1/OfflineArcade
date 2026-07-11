@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const COLORS = [
   { name: 'red', color: '#ff2d55', sound: 'win' },
@@ -223,9 +224,7 @@ export default function SimonSays({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); setMode(null); onPlayingChange?.(false) }} className="quit-btn">
-          {gameOver ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); setMode(null); onPlayingChange?.(false) }} gameOver={gameOver} className="quit-btn" />
       </div>
     </div>
   )

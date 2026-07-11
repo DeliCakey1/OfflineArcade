@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import QuitConfirmButton from './QuitConfirmButton'
 
 const BOARD_SIZES = [3, 4, 5, 6, 7, 8]
 const GOAL_PRESETS = [128, 256, 512, 1024, 2048, 4096, 8192]
@@ -483,9 +484,7 @@ export default function NumberMerge({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button onClick={() => { setScreen('menu'); onPlayingChange?.(false) }} className="quit-btn">
-          {(gameOver || won) ? 'New Game' : 'Quit Game'}
-        </button>
+        <QuitConfirmButton onQuit={() => { setScreen('menu'); onPlayingChange?.(false) }} gameOver={gameOver || won} className="quit-btn" />
       </div>
     </div>
   )
