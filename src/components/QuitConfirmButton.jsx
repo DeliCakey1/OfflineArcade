@@ -35,7 +35,7 @@ export default function QuitConfirmButton({ onQuit, gameOver, className }) {
             <h2 className="stats-title" id="quit-dialog-title">Quit Game?</h2>
             <p className="confirm-modal-text">Your progress in this game will be lost.</p>
             <div className="confirm-buttons">
-              <button className="confirm-btn yes" onClick={onQuit}>Quit</button>
+              <button onClick={() => { setShowConfirm(false); onQuit() }} className="quit-btn">Quit</button>
               <button className="confirm-btn no" ref={cancelRef} onClick={() => setShowConfirm(false)}>Stay</button>
             </div>
           </div>

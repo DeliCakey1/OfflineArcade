@@ -853,6 +853,15 @@ function App() {
         </div>
       </main>
       {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
+      {showConfirmClear && (
+        <ConfirmModal
+          message="This will permanently delete all your stats. Are you sure?"
+          confirmText="Clear Stats"
+          cancelText="Cancel"
+          onConfirm={() => { clearStats(); setShowConfirmClear(false) }}
+          onCancel={() => setShowConfirmClear(false)}
+        />
+      )}
       {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
     </div>
   )

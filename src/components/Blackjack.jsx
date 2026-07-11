@@ -173,9 +173,9 @@ export default function Blackjack({ onPlayingChange }) {
               setDealerRevealed(true)
               setDealerValue(handValue(dCards))
               if (isBlackjack(dCards)) {
-                finishRound('push', currentBet, 'Both Blackjack! Push', pCards, dCards, true)
+                finishRound('push', currentBet, 'Both Blackjack! Push', pCards, dCards, true, coins)
               } else {
-                finishRound('blackjack', currentBet, 'Blackjack! 3x payout!', pCards, dCards, true)
+                finishRound('blackjack', currentBet, 'Blackjack! 3x payout!', pCards, dCards, true, coins)
               }
             } else {
               setPhase('playing')
@@ -188,7 +188,7 @@ export default function Blackjack({ onPlayingChange }) {
     revealCards()
   }
 
-  function finishRound(resultType, currentBet, detail, pCards, dCards, dealerAlreadyRevealed) {
+  function finishRound(resultType, currentBet, detail, pCards, dCards, dealerAlreadyRevealed, currentCoins) {
     const dv = handValue(dCards)
     if (!dealerAlreadyRevealed) {
       setDealerRevealed(true)
@@ -204,7 +204,7 @@ export default function Blackjack({ onPlayingChange }) {
     else if (resultType === 'surrender') coinChange = Math.floor(currentBet / 2)
     else coinChange = 0
 
-    const newCoins = coins + coinChange
+    const newCoins = currentCoins + coinChange
     setCoins(newCoins)
 
     const newRound = round + 1
@@ -266,7 +266,7 @@ export default function Blackjack({ onPlayingChange }) {
     if (newValue > 21) {
       setAnimating(true)
       dealTimeoutRef.current = setTimeout(() => {
-        finishRound('bust', bet, 'Bust! You lose.', newCards, dealerCards, false)
+        finishRound('bust', bet, 'Bust! You lose.', newCards, dealerCards, false, coins)
       }, 400)
     }
   }
@@ -300,7 +300,7 @@ export default function Blackjack({ onPlayingChange }) {
 
     if (newValue > 21) {
       dealTimeoutRef.current = setTimeout(() => {
-        finishRound('bust', newBet, 'Bust on double down!', newCards, dealerCards, false)
+        finishRound('bust', newBet, 'Bust on double down!', newCards, dealerCards, false, coins)
       }, 400)
     } else {
       setAnimating(true)
@@ -313,7 +313,7 @@ export default function Blackjack({ onPlayingChange }) {
   function playerSurrender() {
     if (phase !== 'playing' || animating || playerCards.length !== 2) return
     sound('click')
-    finishRound('surrender', bet, 'Surrendered. Half bet returned.', playerCards, dealerCards, false)
+    finishRound('surrender', bet, 'Surrendered. Half bet returned.', playerCards, dealerCards, false, coins)
   }
 
   function dealerPlay(currentDealerCards, currentPlayerCards, currentBet) {
@@ -341,13 +341,13 @@ export default function Blackjack({ onPlayingChange }) {
           const finalDealerValue = handValue(dCards)
 
           if (finalDealerValue > 21) {
-            finishRound('dealerBust', currentBetVal, 'Dealer busts! You win!', pCards, dCards, true)
+            finishRound('dealerBust', currentBetVal, 'Dealer busts! You win!', pCards, dCards, true, coins)
           } else if (finalPlayerValue > finalDealerValue) {
-            finishRound('win', currentBetVal, `You win! ${finalPlayerValue} vs ${finalDealerValue}`, pCards, dCards, true)
+            finishRound('win', currentBetVal, `You win! ${finalPlayerValue} vs ${finalDealerValue}`, pCards, dCards, true, coins)
           } else if (finalPlayerValue < finalDealerValue) {
-            finishRound('lose', currentBetVal, `Dealer wins. ${finalDealerValue} vs ${finalPlayerValue}`, pCards, dCards, true)
+            finishRound('lose', currentBetVal, `Dealer wins. ${finalDealerValue} vs ${finalPlayerValue}`, pCards, dCards, true, coins)
           } else {
-            finishRound('push', currentBetVal, `Push! Both have ${finalPlayerValue}`, pCards, dCards, true)
+            finishRound('push', currentBetVal, `Push! Both have ${finalPlayerValue}`, pCards, dCards, true, coins)
           }
         }, 200)
       }
