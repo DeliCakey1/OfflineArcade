@@ -479,8 +479,8 @@ export default function Slots({ onPlayingChange }) {
           font-family: 'Fredoka', sans-serif;
           font-size: 18px;
           font-weight: 700;
-          width: 36px;
-          height: 36px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
           border: 2px solid var(--border-glass);
           background: var(--bg-glass);
@@ -535,7 +535,7 @@ export default function Slots({ onPlayingChange }) {
           font-family: 'Fredoka', sans-serif;
           font-size: 12px;
           font-weight: 600;
-          padding: 4px 10px;
+          padding: 8px 12px;
           border-radius: 8px;
           border: 1px solid var(--border-glass);
           background: var(--bg-glass);

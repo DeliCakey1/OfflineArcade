@@ -330,18 +330,19 @@ export default function SnakeGame({ onPlayingChange }) {
 
       {(gameState === 'playing' || gameState === 'paused') && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: 12 }}>
-          <button style={btnStyle} onClick={() => changeDirection({ x: 0, y: -1 })}>&#9650;</button>
+          <button style={btnStyle} aria-label="Move up" onClick={() => changeDirection({ x: 0, y: -1 })}>&#9650;</button>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button style={btnStyle} onClick={() => changeDirection({ x: -1, y: 0 })}>&#9664;</button>
+            <button style={btnStyle} aria-label="Move left" onClick={() => changeDirection({ x: -1, y: 0 })}>&#9664;</button>
             <button
               style={{ ...btnStyle, fontSize: 14, width: 48, height: 48 }}
+              aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}
               onClick={pauseResume}
             >
               {gameState === 'paused' ? '&#9654;' : '&#9646;&#9646;'}
             </button>
-            <button style={btnStyle} onClick={() => changeDirection({ x: 1, y: 0 })}>&#9654;</button>
+            <button style={btnStyle} aria-label="Move right" onClick={() => changeDirection({ x: 1, y: 0 })}>&#9654;</button>
           </div>
-          <button style={btnStyle} onClick={() => changeDirection({ x: 0, y: 1 })}>&#9660;</button>
+          <button style={btnStyle} aria-label="Move down" onClick={() => changeDirection({ x: 0, y: 1 })}>&#9660;</button>
         </div>
       )}
 

@@ -249,7 +249,7 @@ export default function HigherOrLower({ onPlayingChange }) {
           <div className="hol-cards">
             <div className="hol-card-col">
               <div className="hol-card-label">Current</div>
-              <div className={`hol-card ${isRed(currentCard.suit) ? 'red' : 'black'}`}>
+              <div className={`hol-card ${isRed(currentCard.suit) ? 'red' : 'black'}`} aria-label={`Current card: ${currentCard.value} of ${currentCard.suit === '♠' ? 'spades' : currentCard.suit === '♥' ? 'hearts' : currentCard.suit === '♦' ? 'diamonds' : 'clubs'}`}>
                 <div className="hol-card-top">{currentCard.value}<br/>{currentCard.suit}</div>
                 <div className="hol-card-center">{currentCard.suit}</div>
                 <div className="hol-card-bottom">{currentCard.value}<br/>{currentCard.suit}</div>
@@ -269,7 +269,7 @@ export default function HigherOrLower({ onPlayingChange }) {
             <div className="hol-card-col">
               <div className="hol-card-label">Next</div>
               {reveal && nextCard ? (
-                <div className={`hol-card revealed ${isRed(nextCard.suit) ? 'red' : 'black'}`}>
+                <div className={`hol-card revealed ${isRed(nextCard.suit) ? 'red' : 'black'}`} aria-label={`Revealed card: ${nextCard.value} of ${nextCard.suit === '♠' ? 'spades' : nextCard.suit === '♥' ? 'hearts' : nextCard.suit === '♦' ? 'diamonds' : 'clubs'}`}>
                   <div className="hol-card-top">{nextCard.value}<br/>{nextCard.suit}</div>
                   <div className="hol-card-center">{nextCard.suit}</div>
                   <div className="hol-card-bottom">{nextCard.value}<br/>{nextCard.suit}</div>

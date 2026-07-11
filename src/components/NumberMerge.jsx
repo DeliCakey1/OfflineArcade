@@ -421,7 +421,7 @@ export default function NumberMerge({ onPlayingChange }) {
 
       <div className="merge-controls">
         {DIRS.map(d => (
-          <button key={d.key} className="merge-dir-btn" onClick={() => makeMove(d.dir)} disabled={animating}>
+          <button key={d.key} className="merge-dir-btn" aria-label={`Slide ${d.dir}`} onClick={() => makeMove(d.dir)} disabled={animating}>
             {d.label}
           </button>
         ))}

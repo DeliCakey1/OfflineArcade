@@ -160,7 +160,11 @@ export default function ReactionTime({ onPlayingChange }) {
       </div>
 
       <div className="reaction-zone"
+        tabIndex={0}
+        role="button"
+        aria-label="Click or press Space"
         onClick={handleClick}
+        onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); handleClick() } }}
         style={{
           background: phase === 'ready' ? 'linear-gradient(135deg, #00c853, #39ff14)' :
             phase === 'waiting' ? 'linear-gradient(135deg, var(--neon-red), #ff4444)' :

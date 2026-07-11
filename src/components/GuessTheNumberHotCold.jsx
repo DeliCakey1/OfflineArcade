@@ -258,6 +258,7 @@ export default function GuessTheNumberHotCold({ onPlayingChange }) {
               min="1"
               max="100"
               className="gtn-input"
+              aria-label="Guess a number"
               placeholder="1-100"
               value={guess}
               onChange={(e) => setGuess(e.target.value)}

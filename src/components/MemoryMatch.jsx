@@ -160,7 +160,7 @@ export default function MemoryMatch({ onPlayingChange }) {
         </div>
       </div>
 
-      <div className="memory-progress">
+      <div className="memory-progress" role="progressbar" aria-valuenow={foundPairs} aria-valuemin={0} aria-valuemax={totalPairs}>
         <div className="memory-progress-fill" style={{ width: `${(foundPairs / totalPairs) * 100}%` }} />
       </div>
 
@@ -191,6 +191,7 @@ export default function MemoryMatch({ onPlayingChange }) {
             return (
               <button key={i}
                 className={`memory-card ${isFlipped ? 'flipped' : ''} ${isMatched ? 'matched' : ''}`}
+                aria-label={isFlipped ? `${card.emoji} card, face up` : `Card ${i + 1}, face down`}
                 onClick={() => flipCard(i)}
                 disabled={isFlipped || animating}
               >

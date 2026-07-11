@@ -55,7 +55,7 @@ function makeDeck() {
 function CardFace({ card, style, className }) {
   const red = isRed(card.suit)
   return (
-    <div className={`bj-card ${red ? 'red' : 'black'} ${className || ''}`} style={style}>
+    <div className={`bj-card ${red ? 'red' : 'black'} ${className || ''}`} style={style} aria-label={`${card.rank} of ${card.suit === '♠' ? 'spades' : card.suit === '♥' ? 'hearts' : card.suit === '♦' ? 'diamonds' : 'clubs'}`}>
       <div className="bj-card-top">{card.rank}<br />{card.suit}</div>
       <div className="bj-card-center">{card.suit}</div>
       <div className="bj-card-bottom">{card.rank}<br />{card.suit}</div>
@@ -502,6 +502,7 @@ export default function Blackjack({ onPlayingChange }) {
               max={coins}
               className="bj-bet-input"
               placeholder={`1 - ${coins}`}
+              aria-label={`Bet amount, 1 to ${coins} coins`}
               value={betInput}
               onChange={e => setBetInput(e.target.value)}
             />

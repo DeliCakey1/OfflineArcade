@@ -161,14 +161,33 @@ const GAMES = [
 ]
 
 function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave', cancelText = 'Stay' }) {
+  const cancelRef = useRef(null)
+  const previousFocus = useRef(null)
+
+  useEffect(() => {
+    previousFocus.current = document.activeElement
+    cancelRef.current?.focus()
+    function handleKey(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onCancel()
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      previousFocus.current?.focus()
+    }
+  }, [onCancel])
+
   return (
     <div className="stats-overlay" onClick={onCancel}>
-      <div className="stats-modal confirm-modal" onClick={e => e.stopPropagation()}>
-        <h2 className="stats-title">Are you sure?</h2>
+      <div className="stats-modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" onClick={e => e.stopPropagation()}>
+        <h2 className="stats-title" id="confirm-dialog-title">Are you sure?</h2>
         <p className="confirm-modal-text">{message}</p>
         <div className="confirm-buttons">
           <button className="confirm-btn yes" onClick={onConfirm}>{confirmText}</button>
-          <button className="confirm-btn no" onClick={onCancel}>{cancelText}</button>
+          <button className="confirm-btn no" ref={cancelRef} onClick={onCancel}>{cancelText}</button>
         </div>
       </div>
     </div>
@@ -200,10 +219,29 @@ function GameCard({ game, stats, onClick }) {
 function StatsModal({ allStats, onClose, onClear }) {
   const totalPlayed = Object.values(allStats).reduce((s, g) => s + g.played, 0)
   const totalWon = Object.values(allStats).reduce((s, g) => s + g.won, 0)
+  const closeRef = useRef(null)
+  const previousFocus = useRef(null)
+
+  useEffect(() => {
+    previousFocus.current = document.activeElement
+    closeRef.current?.focus()
+    function handleKey(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      previousFocus.current?.focus()
+    }
+  }, [onClose])
+
   return (
     <div className="stats-overlay" onClick={onClose}>
-      <div className="stats-modal" onClick={e => e.stopPropagation()}>
-        <h2 className="stats-title">Your Stats</h2>
+      <div className="stats-modal" role="dialog" aria-modal="true" aria-labelledby="stats-dialog-title" onClick={e => e.stopPropagation()}>
+        <h2 className="stats-title" id="stats-dialog-title">Your Stats</h2>
         <div className="stats-total">
           <span>{totalPlayed} games played</span>
           <span>{totalWon} won</span>
@@ -224,7 +262,7 @@ function StatsModal({ allStats, onClose, onClear }) {
           })}
         </div>
         <div className="stats-footer">
-          <button className="stats-close" onClick={onClose}>Close</button>
+          <button className="stats-close" ref={closeRef} onClick={onClose}>Close</button>
           {totalPlayed > 0 && (
             <button className="stats-clear-btn" onClick={onClear}>🗑️ Clear All Stats</button>
           )}
@@ -242,7 +280,7 @@ function ThemePicker({ current, onChange }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="theme-picker">
-      <button className="settings-btn" onClick={() => setOpen(!open)} title="Change Theme">
+      <button className="settings-btn" onClick={() => setOpen(!open)} title="Change Theme" aria-expanded={open} aria-haspopup="listbox">
         {THEMES[current].emoji}
       </button>
       {open && (
@@ -278,7 +316,7 @@ function GamesDropdown({ inGame, onNavigate }) {
 
   return (
     <div className="games-dropdown-wrap" ref={ref}>
-      <button className="settings-btn games-dropdown-btn" onClick={() => setOpen(!open)}>
+      <button className="settings-btn games-dropdown-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="listbox">
         🕹️ Games ▾
       </button>
       <div className={`theme-dropdown games-dropdown ${open ? 'open' : ''}`}>
@@ -608,30 +646,30 @@ function CloakScreen({ onBack }) {
 
 function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats, inGame, onHome, onNavigateGame, onCloak }) {
   return (
-    <div className="settings-bar">
+    <div className="settings-bar" role="toolbar" aria-label="Game settings">
       <div className="settings-bar-left">
-        <button className="settings-btn home-btn" onClick={onHome} title="Home">
+        <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">
           🏠
         </button>
         <GamesDropdown inGame={inGame} onNavigate={onNavigateGame} />
-        <button className="settings-btn" onClick={onCloak} title="Tab Cloaking">
+        <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">
           🎭
         </button>
       </div>
       <div className="settings-bar-right">
-        <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'}>
+        <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'} aria-label={muted ? 'Unmute sound' : 'Mute sound'}>
           {muted ? '🔇' : '🔊'}
         </button>
-        <button className="settings-btn" onClick={onAnimToggle} title={animations ? 'Disable Animations' : 'Enable Animations'}>
+        <button className="settings-btn" onClick={onAnimToggle} title={animations ? 'Disable Animations' : 'Enable Animations'} aria-label={animations ? 'Disable animations' : 'Enable animations'}>
           {animations ? '✨' : '🚫'}
         </button>
-        <button className="settings-btn" onClick={onGlassToggle} title={glass ? 'Disable Glassmorphism' : 'Enable Glassmorphism'}>
+        <button className="settings-btn" onClick={onGlassToggle} title={glass ? 'Disable Glassmorphism' : 'Enable Glassmorphism'} aria-label={glass ? 'Disable glassmorphism' : 'Enable glassmorphism'}>
           {glass ? '💎' : '🪟'}
         </button>
-        <button className="settings-btn" onClick={onBgToggle} title={bg ? 'Disable Background' : 'Enable Background'}>
+        <button className="settings-btn" onClick={onBgToggle} title={bg ? 'Disable Background' : 'Enable Background'} aria-label={bg ? 'Disable background' : 'Enable background'}>
           {bg ? '🖼️' : '⬛'}
         </button>
-        <button className="settings-btn" onClick={onStats} title="Stats">
+        <button className="settings-btn" onClick={onStats} title="Stats" aria-label="View statistics">
           📊
         </button>
         <ThemePicker current={theme} onChange={onThemeChange} />

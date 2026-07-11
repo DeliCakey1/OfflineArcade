@@ -184,6 +184,7 @@ export default function TypingSpeed({ onPlayingChange }) {
           <input
             ref={inputRef}
             className="typing-input"
+            aria-label="Type the displayed text"
             type="text"
             value={input}
             onChange={handleInput}

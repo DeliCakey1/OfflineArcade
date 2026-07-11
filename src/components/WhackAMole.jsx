@@ -46,6 +46,17 @@ export default function WhackAMole({ onPlayingChange }) {
   }, [gameOver])
 
   useEffect(() => {
+    if (!difficulty || gameOver) return
+    function handleKey(e) {
+      const keyMap = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8 }
+      const idx = keyMap[e.key]
+      if (idx !== undefined) { e.preventDefault(); whackMole(idx) }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [difficulty, gameOver])
+
+  useEffect(() => {
     return () => {
       clearAllTimers()
     }
@@ -241,7 +252,8 @@ export default function WhackAMole({ onPlayingChange }) {
           const isUp = moles[hole] !== undefined
           const isHit = hitEffects[hole]
           return (
-            <div key={hole} style={{ position: 'relative', aspectRatio: '1', cursor: isUp ? 'pointer' : 'default', userSelect: 'none' }}
+            <button key={hole} style={{ position: 'relative', aspectRatio: '1', cursor: isUp ? 'pointer' : 'default', userSelect: 'none', border: 'none', background: 'none', padding: 0 }}
+              aria-label={isUp ? `Mole in hole ${hole + 1}` : `Hole ${hole + 1}, empty`}
               onClick={() => whackMole(hole)}>
               <div style={{
                 position: 'absolute', bottom: 0, left: '5%', width: '90%', height: '35%',
@@ -270,7 +282,7 @@ export default function WhackAMole({ onPlayingChange }) {
               }}>
                 {isHit ? '💥' : '🐹'}
               </div>
-            </div>
+            </button>
           )
         })}
       </div>

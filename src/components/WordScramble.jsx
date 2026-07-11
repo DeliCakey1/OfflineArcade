@@ -259,6 +259,7 @@ export default function WordScramble({ onPlayingChange }) {
             <div className="word-scramble-input-area">
               <input
                 className="word-scramble-input"
+                aria-label="Type your guess"
                 type="text"
                 value={guess}
                 onChange={e => setGuess(e.target.value)}

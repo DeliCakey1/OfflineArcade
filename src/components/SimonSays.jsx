@@ -184,6 +184,7 @@ export default function SimonSays({ onPlayingChange }) {
               borderColor: c.color,
               boxShadow: highlight === i ? `0 0 30px ${c.color}, inset 0 0 20px ${c.color}` : 'none',
             }}
+            aria-label={`${c.name} button`}
             onClick={() => handlePress(i)}
             disabled={phase !== 'input'}
           >

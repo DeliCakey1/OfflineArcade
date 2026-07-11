@@ -22,6 +22,11 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:focus-visible {
+  outline: 2px solid var(--neon-purple);
+  outline-offset: 2px;
+}
+
 body {
   background-color: var(--bg-dark);
   background-image: url('/Alpine-Amnesia.png');
@@ -443,7 +448,9 @@ body::after {
 }
 .settings-btn {
   font-size: 18px;
-  padding: 6px 12px;
+  padding: 10px 12px;
+  min-height: 44px;
+  min-width: 44px;
   border: 1px solid var(--border-glass);
   border-radius: 10px;
   background: var(--bg-glass);
@@ -649,10 +656,13 @@ body::after {
   border: none;
   color: var(--text-dim);
   cursor: pointer;
-  font-size: 13;
+  font-size: 13px;
   font-family: 'Fredoka', sans-serif;
   text-decoration: underline;
-  font-size: 13px;
+  min-height: 44px;
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .quit-btn:hover { color: var(--text-light); }
@@ -2180,6 +2190,15 @@ body::after {
 }
 
 /* ===== RESPONSIVE ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @media (max-width: 600px) {
   .arcade-title { font-size: 18px; }
   .game-card { padding: 20px; }
