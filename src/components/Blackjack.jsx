@@ -198,10 +198,10 @@ export default function Blackjack({ onPlayingChange }) {
 
     let coinChange = 0
     if (resultType === 'blackjack') coinChange = currentBet * 3
-    else if (resultType === 'win' || resultType === 'dealerBust') coinChange = currentBet
-    else if (resultType === 'push') coinChange = 0
-    else if (resultType === 'surrender') coinChange = -Math.floor(currentBet / 2)
-    else coinChange = -currentBet
+    else if (resultType === 'win' || resultType === 'dealerBust') coinChange = currentBet * 2
+    else if (resultType === 'push') coinChange = currentBet
+    else if (resultType === 'surrender') coinChange = Math.floor(currentBet / 2)
+    else coinChange = 0
 
     const newCoins = coins + coinChange
     setCoins(newCoins)
