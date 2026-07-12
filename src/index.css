@@ -106,6 +106,37 @@ body::after {
   background: var(--bg-dark) !important;
 }
 
+/* ===== WAVE BAR ===== */
+.has-wave-bar {
+  margin-left: 8px;
+}
+.wave-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 100vh;
+  z-index: 9999;
+  background: linear-gradient(
+    180deg,
+    var(--neon-pink) 0%,
+    var(--neon-blue) 20%,
+    var(--neon-cyan) 40%,
+    var(--neon-green) 60%,
+    var(--neon-yellow) 80%,
+    var(--neon-pink) 100%
+  );
+  background-size: 100% 300%;
+  animation: wave-slide 4s linear infinite;
+}
+.no-animations .wave-bar {
+  animation: none;
+}
+@keyframes wave-slide {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 300%; }
+}
+
 /* ===== SETTINGS BAR ===== */
 .settings-bar {
   display: flex;

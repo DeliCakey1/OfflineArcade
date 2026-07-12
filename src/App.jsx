@@ -644,7 +644,7 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, onStats, inGame, onHome, onNavigateGame, onCloak }) {
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, onStats, inGame, onHome, onNavigateGame, onCloak }) {
   return (
     <div className="settings-bar" role="toolbar" aria-label="Game settings">
       <div className="settings-bar-left">
@@ -669,6 +669,9 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
         <button className="settings-btn" onClick={onBgToggle} title={bg ? 'Disable Background' : 'Enable Background'} aria-label={bg ? 'Disable background' : 'Enable background'}>
           {bg ? '🖼️' : '⬛'}
         </button>
+        <button className="settings-btn" onClick={onWaveBarToggle} title={waveBar ? 'Disable Wave Bar' : 'Enable Wave Bar'} aria-label={waveBar ? 'Disable wave bar' : 'Enable wave bar'}>
+          {waveBar ? '🌊' : '🫧'}
+        </button>
         <button className="settings-btn" onClick={onStats} title="Stats" aria-label="View statistics">
           📊
         </button>
@@ -690,6 +693,7 @@ function App() {
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showCloak, setShowCloak] = useState(false)
+  const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
   const { allStats, clearStats } = useStats('_global')
 
   useEffect(() => {
@@ -714,6 +718,11 @@ function App() {
     document.documentElement.classList.toggle('no-bg', !bg)
     try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {}
   }, [bg])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('has-wave-bar', waveBar)
+    try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {}
+  }, [waveBar])
 
   useEffect(() => {
     let buf = []
@@ -778,6 +787,7 @@ function App() {
     animations, onAnimToggle: () => setAnimations(a => !a),
     glass, onGlassToggle: () => setGlass(g => !g),
     bg, onBgToggle: () => setBg(b => !b),
+    waveBar, onWaveBarToggle: () => setWaveBar(w => !w),
     onStats: () => setShowStats(true),
     inGame: !!activeGame,
     onHome: handleHome,
@@ -790,6 +800,7 @@ function App() {
     const ActiveComponent = game.component
     return (
       <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
         <SettingsBar {...settings} />
         <header className="arcade-header">
           <h1 className="arcade-title">ARCADE GAMES</h1>
@@ -835,6 +846,7 @@ function App() {
 
   return (
     <div>
+      {waveBar && <div className="wave-bar" aria-hidden="true" />}
       <SettingsBar {...settings} />
       <header className="arcade-header">
         <h1 className="arcade-title">ARCADE GAMES</h1>
