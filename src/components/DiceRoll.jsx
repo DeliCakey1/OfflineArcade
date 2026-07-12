@@ -135,7 +135,7 @@ export default function DiceRoll({ onPlayingChange }) {
     const wins = history.filter(h => h.won).length
     const lines = [
       `🎲 Beat the bot at Dice Roll (${modeLabel})!`,
-      `📊 ${wins}/${totalRounds} rounds won | 💰 Net: $${totalWinnings >= 0 ? '+' : ''}${totalWinnings.toLocaleString()}`,
+      `📊 ${wins}/${totalRounds} rounds won | 💰 Net: ${totalWinnings >= 0 ? '+' : ''}$${totalWinnings.toLocaleString()}`,
       ``,
       `Round history:`,
       ...history.map(h => `  #${h.round}: Bet $${h.bet} on ${typeof h.pick === 'object' ? h.pick.label : h.pick === true ? 'Even' : h.pick === false ? 'Odd' : h.pick} → 🎲${h.dice[0]}+${h.dice[1]}=${h.total} ${h.won ? `+$${h.payout}` : `-$${Math.abs(h.payout)}`}`),

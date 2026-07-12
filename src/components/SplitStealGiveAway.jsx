@@ -185,7 +185,7 @@ export default function SplitStealGiveAway({ onPlayingChange }) {
       `📊 You: $${totals.player.toLocaleString()} | Bot: $${totals.bot.toLocaleString()}`,
       ``,
       `Round history:`,
-      ...history.map(h => `  #${h.round}: ${h.player.emoji} vs ${h.bot.emoji} | Prize: $${h.prize} → ${h.result === 'win' ? `+$${h.playerPayoff}` : h.result === 'lose' ? `-$${h.botPayoff}` : `$${h.playerPayoff}`}`),
+      ...history.map(h => `  #${h.round}: ${h.player.emoji} vs ${h.bot.emoji} | Prize: $${h.prize} → ${h.result === 'win' ? `+$${h.playerPayoff}` : h.result === 'lose' ? `You got $${h.playerPayoff}` : `$${h.playerPayoff}`}`),
       ``,
       `🎮 Offline Arcade`,
     ]
@@ -474,7 +474,7 @@ export default function SplitStealGiveAway({ onPlayingChange }) {
                 <span className="history-vs">vs</span>
                 <span className="history-pick">{h.bot.emoji}</span>
                 <span className={`history-result ${h.result}`}>
-                  {h.result === 'win' ? `+$${h.playerPayoff}` : h.result === 'lose' ? `-$${h.botPayoff}` : `$${h.playerPayoff}`}
+                  {h.result === 'win' ? `+$${h.playerPayoff}` : h.result === 'lose' ? `You got $${h.playerPayoff}` : `$${h.playerPayoff}`}
                 </span>
               </div>
             ))}

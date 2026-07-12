@@ -32,6 +32,7 @@ export default function Slots({ onPlayingChange }) {
   const [result, setResult] = useState(null)
   const [lastWin, setLastWin] = useState(0)
   const [streak, setStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
   const [bestWin, setBestWin] = useState(0)
   const [totalSpins, setTotalSpins] = useState(0)
   const [history, setHistory] = useState([])
@@ -100,7 +101,11 @@ export default function Slots({ onPlayingChange }) {
             if (pts > 0) {
               setResult('win')
               setLastWin(pts)
-              setStreak(prev => prev + 1)
+              setStreak(prev => {
+                const ns = prev + 1
+                setBestStreak(b => Math.max(b, ns))
+                return ns
+              })
               setBestWin(prev => Math.max(prev, pts))
               setPointAnim('win')
               if (type === 'three') sound('victory')
@@ -140,6 +145,7 @@ export default function Slots({ onPlayingChange }) {
     setResult(null)
     setLastWin(0)
     setStreak(0)
+    setBestStreak(0)
     setBestWin(0)
     setTotalSpins(0)
     setHistory([])
@@ -153,7 +159,7 @@ export default function Slots({ onPlayingChange }) {
     const lines = [
       `🎰 Slot Machine Results`,
       `⭐ Total points: ${points}`,
-      `📊 ${wins}/${history.length} spins won | Best win: ${bestWin} pts | Best streak: ${streak}`,
+      `📊 ${wins}/${history.length} spins won | Best win: ${bestWin} pts | Best streak: ${bestStreak}`,
       ``,
       `Spin history:`,
       ...history.map(h => `  #${h.round}: ${h.reels.join(' ')} → ${h.won ? `+${h.points} pts` : 'No match'}`),
