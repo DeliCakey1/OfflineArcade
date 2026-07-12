@@ -12,21 +12,20 @@ function getRandomSymbol() {
   return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]
 }
 
-function calculatePayout(reels, bet) {
+function calculatePayout(reels) {
   if (reels[0] === reels[1] && reels[1] === reels[2]) {
-    return { multiplier: PAYOUTS_3[reels[0]], type: 'three' }
+    return { points: PAYOUTS_3[reels[0]], type: 'three' }
   }
   if (reels[0] === reels[1] || reels[1] === reels[2] || reels[0] === reels[2]) {
     const matched = reels[0] === reels[1] ? reels[0] : reels[0] === reels[2] ? reels[0] : reels[1]
-    const multiplier = PAYOUTS_2[matched] || 1
-    return { multiplier, type: 'two' }
+    const points = PAYOUTS_2[matched] || 1
+    return { points, type: 'two' }
   }
-  return { multiplier: 0, type: 'none' }
+  return { points: 0, type: 'none' }
 }
 
 export default function Slots({ onPlayingChange }) {
-  const [coins, setCoins] = useState(100)
-  const [bet, setBet] = useState(10)
+  const [points, setPoints] = useState(0)
   const [reels, setReels] = useState(['❓', '❓', '❓'])
   const [spinning, setSpinning] = useState(false)
   const [stoppedReels, setStoppedReels] = useState([false, false, false])
@@ -34,10 +33,10 @@ export default function Slots({ onPlayingChange }) {
   const [lastWin, setLastWin] = useState(0)
   const [streak, setStreak] = useState(0)
   const [bestWin, setBestWin] = useState(0)
+  const [totalSpins, setTotalSpins] = useState(0)
   const [history, setHistory] = useState([])
   const [copied, setCopied] = useState(false)
-  const [coinAnim, setCoinAnim] = useState('')
-  const [gameOver, setGameOver] = useState(false)
+  const [pointAnim, setPointAnim] = useState('')
   const spinIntervals = useRef([])
   const sound = useSound()
   const { gameStats, recordGame } = useStats('slots')
@@ -61,17 +60,14 @@ export default function Slots({ onPlayingChange }) {
   }, [])
 
   const spin = useCallback(() => {
-    if (spinning || bet < 1 || bet > coins || coins <= 0) return
+    if (spinning) return
     sound('confirm')
     setSpinning(true)
     setResult(null)
     setLastWin(0)
     setStoppedReels([false, false, false])
-    setCoinAnim('')
+    setPointAnim('')
     onPlayingChange?.(true)
-
-    const newCoins = coins - bet
-    setCoins(newCoins)
 
     const finalReels = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()]
 
@@ -96,62 +92,48 @@ export default function Slots({ onPlayingChange }) {
         stopReel(i, finalReels[i])
         if (i === 2) {
           setTimeout(() => {
-            const { multiplier, type } = calculatePayout(finalReels, bet)
-            const payout = bet * multiplier
-            const newCoinsAfter = newCoins + payout
+            const { points: pts, type } = calculatePayout(finalReels)
 
-            setCoins(prev => {
-              const updated = Math.max(0, prev + payout)
-              return updated
-            })
+            setPoints(prev => prev + pts)
+            setTotalSpins(prev => prev + 1)
 
-            if (payout > 0) {
+            if (pts > 0) {
               setResult('win')
-              setLastWin(payout)
+              setLastWin(pts)
               setStreak(prev => prev + 1)
-              setBestWin(prev => Math.max(prev, payout))
-              setCoinAnim('win')
+              setBestWin(prev => Math.max(prev, pts))
+              setPointAnim('win')
               if (type === 'three') sound('victory')
               else sound('cash')
             } else {
               setResult('lose')
               setStreak(0)
-              setCoinAnim('lose')
+              setPointAnim('lose')
               sound('lose')
             }
 
             setHistory(prev => [...prev.slice(-19), {
               reels: [...finalReels],
-              bet,
-              payout,
-              won: payout > 0,
+              points: pts,
+              won: pts > 0,
               round: prev.length + 1,
             }])
 
-            recordGame(payout > 0, streak + (payout > 0 ? 1 : 0))
-
-            const finalCoins = newCoinsAfter
-            if (finalCoins <= 0) {
-              setTimeout(() => {
-                setGameOver(true)
-                sound('defeat')
-              }, 600)
-            }
+            recordGame(pts > 0, streak + (pts > 0 ? 1 : 0))
 
             setSpinning(false)
             onPlayingChange?.(false)
-            setTimeout(() => setCoinAnim(''), 600)
+            setTimeout(() => setPointAnim(''), 600)
           }, 200)
         }
       }, time)
     })
-  }, [spinning, bet, coins, sound, stopReel, onPlayingChange, recordGame, streak])
+  }, [spinning, sound, stopReel, onPlayingChange, recordGame, streak])
 
   function reset() {
     spinIntervals.current.forEach(clearInterval)
     spinIntervals.current = []
-    setCoins(100)
-    setBet(10)
+    setPoints(0)
     setReels(['❓', '❓', '❓'])
     setSpinning(false)
     setStoppedReels([false, false, false])
@@ -159,23 +141,22 @@ export default function Slots({ onPlayingChange }) {
     setLastWin(0)
     setStreak(0)
     setBestWin(0)
+    setTotalSpins(0)
     setHistory([])
     setCopied(false)
-    setCoinAnim('')
-    setGameOver(false)
+    setPointAnim('')
     onPlayingChange?.(false)
   }
 
   function shareResult() {
     const wins = history.filter(h => h.won).length
-    const totalPayout = history.reduce((s, h) => s + h.payout, 0)
     const lines = [
       `🎰 Slot Machine Results`,
-      `💰 Started with 100, ended with ${coins} coins`,
-      `📊 ${wins}/${history.length} spins won | Best win: $${bestWin} | Best streak: ${streak}`,
+      `⭐ Total points: ${points}`,
+      `📊 ${wins}/${history.length} spins won | Best win: ${bestWin} pts | Best streak: ${streak}`,
       ``,
       `Spin history:`,
-      ...history.map(h => `  #${h.round}: ${h.reels.join(' ')} → ${h.won ? `+$${h.payout}` : `-$${h.bet}`}`),
+      ...history.map(h => `  #${h.round}: ${h.reels.join(' ')} → ${h.won ? `+${h.points} pts` : 'No match'}`),
       ``,
       `🎮 Offline Arcade`,
     ]
@@ -185,33 +166,6 @@ export default function Slots({ onPlayingChange }) {
     })
   }
 
-  if (gameOver) {
-    return (
-      <div className="game-card slide-in">
-        <h2>Slot Machine</h2>
-        <div className="rps-game-over">
-          <div className="rps-game-over-emoji">🎰</div>
-          <div className="result-text lose">Out of Coins!</div>
-          <div className="result-message">
-            You had {history.length} spins with {history.filter(h => h.won).length} wins
-          </div>
-          <div className="result-message">
-            Best win: ${bestWin}
-          </div>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={reset}>Play Again (100 coins)</button>
-            <button className="play-again-btn share-btn" onClick={shareResult}>
-              {copied ? '✓ Copied!' : '📋 Copy Result'}
-            </button>
-          </div>
-        </div>
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <button onClick={reset} className="quit-btn">New Game</button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="game-card slide-in">
       <h2>Slot Machine</h2>
@@ -219,10 +173,14 @@ export default function Slots({ onPlayingChange }) {
 
       <div className="slots-stats">
         <div className="slots-stat">
-          <div className="slots-stat-label">Coins</div>
-          <div className={`slots-stat-num coins ${coinAnim === 'win' ? 'bounce-win' : coinAnim === 'lose' ? 'bounce-lose' : ''}`}>
-            💰 {coins}
+          <div className="slots-stat-label">Points</div>
+          <div className={`slots-stat-num coins ${pointAnim === 'win' ? 'bounce-win' : pointAnim === 'lose' ? 'bounce-lose' : ''}`}>
+            ⭐ {points}
           </div>
+        </div>
+        <div className="slots-stat">
+          <div className="slots-stat-label">Spins</div>
+          <div className="slots-stat-num">{totalSpins}</div>
         </div>
         <div className="slots-stat">
           <div className="slots-stat-label">Streak</div>
@@ -232,7 +190,7 @@ export default function Slots({ onPlayingChange }) {
         </div>
         <div className="slots-stat">
           <div className="slots-stat-label">Best Win</div>
-          <div className="slots-stat-num best">⭐ {bestWin}</div>
+          <div className="slots-stat-num best">🏆 {bestWin}</div>
         </div>
       </div>
 
@@ -255,48 +213,19 @@ export default function Slots({ onPlayingChange }) {
       {result && (
         <div className="result-area-inner">
           <div className={`result-text ${result === 'win' ? 'win' : 'lose'}`}>
-            {result === 'win' ? `Won $${lastWin}!` : 'No match!'}
+            {result === 'win' ? `+${lastWin} points!` : 'No match!'}
           </div>
-          {result === 'win' && lastWin >= bet * 5 && (
+          {result === 'win' && lastWin >= 15 && (
             <div className="result-message">🎯 Big Win!</div>
           )}
         </div>
       )}
 
       <div className="slots-controls">
-        <div className="slots-bet-area">
-          <div className="slots-bet-label">BET</div>
-          <div className="slots-bet-buttons">
-            <button className="slots-bet-btn" onClick={() => { sound('click'); setBet(Math.max(1, bet - 5)) }} disabled={spinning}>-</button>
-            <input
-              type="number"
-              className="slots-bet-input"
-              value={bet}
-              min={1}
-              max={coins}
-              onChange={(e) => {
-                const v = parseInt(e.target.value)
-                if (!isNaN(v) && v >= 1 && v <= coins) setBet(v)
-              }}
-              disabled={spinning}
-            />
-            <button className="slots-bet-btn" onClick={() => { sound('click'); setBet(Math.min(coins, bet + 5)) }} disabled={spinning}>+</button>
-          </div>
-          <div className="slots-bet-presets">
-            {[5, 10, 25, 50].map(amount => (
-              <button key={amount} className={`slots-preset-btn ${bet === amount ? 'active' : ''}`}
-                onClick={() => { if (amount <= coins) { sound('click'); setBet(amount) } }}
-                disabled={spinning || amount > coins}>
-                ${amount}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <button
           className={`slots-spin-btn ${spinning ? 'spinning' : ''}`}
           onClick={spin}
-          disabled={spinning || bet < 1 || bet > coins || coins <= 0}
+          disabled={spinning}
         >
           {spinning ? '🎰 Spinning...' : '🎰 SPIN'}
         </button>
@@ -305,24 +234,24 @@ export default function Slots({ onPlayingChange }) {
       <div className="slots-payouts">
         <div className="slots-payouts-title">Payouts</div>
         <div className="slots-payouts-grid">
-          {Object.entries(PAYOUTS_3).map(([sym, mult]) => (
+          {Object.entries(PAYOUTS_3).map(([sym, pts]) => (
             <div key={sym} className="slots-payout-row">
               <span className="slots-payout-sym">{sym}×3</span>
-              <span className="slots-payout-mult">{mult}x</span>
+              <span className="slots-payout-mult">{pts} pts</span>
             </div>
           ))}
           <div className="slots-payout-divider" />
           <div className="slots-payout-row">
             <span className="slots-payout-sym">💎×2</span>
-            <span className="slots-payout-mult">3x</span>
+            <span className="slots-payout-mult">3 pts</span>
           </div>
           <div className="slots-payout-row">
             <span className="slots-payout-sym">⭐×2</span>
-            <span className="slots-payout-mult">2x</span>
+            <span className="slots-payout-mult">2 pts</span>
           </div>
           <div className="slots-payout-row">
             <span className="slots-payout-sym">Any×2</span>
-            <span className="slots-payout-mult">1x</span>
+            <span className="slots-payout-mult">1 pt</span>
           </div>
         </div>
       </div>
@@ -336,7 +265,7 @@ export default function Slots({ onPlayingChange }) {
                 <span className="history-round">#{h.round}</span>
                 <span className="history-pick">{h.reels.join(' ')}</span>
                 <span className={`history-result ${h.won ? 'win' : 'lose'}`}>
-                  {h.won ? `+$${h.payout}` : `-$${h.bet}`}
+                  {h.won ? `+${h.points} pts` : '—'}
                 </span>
               </div>
             ))}
@@ -353,15 +282,16 @@ export default function Slots({ onPlayingChange }) {
       )}
 
       <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <QuitConfirmButton onQuit={reset} gameOver={gameOver} className="quit-btn" />
+        <QuitConfirmButton onQuit={reset} gameOver={false} className="quit-btn" />
       </div>
 
       <style>{`
         .slots-stats {
           display: flex;
           justify-content: center;
-          gap: 24px;
+          gap: 16px;
           margin-bottom: 20px;
+          flex-wrap: wrap;
         }
         .slots-stat {
           text-align: center;
@@ -375,7 +305,7 @@ export default function Slots({ onPlayingChange }) {
         }
         .slots-stat-num {
           font-family: 'Press Start 2P', monospace;
-          font-size: 16px;
+          font-size: 14px;
           color: var(--neon-yellow);
           transition: all 0.3s ease;
         }
@@ -457,105 +387,6 @@ export default function Slots({ onPlayingChange }) {
           align-items: center;
           gap: 16px;
           margin-bottom: 20px;
-        }
-        .slots-bet-area {
-          text-align: center;
-        }
-        .slots-bet-label {
-          font-size: 11px;
-          color: var(--text-dim);
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-bottom: 8px;
-        }
-        .slots-bet-buttons {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-          justify-content: center;
-        }
-        .slots-bet-btn {
-          font-family: 'Fredoka', sans-serif;
-          font-size: 18px;
-          font-weight: 700;
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          border: 2px solid var(--border-glass);
-          background: var(--bg-glass);
-          backdrop-filter: blur(8px);
-          color: var(--text-light);
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .slots-bet-btn:hover:not(:disabled) {
-          border-color: var(--neon-purple);
-          transform: scale(1.1);
-        }
-        .slots-bet-btn:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-        .slots-bet-input {
-          font-family: 'Press Start 2P', monospace;
-          font-size: 18px;
-          width: 80px;
-          padding: 8px;
-          border: 2px solid var(--border-glass);
-          border-radius: 10px;
-          background: var(--bg-glass);
-          backdrop-filter: blur(8px);
-          color: var(--neon-yellow);
-          text-align: center;
-          outline: none;
-          -moz-appearance: textfield;
-        }
-        .slots-bet-input::-webkit-outer-spin-button,
-        .slots-bet-input::-webkit-inner-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-        .slots-bet-input:focus {
-          border-color: var(--neon-purple);
-          box-shadow: 0 0 12px rgba(185, 70, 255, 0.3);
-        }
-        .slots-bet-input:disabled {
-          opacity: 0.5;
-        }
-        .slots-bet-presets {
-          display: flex;
-          gap: 6px;
-          justify-content: center;
-        }
-        .slots-preset-btn {
-          font-family: 'Fredoka', sans-serif;
-          font-size: 12px;
-          font-weight: 600;
-          padding: 8px 12px;
-          border-radius: 8px;
-          border: 1px solid var(--border-glass);
-          background: var(--bg-glass);
-          backdrop-filter: blur(8px);
-          color: var(--text-dim);
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .slots-preset-btn:hover:not(:disabled) {
-          border-color: var(--neon-purple);
-          color: var(--text-light);
-        }
-        .slots-preset-btn.active {
-          border-color: var(--neon-purple);
-          background: rgba(185, 70, 255, 0.15);
-          color: var(--neon-purple);
-        }
-        .slots-preset-btn:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
         }
         .slots-spin-btn {
           font-family: 'Press Start 2P', monospace;
