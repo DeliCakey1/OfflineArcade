@@ -130,8 +130,7 @@ export default function Blackjack({ onPlayingChange }) {
   }, [coins])
 
   useEffect(() => {
-    onPlayingChange?.(phase === 'dealing' || phase === 'playing')
-    return () => { onPlayingChange?.(false); if (dealTimeoutRef.current) clearTimeout(dealTimeoutRef.current) }
+    onPlayingChange?.(phase === 'dealing' || phase === 'playing' || phase === 'dealerTurn')
   }, [phase, onPlayingChange])
 
   useEffect(() => {
