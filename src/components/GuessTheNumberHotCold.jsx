@@ -26,10 +26,10 @@ export default function GuessTheNumberHotCold({ onPlayingChange }) {
   const { recordGame } = useStats('gtn-hc')
 
   useEffect(() => {
-    const playing = Boolean(maxAttempts)
+    const playing = Boolean(maxAttempts) && !gameOver
     onPlayingChange?.(playing)
     return () => onPlayingChange?.(false)
-  }, [maxAttempts, onPlayingChange])
+  }, [maxAttempts, onPlayingChange, gameOver])
 
   const attempts = guesses.length
 

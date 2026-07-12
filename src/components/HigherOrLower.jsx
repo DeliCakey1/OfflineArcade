@@ -51,10 +51,10 @@ export default function HigherOrLower({ onPlayingChange }) {
   const { recordGame } = useStats('hol')
 
   useEffect(() => {
-    const playing = Boolean(maxRounds)
+    const playing = Boolean(maxRounds) && !gameOver
     onPlayingChange?.(playing)
     return () => onPlayingChange?.(false)
-  }, [maxRounds, onPlayingChange])
+  }, [maxRounds, onPlayingChange, gameOver])
 
   const startGame = useCallback(() => {
     const d = makeDeck()

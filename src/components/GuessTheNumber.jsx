@@ -29,10 +29,10 @@ export default function GuessTheNumber({ onPlayingChange }) {
   const { recordGame } = useStats('gtn')
 
   useEffect(() => {
-    const playing = Boolean(maxAttempts)
+    const playing = Boolean(maxAttempts) && !gameOver
     onPlayingChange?.(playing)
     return () => onPlayingChange?.(false)
-  }, [maxAttempts, onPlayingChange])
+  }, [maxAttempts, onPlayingChange, gameOver])
 
   const attempts = guesses.length
 

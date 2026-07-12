@@ -82,10 +82,10 @@ export default function SplitStealGiveAway({ onPlayingChange }) {
   const { recordGame } = useStats('ssg')
 
   useEffect(() => {
-    const playing = Boolean(totalRounds)
+    const playing = Boolean(totalRounds) && !gameOver
     onPlayingChange?.(playing)
     return () => onPlayingChange?.(false)
-  }, [totalRounds, onPlayingChange])
+  }, [totalRounds, onPlayingChange, gameOver])
 
   const isRandom = prizeMode === null
 

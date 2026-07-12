@@ -10,11 +10,17 @@
   --neon-yellow: #ffe600;
   --neon-purple: #b946ff;
   --neon-orange: #ff6b2b;
+  --neon-red: #ff3333;
   --text-light: #f0e6ff;
   --text-dim: #9b8ec4;
   --win-color: #39ff14;
   --lose-color: #ff2d7b;
   --draw-color: #ffe600;
+  --surface: #2a1f4e;
+  --border: rgba(255, 255, 255, 0.15);
+  --grad-1: rgba(185, 70, 255, 0.15);
+  --grad-2: rgba(0, 212, 255, 0.1);
+  --grad-3: rgba(255, 45, 123, 0.08);
 
   font-family: 'Fredoka', sans-serif;
   color-scheme: dark;
@@ -2186,6 +2192,34 @@ body::after {
   font-weight: 700;
   color: var(--neon-yellow);
   margin: 8px 0 12px;
+  text-align: center;
+}
+.bj-deal-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.bj-deal-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  padding: 16px 40px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--neon-green), #16a34a);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(57, 255, 20, 0.3);
+}
+.bj-deal-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 28px rgba(57, 255, 20, 0.5);
+}
+.bj-record {
+  font-size: 12px;
+  color: var(--text-dim);
   text-align: center;
 }
 

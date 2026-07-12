@@ -100,7 +100,6 @@ function Hand({ cards, label, faceDownCount, value, showValue, bust }) {
 export default function Blackjack({ onPlayingChange }) {
   const [targetRounds, setTargetRounds] = useState(null)
   const [points, setPoints] = useState(0)
-  const [reels, setReels] = useState([])
   const [playerCards, setPlayerCards] = useState([])
   const [dealerCards, setDealerCards] = useState([])
   const [dealerRevealed, setDealerRevealed] = useState(false)
@@ -121,7 +120,6 @@ export default function Blackjack({ onPlayingChange }) {
   const { recordGame } = useStats('blackjack')
   const deckRef = useRef([])
   const dealTimeoutRef = useRef(null)
-  const betRef = useRef(1)
 
   useEffect(() => {
     onPlayingChange?.(phase === 'dealing' || phase === 'playing' || phase === 'dealerTurn')

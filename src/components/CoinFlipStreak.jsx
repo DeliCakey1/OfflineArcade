@@ -30,10 +30,10 @@ export default function CoinFlipStreak({ onPlayingChange }) {
   const { recordGame } = useStats('coin')
 
   useEffect(() => {
-    const playing = Boolean(target)
+    const playing = Boolean(target) && !gameOver
     onPlayingChange?.(playing)
     return () => onPlayingChange?.(false)
-  }, [target, onPlayingChange])
+  }, [target, onPlayingChange, gameOver])
 
   function flip() {
     if (animating || gameOver || !pendingCall) return

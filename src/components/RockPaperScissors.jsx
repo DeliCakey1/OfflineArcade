@@ -42,10 +42,10 @@ export default function RockPaperScissors({ onPlayingChange }) {
   const { recordGame } = useStats('rps')
 
   useEffect(() => {
-    const playing = Boolean(gameMode && target)
+    const playing = Boolean(gameMode && target) && !gameOver
     onPlayingChange?.(playing)
     return () => onPlayingChange?.(false)
-  }, [gameMode, target, onPlayingChange])
+  }, [gameMode, target, onPlayingChange, gameOver])
 
   const progress = gameMode === 'firstTo'
     ? { player: scores.player / target, bot: scores.bot / target }

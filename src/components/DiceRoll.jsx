@@ -35,10 +35,10 @@ export default function DiceRoll({ onPlayingChange }) {
   const { recordGame } = useStats('dice')
 
   useEffect(() => {
-    const playing = Boolean(mode && totalRounds)
+    const playing = Boolean(mode && totalRounds) && !gameOver
     onPlayingChange?.(playing)
     return () => onPlayingChange?.(false)
-  }, [mode, totalRounds, onPlayingChange])
+  }, [mode, totalRounds, onPlayingChange, gameOver])
 
   function getMultiplier() {
     if (mode === 'exact') return 5
