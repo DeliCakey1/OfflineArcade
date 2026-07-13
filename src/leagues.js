@@ -52,31 +52,31 @@ export function formatSeasonTime(ms) {
 }
 
 export const GAME_XP = {
-  rps: 5,
-  ssg: 8,
-  gtn: 10,
-  'gtn-hc': 8,
-  hol: 8,
-  dice: 6,
-  coin: 5,
-  memory: 12,
-  word: 10,
-  merge: 15,
-  reaction: 6,
-  typing: 8,
-  simon: 10,
-  slots: 5,
-  blackjack: 8,
-  whack: 8,
-  snake: 15,
-  tetris: 15,
-  breakout: 12,
-  flappy: 10,
-  minesweeper: 15,
+  rps: 10,
+  ssg: 16,
+  gtn: 20,
+  'gtn-hc': 16,
+  hol: 16,
+  dice: 12,
+  coin: 10,
+  memory: 24,
+  word: 20,
+  merge: 30,
+  reaction: 12,
+  typing: 16,
+  simon: 20,
+  slots: 10,
+  blackjack: 16,
+  whack: 16,
+  snake: 30,
+  tetris: 30,
+  breakout: 24,
+  flappy: 20,
+  minesweeper: 30,
 }
 
 export function calculateWinXP(gameId, streak = 0) {
-  const base = GAME_XP[gameId] || 10
-  const streakBonus = Math.min(streak, 10) * 2
+  const base = GAME_XP[gameId] || 20
+  const streakBonus = Math.min(streak, 10)
   return base + streakBonus
 }
