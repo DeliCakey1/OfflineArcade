@@ -1,7 +1,6 @@
 export const MAX_PER_LEAGUE = 15
 export const PROMOTE_COUNT = 3
 export const DEMOTE_COUNT = 3
-export const SEASON_DURATION_MS = 7 * 24 * 60 * 60 * 1000
 
 export const LEAGUE_RANKS = [
   { rank: 1, name: 'Champion', emoji: '👑', color: '#ffd700' },
@@ -20,11 +19,11 @@ export function getRankInfo(rank) {
   return LEAGUE_RANKS.find(r => r.rank === rank) || LEAGUE_RANKS[9]
 }
 
-export function getPromotionZone(totalPlayers) {
+export function getPromotionZone() {
   return PROMOTE_COUNT
 }
 
-export function getDemotionZone(totalPlayers) {
+export function getDemotionZone() {
   return DEMOTE_COUNT
 }
 
@@ -32,14 +31,22 @@ export function getStayZone(totalPlayers) {
   return totalPlayers - PROMOTE_COUNT - DEMOTE_COUNT
 }
 
-export function getSeasonEndTime(seasonStart) {
-  return seasonStart + SEASON_DURATION_MS
+export function getNextWednesdayMidnightPST() {
+  const now = new Date()
+  const laTimeStr = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+  const laTime = new Date(laTimeStr)
+  const day = laTime.getDay()
+  let daysAhead = (3 - day + 7) % 7
+  if (daysAhead === 0) daysAhead = 7
+  const target = new Date(laTime)
+  target.setDate(target.getDate() + daysAhead)
+  target.setHours(0, 0, 0, 0)
+  const laOffset = now.getTime() - laTime.getTime()
+  return target.getTime() + laOffset
 }
 
-export function getTimeUntilSeasonEnd(seasonStart) {
-  const end = getSeasonEndTime(seasonStart)
-  const now = Date.now()
-  return Math.max(0, end - now)
+export function getTimeUntilSeasonEnd() {
+  return Math.max(0, getNextWednesdayMidnightPST() - Date.now())
 }
 
 export function formatSeasonTime(ms) {

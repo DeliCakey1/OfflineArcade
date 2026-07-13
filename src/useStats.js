@@ -89,6 +89,7 @@ export default function useStats(gameId) {
     if (won) {
       try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId } })) } catch {}
     }
+    try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId, won } })) } catch {}
     setStats(prev => {
       const current = prev[gameId] || getEmptyGameStats()
       const xpEarned = won ? 10 + Math.min(streak, 10) * 2 : 0

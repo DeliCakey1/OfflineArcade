@@ -4,7 +4,7 @@ import {
   onSnapshot, limit as firestoreLimit
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { MAX_PER_LEAGUE, LEAGUE_RANKS, SEASON_DURATION_MS } from './leagues'
+import { MAX_PER_LEAGUE, LEAGUE_RANKS, getNextWednesdayMidnightPST } from './leagues'
 
 const PLAYERS = 'players'
 const LEAGUES = 'leagues'
@@ -163,6 +163,19 @@ export async function finishMatch(matchId, winnerId, loserId) {
     xp: increment(-xpLoss),
     streak: 0,
   })
+}
+
+export async function ensurePlayerInLeague(userId) {
+  const p = await getPlayer(userId)
+  if (!p) return null
+  if (p.leagueInstanceId) {
+    const lg = await getLeagueInstance(p.leagueInstanceId)
+    if (lg && lg.status !== 'completed') return lg
+  }
+  const lg = await findOrCreateLeagueInstance(p.league)
+  await joinLeague(lg.id, userId)
+  await updatePlayer(userId, { leagueInstanceId: lg.id })
+  return lg
 }
 
 export async function processSeasonReset(leagueId) {

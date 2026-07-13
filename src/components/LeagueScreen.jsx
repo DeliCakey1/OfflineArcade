@@ -8,6 +8,7 @@ import {
   getOrCreatePlayer, findOrCreateLeagueInstance, joinLeague,
   getLeagueInstance, getLeaguePlayers,
   subscribeToLeague, subscribeToPlayer, processSeasonReset, updatePlayer,
+  ensurePlayerInLeague,
 } from '../leagueService'
 
 const LEAGUE_GAMES = [
@@ -46,20 +47,15 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
         setPlayer(p)
 
         if (!p.leagueInstanceId) {
-          const lg = await findOrCreateLeagueInstance(p.league)
-          await joinLeague(lg.id, userId)
-          await updatePlayer(userId, { leagueInstanceId: lg.id })
-          if (!cancelled) setLeague(lg)
+          if (!cancelled) setLoading(false)
+          return
+        }
+        const lg = await getLeagueInstance(p.leagueInstanceId)
+        if (!lg || lg.status === 'completed') {
+          const newLg = await ensurePlayerInLeague(userId)
+          if (!cancelled) setLeague(newLg)
         } else {
-          const lg = await getLeagueInstance(p.leagueInstanceId)
-          if (!lg || lg.status === 'completed') {
-            const newLg = await findOrCreateLeagueInstance(p.league)
-            await joinLeague(newLg.id, userId)
-            await updatePlayer(userId, { leagueInstanceId: newLg.id })
-            if (!cancelled) setLeague(newLg)
-          } else {
-            if (!cancelled) setLeague(lg)
-          }
+          if (!cancelled) setLeague(lg)
         }
         if (!cancelled) setLoading(false)
       } catch (e) {
@@ -91,12 +87,11 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   }, [league?.players])
 
   useEffect(() => {
-    if (!league?.seasonStart) return
-    const tick = () => setSeasonTime(getTimeUntilSeasonEnd(league.seasonStart))
+    const tick = () => setSeasonTime(getTimeUntilSeasonEnd())
     tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [league?.seasonStart])
+  }, [])
 
   const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp)
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
@@ -145,6 +140,24 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
           <h2>⚔️ Leagues</h2>
         </div>
         <p style={{ color: 'var(--lose-color)', textAlign: 'center', padding: 20 }}>{error}</p>
+      </div>
+    )
+  }
+
+  if (player && !player.leagueInstanceId && !league) {
+    return (
+      <div className="league-sidebar">
+        <div className="league-sidebar-header">
+          <button className="quit-btn" onClick={onBack}>← Back</button>
+          <div className="league-header-text">
+            <h2>⚔️ Leagues</h2>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🎮</div>
+          <h3 style={{ color: 'var(--text-light)', marginBottom: 8 }}>Complete a game to join!</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>Play and finish any game to be placed in a league with other players.</p>
+        </div>
       </div>
     )
   }
@@ -225,6 +238,9 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
 
       <div className="league-footer">
         Top {PROMOTE_COUNT} promote · Bottom {DEMOTE_COUNT} demote · Win +10 XP
+      </div>
+      <div className="league-footer" style={{ marginTop: 4, fontSize: 11 }}>
+        Seasons reset every Wednesday at 12 AM PST
       </div>
     </div>
   )

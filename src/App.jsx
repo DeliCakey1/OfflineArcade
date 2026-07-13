@@ -601,6 +601,21 @@ function App() {
   }, [userId])
 
   useEffect(() => {
+    function handleGameComplete() {
+      if (!userId) return
+      import('./leagueService').then(({ getPlayer, ensurePlayerInLeague }) => {
+        getPlayer(userId).then(p => {
+          if (p && !p.leagueInstanceId) {
+            ensurePlayerInLeague(userId).catch(() => {})
+          }
+        })
+      }).catch(() => {})
+    }
+    window.addEventListener('arcade-game-complete', handleGameComplete)
+    return () => window.removeEventListener('arcade-game-complete', handleGameComplete)
+  }, [userId])
+
+  useEffect(() => {
     if (newAchievements.length > 0) {
       setShowAchievements(true)
       markAchievementsSeen()
