@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import {
   getRankInfo, MAX_PER_LEAGUE, PROMOTE_COUNT, DEMOTE_COUNT,
-  getTimeUntilSeasonEnd, formatSeasonTime
+  getTimeUntilSeasonEnd, formatSeasonTime, LEAGUE_RANKS
 } from '../leagues'
 import {
   getOrCreatePlayer, findOrCreateLeagueInstance, joinLeague,
@@ -201,6 +201,35 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
           {isPromotion ? `⬆️ Promotion (#${playerPosition})` : isDemotion ? `⬇️ Demotion (#${playerPosition})` : `— Safe (#${playerPosition})`}
         </div>
       )}
+
+      {player && (() => {
+        const currentRank = LEAGUE_RANKS.find(r => r.rank === (league?.rank || player.league))
+        const prevRank = LEAGUE_RANKS.find(r => r.rank === (currentRank?.rank || 10) - 1)
+        const nextRank = LEAGUE_RANKS.find(r => r.rank === (currentRank?.rank || 10) + 1)
+        return (
+          <div className="league-rank-ladder">
+            {prevRank ? (
+              <div className="league-ladder-rank promotion-target">
+                <span className="league-ladder-arrow">⬆️</span>
+                <span className="league-ladder-emoji">{prevRank.emoji}</span>
+                <span className="league-ladder-name" style={{ color: prevRank.color }}>{prevRank.name}</span>
+              </div>
+            ) : <div className="league-ladder-rank" />}
+            <div className="league-ladder-current">
+              <span className="league-ladder-emoji current">{currentRank?.emoji}</span>
+              <span className="league-ladder-name current" style={{ color: currentRank?.color }}>{currentRank?.name}</span>
+              <span className="league-ladder-you">You are here</span>
+            </div>
+            {nextRank ? (
+              <div className="league-ladder-rank demotion-target">
+                <span className="league-ladder-arrow">⬇️</span>
+                <span className="league-ladder-emoji">{nextRank.emoji}</span>
+                <span className="league-ladder-name" style={{ color: nextRank.color }}>{nextRank.name}</span>
+              </div>
+            ) : <div className="league-ladder-rank" />}
+          </div>
+        )
+      })()}
 
       <div className="league-play-section">
         <h3>Play for League XP</h3>
