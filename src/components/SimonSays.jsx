@@ -4,10 +4,10 @@ import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
 
 const COLORS = [
-  { name: 'red', color: '#ff2d55', sound: 'win' },
-  { name: 'blue', color: '#007aff', sound: 'click' },
-  { name: 'green', color: '#39ff14', sound: 'lose' },
-  { name: 'yellow', color: '#ffe600', sound: 'victory' },
+  { name: 'red', color: '#ff2d55', sound: 'note1' },
+  { name: 'blue', color: '#007aff', sound: 'note2' },
+  { name: 'green', color: '#39ff14', sound: 'note3' },
+  { name: 'yellow', color: '#ffe600', sound: 'note4' },
 ]
 
 const MODES = [
