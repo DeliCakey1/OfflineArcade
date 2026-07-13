@@ -129,8 +129,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
 
   if (loading) {
     return (
-      <div className="league-sidebar">
-        <div className="league-sidebar-header">
+      <div className="league-page">
+        <div className="league-page-header">
           <button className="quit-btn" onClick={onBack}>← Back</button>
           <h2>⚔️ Leagues</h2>
         </div>
@@ -144,8 +144,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
 
   if (error && !player) {
     return (
-      <div className="league-sidebar">
-        <div className="league-sidebar-header">
+      <div className="league-page">
+        <div className="league-page-header">
           <button className="quit-btn" onClick={onBack}>← Back</button>
           <h2>⚔️ Leagues</h2>
         </div>
@@ -156,8 +156,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
 
   if (player && !player.leagueInstanceId && !league) {
     return (
-      <div className="league-sidebar">
-        <div className="league-sidebar-header">
+      <div className="league-page">
+        <div className="league-page-header">
           <button className="quit-btn" onClick={onBack}>← Back</button>
           <div className="league-header-text">
             <h2>⚔️ Leagues</h2>
@@ -173,8 +173,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   }
 
   return (
-    <div className="league-sidebar">
-      <div className="league-sidebar-header">
+    <div className="league-page">
+      <div className="league-page-header">
         <button className="quit-btn" onClick={onBack}>← Back</button>
         <div className="league-header-text">
           <h2>{rankInfo.emoji} {rankInfo.name}</h2>
@@ -184,7 +184,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
         </div>
       </div>
 
-      <div className="league-sidebar-stats">
+      <div className="league-page-stats">
         {player && (
           <div className="league-player-stats">
             <span>⭐ {player.xp} XP</span>
