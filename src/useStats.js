@@ -87,7 +87,7 @@ export default function useStats(gameId) {
 
   const recordGame = useCallback((won, streak = 0) => {
     if (won) {
-      try { window.dispatchEvent(new CustomEvent('arcade-win')) } catch {}
+      try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId } })) } catch {}
     }
     setStats(prev => {
       const current = prev[gameId] || getEmptyGameStats()

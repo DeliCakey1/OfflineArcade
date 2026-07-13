@@ -50,3 +50,33 @@ export function formatSeasonTime(ms) {
   if (hours > 0) return `${hours}h ${minutes}m`
   return `${minutes}m`
 }
+
+export const GAME_XP = {
+  rps: 5,
+  ssg: 8,
+  gtn: 10,
+  'gtn-hc': 8,
+  hol: 8,
+  dice: 6,
+  coin: 5,
+  memory: 12,
+  word: 10,
+  merge: 15,
+  reaction: 6,
+  typing: 8,
+  simon: 10,
+  slots: 5,
+  blackjack: 8,
+  whack: 8,
+  snake: 15,
+  tetris: 15,
+  breakout: 12,
+  flappy: 10,
+  minesweeper: 15,
+}
+
+export function calculateWinXP(gameId, streak = 0) {
+  const base = GAME_XP[gameId] || 10
+  const streakBonus = Math.min(streak, 10) * 2
+  return base + streakBonus
+}

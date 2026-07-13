@@ -25,6 +25,7 @@ import Confetti from './components/Confetti'
 import AchievementsModal from './components/AchievementsModal'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
+import { calculateWinXP } from './leagues'
 import { THEMES, THEME_ORDER } from './themes'
 import './index.css'
 
@@ -583,10 +584,22 @@ function App() {
   }, [])
 
   useEffect(() => {
-    function handleWin() { setShowConfetti(true) }
+    function handleWin(e) {
+      setShowConfetti(true)
+      if (userId && e.detail?.gameId) {
+        import('./leagueService').then(({ updatePlayer, getPlayer }) => {
+          getPlayer(userId).then(p => {
+            if (p) {
+              const xp = calculateWinXP(e.detail.gameId, p.streak || 0)
+              updatePlayer(userId, { xp: (p.xp || 0) + xp, wins: (p.wins || 0) + 1, streak: (p.streak || 0) + 1 })
+            }
+          })
+        }).catch(() => {})
+      }
+    }
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
-  }, [])
+  }, [userId])
 
   useEffect(() => {
     if (newAchievements.length > 0) {
