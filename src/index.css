@@ -3048,6 +3048,28 @@ body::after {
   border-top: 1px solid var(--border-glass);
 }
 
+.league-play-section {
+  margin-bottom: 16px;
+}
+.league-play-section h3 {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.league-play-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+.league-play-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
 /* Mobile: full page */
 @media (max-width: 768px) {
   .league-sidebar {

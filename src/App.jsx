@@ -727,7 +727,7 @@ function App() {
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
-        {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} />}
+        {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} onPlayGame={(id) => { setShowLeagues(false); setActiveGame(id) }} />}
       </div>
     )
   }
@@ -820,7 +820,7 @@ function App() {
       {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
-      {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} />}
+      {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} onPlayGame={(id) => { setShowLeagues(false); setActiveGame(id) }} />}
     </div>
   )
 }

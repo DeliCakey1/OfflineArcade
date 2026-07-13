@@ -6,29 +6,32 @@ import {
 } from '../leagues'
 import {
   getOrCreatePlayer, findOrCreateLeagueInstance, joinLeague,
-  getLeagueInstance, getLeaguePlayers, findMatch, createMatch, finishMatch,
+  getLeagueInstance, getLeaguePlayers,
   subscribeToLeague, subscribeToPlayer, processSeasonReset, updatePlayer,
-  getPlayer
 } from '../leagueService'
 
-const GAMES_FOR_LEAGUE = [
+const LEAGUE_GAMES = [
   { id: 'rps', label: 'RPS', emoji: '✊' },
   { id: 'gtn', label: 'Guess #', emoji: '🔢' },
   { id: 'hol', label: 'Hi/Lo', emoji: '🃏' },
   { id: 'dice', label: 'Dice', emoji: '🎲' },
   { id: 'simon', label: 'Simon', emoji: '🎵' },
   { id: 'typing', label: 'Typing', emoji: '⌨️' },
+  { id: 'coin', label: 'Coin Flip', emoji: '🪙' },
+  { id: 'memory', label: 'Memory', emoji: '🧠' },
+  { id: 'word', label: 'Word Scramble', emoji: '📚' },
+  { id: 'whack', label: 'Whack-a-Mole', emoji: '🔨' },
+  { id: 'slots', label: 'Slots', emoji: '🎰' },
+  { id: 'blackjack', label: 'Blackjack', emoji: '🃏' },
 ]
 
-export default function LeagueScreen({ onBack, userId }) {
+export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   const [player, setPlayer] = useState(null)
   const [league, setLeague] = useState(null)
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [seasonTime, setSeasonTime] = useState(0)
-  const [searching, setSearching] = useState(false)
-  const [matchFound, setMatchFound] = useState(null)
   const sound = useSound()
   const unsubLeagueRef = useRef(null)
   const unsubPlayerRef = useRef(null)
@@ -61,10 +64,7 @@ export default function LeagueScreen({ onBack, userId }) {
         if (!cancelled) setLoading(false)
       } catch (e) {
         console.error('League init error:', e)
-        if (!cancelled) {
-          setError(e.message || 'Failed to load league data')
-          setLoading(false)
-        }
+        if (!cancelled) { setError(e.message || 'Failed to load league data'); setLoading(false) }
       }
     }
     init()
@@ -98,58 +98,11 @@ export default function LeagueScreen({ onBack, userId }) {
     return () => clearInterval(interval)
   }, [league?.seasonStart])
 
-  const sortedPlayers = [...players].sort((a, b) => {
-    if (a.streak !== b.streak) return b.streak - a.streak
-    return b.xp - a.xp
-  })
-
+  const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp)
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
   const isPromotion = playerPosition > 0 && playerPosition <= PROMOTE_COUNT
   const isDemotion = playerPosition > sortedPlayers.length - DEMOTE_COUNT && playerPosition > PROMOTE_COUNT
   const rankInfo = getRankInfo(league?.rank || 10)
-
-  async function handleFindMatch() {
-    setSearching(true)
-    sound('click')
-    try {
-      const opponentId = await findMatch(league.id, userId)
-      if (!opponentId) {
-        setSearching(false)
-        setError('No opponents available. Try again later.')
-        setTimeout(() => setError(null), 3000)
-        return
-      }
-      setMatchFound(opponentId)
-      sound('confirm')
-    } catch (e) {
-      setSearching(false)
-      setError('Failed to find match')
-      setTimeout(() => setError(null), 3000)
-    }
-  }
-
-  async function handleAcceptMatch(gameId) {
-    if (!matchFound) return
-    sound('confirm')
-    try {
-      const match = await createMatch(userId, matchFound, gameId)
-      await finishMatch(match.id, userId, matchFound)
-      setMatchFound(null)
-      setSearching(false)
-      sound('victory')
-      setError('You won +10 XP!')
-      setTimeout(() => setError(null), 3000)
-    } catch (e) {
-      setError('Match failed: ' + e.message)
-      setTimeout(() => setError(null), 3000)
-    }
-  }
-
-  function handleDeclineMatch() {
-    setMatchFound(null)
-    setSearching(false)
-    sound('click')
-  }
 
   async function handleSeasonReset() {
     if (!league?.id) return
@@ -226,6 +179,19 @@ export default function LeagueScreen({ onBack, userId }) {
         </div>
       )}
 
+      <div className="league-play-section">
+        <h3>Play for League XP</h3>
+        <p className="league-play-hint">Win games to earn league XP and climb the standings</p>
+        <div className="league-play-grid">
+          {LEAGUE_GAMES.map(g => (
+            <button key={g.id} className="league-game-btn" onClick={() => { sound('click'); onPlayGame(g.id) }}>
+              <span className="league-game-emoji">{g.emoji}</span>
+              <span className="league-game-label">{g.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="league-standings">
         <h3>Standings</h3>
         <div className="league-standings-list">
@@ -239,7 +205,6 @@ export default function LeagueScreen({ onBack, userId }) {
                 <span className="league-row-pos">#{pos}</span>
                 <span className="league-row-name">{p.name}{isYou ? ' (you)' : ''}</span>
                 <span className="league-row-xp">⭐{p.xp}</span>
-                {p.streak > 0 && <span className="league-row-streak">🔥{p.streak}</span>}
                 <span className="league-row-record">{p.wins}W/{p.losses}L</span>
               </div>
             )
@@ -254,31 +219,12 @@ export default function LeagueScreen({ onBack, userId }) {
         <button className="league-reset-btn" onClick={handleSeasonReset}>🔄 Reset Season</button>
       )}
 
-      {matchFound ? (
-        <div className="league-match-found">
-          <p>⚔️ Pick a game:</p>
-          <div className="league-game-grid">
-            {GAMES_FOR_LEAGUE.map(g => (
-              <button key={g.id} className="league-game-btn" onClick={() => handleAcceptMatch(g.id)}>
-                <span className="league-game-emoji">{g.emoji}</span>
-                <span className="league-game-label">{g.label}</span>
-              </button>
-            ))}
-          </div>
-          <button className="confirm-btn no" onClick={handleDeclineMatch}>Decline</button>
-        </div>
-      ) : (
-        <button className="league-find-btn" onClick={handleFindMatch} disabled={searching}>
-          {searching ? '⏳ Searching...' : '⚔️ Find Match'}
-        </button>
-      )}
-
       {error && (
         <div className={`league-toast ${error.includes('won') ? 'win' : 'info'}`}>{error}</div>
       )}
 
       <div className="league-footer">
-        Top {PROMOTE_COUNT} promote · Bottom {DEMOTE_COUNT} demote · Win +10 XP · Loss -5 XP
+        Top {PROMOTE_COUNT} promote · Bottom {DEMOTE_COUNT} demote · Win +10 XP
       </div>
     </div>
   )
