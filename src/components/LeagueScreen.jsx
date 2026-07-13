@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import {
-  getRankInfo, MAX_PER_LEAGUE, PROMOTE_COUNT, DEMOTE_COUNT,
-  getTimeUntilSeasonEnd, formatSeasonTime, LEAGUE_RANKS
+  getRankInfo, getPromotionZone, getDemotionZone,
+  getTimeUntilSeasonEnd, formatSeasonTime, LEAGUE_RANKS, RANK_PROMO_DEMO
 } from '../leagues'
 import {
   getOrCreatePlayer, findOrCreateLeagueInstance, joinLeague,
-  getLeagueInstance, getLeaguePlayers,
-  subscribeToLeague, subscribeToPlayer, processSeasonReset, updatePlayer,
-  ensurePlayerInLeague,
+  getLeagueInstance, getLeaguePlayers, getTournament,
+  subscribeToLeague, subscribeToPlayer, subscribeToTournament,
+  processSeasonReset, processTournamentReset, processSemiFinalsReset,
+  processFinalsReset, updatePlayer, ensurePlayerInLeague,
 } from '../leagueService'
+import { MAX_PER_LEAGUE } from '../leagues'
 
 const LEAGUE_GAMES = [
   { id: 'rps', label: 'RPS', emoji: '✊' },
@@ -26,9 +28,16 @@ const LEAGUE_GAMES = [
   { id: 'blackjack', label: 'Blackjack', emoji: '🃏' },
 ]
 
+const TOURNAMENT_LABELS = {
+  tournament: { name: 'Tournament', emoji: '🏟️', size: 20 },
+  semiFinals: { name: 'Semi-Finals', emoji: '⚔️', size: 15 },
+  finals: { name: 'Finals', emoji: '🏆', size: 10 },
+}
+
 export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   const [player, setPlayer] = useState(null)
   const [league, setLeague] = useState(null)
+  const [tournament, setTournament] = useState(null)
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -36,6 +45,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   const sound = useSound()
   const unsubLeagueRef = useRef(null)
   const unsubPlayerRef = useRef(null)
+  const unsubTournamentRef = useRef(null)
 
   useEffect(() => {
     let cancelled = false
@@ -46,16 +56,26 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
         if (cancelled) return
         setPlayer(p)
 
-        if (!p.leagueInstanceId) {
+        if (p.league === 1) {
           if (!cancelled) setLoading(false)
           return
         }
-        const lg = await getLeagueInstance(p.leagueInstanceId)
-        if (!lg || lg.status === 'completed') {
-          const newLg = await ensurePlayerInLeague(userId)
-          if (!cancelled) setLeague(newLg)
-        } else {
-          if (!cancelled) setLeague(lg)
+
+        if (p.leagueInstanceId) {
+          const tDoc = await getTournament(p.leagueInstanceId).catch(() => null)
+          if (tDoc && tDoc.stage) {
+            if (!cancelled) setTournament(tDoc)
+            if (!cancelled) setLoading(false)
+            return
+          }
+
+          const lg = await getLeagueInstance(p.leagueInstanceId)
+          if (!lg || lg.status === 'completed') {
+            const newLg = await ensurePlayerInLeague(userId)
+            if (!cancelled) setLeague(newLg)
+          } else {
+            if (!cancelled) setLeague(lg)
+          }
         }
         if (!cancelled) setLoading(false)
       } catch (e) {
@@ -68,10 +88,21 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   }, [userId])
 
   useEffect(() => {
-    if (!league?.id) return
-    unsubLeagueRef.current = subscribeToLeague(league.id, setLeague)
-    return () => unsubLeagueRef.current?.()
-  }, [league?.id])
+    if (tournament?.id) {
+      unsubTournamentRef.current = subscribeToTournament(tournament.id, (t) => {
+        setTournament(t)
+        if (t.status === 'completed') setTournament(null)
+      })
+      return () => unsubTournamentRef.current?.()
+    }
+  }, [tournament?.id])
+
+  useEffect(() => {
+    if (!tournament?.id && league?.id) {
+      unsubLeagueRef.current = subscribeToLeague(league.id, setLeague)
+      return () => unsubLeagueRef.current?.()
+    }
+  }, [league?.id, tournament?.id])
 
   useEffect(() => {
     if (!player?.id) return
@@ -80,21 +111,23 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   }, [player?.id])
 
   useEffect(() => {
-    if (!league?.players) return
+    const source = tournament?.players || league?.players
+    if (!source) return
     let cancelled = false
-    getLeaguePlayers(league.players).then(p => { if (!cancelled) setPlayers(p) })
+    getLeaguePlayers(source).then(p => { if (!cancelled) setPlayers(p) })
     return () => { cancelled = true }
-  }, [league?.players])
+  }, [tournament?.players, league?.players])
 
   useEffect(() => {
-    if (!league?.players?.length) return
+    const source = tournament?.players || league?.players
+    if (!source?.length) return
     let cancelled = false
     const refresh = () => {
-      getLeaguePlayers(league.players).then(p => { if (!cancelled) setPlayers(p) }).catch(() => {})
+      getLeaguePlayers(source).then(p => { if (!cancelled) setPlayers(p) }).catch(() => {})
     }
     const interval = setInterval(refresh, 10000)
     return () => { cancelled = true; clearInterval(interval) }
-  }, [league?.players])
+  }, [tournament?.players, league?.players])
 
   useEffect(() => {
     const tick = () => setSeasonTime(getTimeUntilSeasonEnd())
@@ -105,20 +138,52 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
 
   const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp)
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
-  const isPromotion = playerPosition > 0 && playerPosition <= PROMOTE_COUNT
-  const isDemotion = playerPosition > sortedPlayers.length - DEMOTE_COUNT && playerPosition > PROMOTE_COUNT
-  const rankInfo = getRankInfo(league?.rank || 10)
+
+  const isTournament = !!tournament
+  const currentRank = player?.league || 11
+  const rankInfo = getRankInfo(currentRank)
+
+  let promoteCount = 0
+  let demoteCount = 0
+  if (isTournament) {
+    const tInfo = TOURNAMENT_LABELS[tournament.stage]
+    promoteCount = tournament.stage === 'finals' ? 3 : tInfo ? tInfo.size - (tournament.stage === 'semiFinals' ? 5 : tournament.stage === 'tournament' ? 5 : 0) : 0
+    demoteCount = tournament.stage === 'tournament' ? 5 : tournament.stage === 'semiFinals' ? 5 : 0
+  } else if (league) {
+    const pd = RANK_PROMO_DEMO[league.rank] || { promote: 0, demote: 0 }
+    promoteCount = pd.promote
+    demoteCount = pd.demote
+  }
+
+  const isPromotion = playerPosition > 0 && playerPosition <= promoteCount
+  const isDemotion = demoteCount > 0 && playerPosition > sortedPlayers.length - demoteCount && playerPosition > promoteCount
 
   async function handleSeasonReset() {
-    if (!league?.id) return
     sound('confirm')
     try {
-      await processSeasonReset(league.id)
+      if (isTournament) {
+        if (tournament.stage === 'tournament') {
+          await processTournamentReset()
+        } else if (tournament.stage === 'semiFinals') {
+          await processSemiFinalsReset()
+        } else if (tournament.stage === 'finals') {
+          await processFinalsReset()
+        }
+      } else if (league?.id) {
+        await processSeasonReset(league.id)
+      }
       const p = await getOrCreatePlayer(userId)
       setPlayer(p)
+      setTournament(null)
+      setLeague(null)
       if (p.leagueInstanceId) {
-        const lg = await getLeagueInstance(p.leagueInstanceId)
-        setLeague(lg)
+        const tDoc = await getTournament(p.leagueInstanceId).catch(() => null)
+        if (tDoc && tDoc.stage) {
+          setTournament(tDoc)
+        } else {
+          const lg = await getLeagueInstance(p.leagueInstanceId)
+          setLeague(lg)
+        }
       }
       sound('victory')
     } catch (e) {
@@ -154,7 +219,28 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
     )
   }
 
-  if (player && !player.leagueInstanceId && !league) {
+  if (player && player.league === 1) {
+    return (
+      <div className="league-page">
+        <div className="league-page-header">
+          <button className="quit-btn" onClick={onBack}>← Back</button>
+          <div className="league-header-text">
+            <h2>👑 Champion</h2>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>👑</div>
+          <h3 style={{ color: '#ffd700', marginBottom: 8 }}>You are Champion!</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>You've reached the highest rank. Congratulations!</p>
+          {player.tournamentWins > 0 && (
+            <p style={{ color: 'var(--neon-yellow)', fontSize: 13, marginTop: 8 }}>🏆 Tournament Wins: {player.tournamentWins}</p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (player && !player.leagueInstanceId && !league && !tournament) {
     return (
       <div className="league-page">
         <div className="league-page-header">
@@ -172,12 +258,14 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
     )
   }
 
+  const tournamentInfo = isTournament ? TOURNAMENT_LABELS[tournament.stage] : null
+
   return (
     <div className="league-page">
       <div className="league-page-header">
         <button className="quit-btn" onClick={onBack}>← Back</button>
         <div className="league-header-text">
-          <h2>{rankInfo.emoji} {rankInfo.name}</h2>
+          <h2>{isTournament ? `${tournamentInfo.emoji} ${tournamentInfo.name}` : `${rankInfo.emoji} ${rankInfo.name}`}</h2>
           <span className="league-season-timer" style={{ color: seasonTime < 3600000 ? 'var(--neon-red)' : 'var(--neon-blue)' }}>
             ⏱ {formatSeasonTime(seasonTime)}
           </span>
@@ -193,7 +281,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
             {player.streak > 0 && <span>🔥 {player.streak}</span>}
           </div>
         )}
-        <span className="league-size">{players.length}/{MAX_PER_LEAGUE}</span>
+        <span className="league-size">{players.length}/{isTournament ? tournamentInfo.size : MAX_PER_LEAGUE}</span>
       </div>
 
       {playerPosition > 0 && (
@@ -202,22 +290,41 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
         </div>
       )}
 
-      {player && (() => {
-        const currentRank = LEAGUE_RANKS.find(r => r.rank === (league?.rank || player.league))
-        const prevRank = LEAGUE_RANKS.find(r => r.rank === (currentRank?.rank || 10) - 1)
-        const nextRank = LEAGUE_RANKS.find(r => r.rank === (currentRank?.rank || 10) + 1)
+      {isTournament ? (
+        <div className="league-rank-ladder">
+          <div className="league-ladder-rank promotion-target">
+            <span className="league-ladder-arrow">⬆️</span>
+            <span className="league-ladder-emoji">💠</span>
+            <span className="league-ladder-name" style={{ color: '#00d4ff' }}>Diamond</span>
+          </div>
+          <div className="league-ladder-current">
+            <span className="league-ladder-emoji current">{tournamentInfo.emoji}</span>
+            <span className="league-ladder-name current" style={{ color: 'var(--neon-yellow)' }}>{tournamentInfo.name}</span>
+            <span className="league-ladder-you">You are here</span>
+          </div>
+          <div className="league-ladder-rank demotion-target">
+            <span className="league-ladder-arrow">⬇️</span>
+            <span className="league-ladder-emoji">💠</span>
+            <span className="league-ladder-name" style={{ color: '#00d4ff' }}>Diamond</span>
+          </div>
+        </div>
+      ) : player && (() => {
+        const cr = LEAGUE_RANKS.find(r => r.rank === (league?.rank || player.league))
+        const prevRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 11) - 1)
+        const nextRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 11) + 1)
+        const isDiamondPromo = cr?.rank === 3
         return (
           <div className="league-rank-ladder">
             {prevRank ? (
               <div className="league-ladder-rank promotion-target">
                 <span className="league-ladder-arrow">⬆️</span>
                 <span className="league-ladder-emoji">{prevRank.emoji}</span>
-                <span className="league-ladder-name" style={{ color: prevRank.color }}>{prevRank.name}</span>
+                <span className="league-ladder-name" style={{ color: prevRank.color }}>{isDiamondPromo ? 'Tournament' : prevRank.name}</span>
               </div>
             ) : <div className="league-ladder-rank" />}
             <div className="league-ladder-current">
-              <span className="league-ladder-emoji current">{currentRank?.emoji}</span>
-              <span className="league-ladder-name current" style={{ color: currentRank?.color }}>{currentRank?.name}</span>
+              <span className="league-ladder-emoji current">{cr?.emoji}</span>
+              <span className="league-ladder-name current" style={{ color: cr?.color }}>{cr?.name}</span>
               <span className="league-ladder-you">You are here</span>
             </div>
             {nextRank ? (
@@ -245,13 +352,13 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
       </div>
 
       <div className="league-standings">
-        <h3>Standings</h3>
+        <h3>{isTournament ? `${tournamentInfo.name} Standings` : 'Standings'}</h3>
         <div className="league-standings-list">
           {sortedPlayers.map((p, i) => {
             const pos = i + 1
             const isYou = p.id === userId
-            const isPromo = pos <= PROMOTE_COUNT
-            const isDemo = pos > sortedPlayers.length - DEMOTE_COUNT && pos > PROMOTE_COUNT
+            const isPromo = pos <= promoteCount
+            const isDemo = demoteCount > 0 && pos > sortedPlayers.length - demoteCount && pos > promoteCount
             return (
               <div key={p.id} className={`league-row ${isYou ? 'you' : ''} ${isPromo ? 'promo' : isDemo ? 'demo' : ''}`}>
                 <span className="league-row-pos">#{pos}</span>
@@ -268,7 +375,9 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
       </div>
 
       {seasonTime === 0 && (
-        <button className="league-reset-btn" onClick={handleSeasonReset}>🔄 Reset Season</button>
+        <button className="league-reset-btn" onClick={handleSeasonReset}>
+          {isTournament ? `🔄 Advance ${tournamentInfo.name}` : '🔄 Reset Season'}
+        </button>
       )}
 
       {error && (
@@ -276,10 +385,15 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
       )}
 
       <div className="league-footer">
-        Top {PROMOTE_COUNT} promote · Bottom {DEMOTE_COUNT} demote · Win +10 XP
+        {isTournament
+          ? tournament.stage === 'finals'
+            ? `Top 3 win · Bottom ${demoteCount} → Diamond`
+            : `Top ${promoteCount} advance · Bottom ${demoteCount} → Diamond`
+          : `Top ${promoteCount} promote · Bottom ${demoteCount} demote · Win +10 XP`
+        }
       </div>
       <div className="league-footer" style={{ marginTop: 4, fontSize: 11 }}>
-        Seasons reset every Wednesday at 12 AM PST
+        Seasons reset every Wednesday at 12 AM UTC
       </div>
     </div>
   )

@@ -45,6 +45,21 @@ export const ACHIEVEMENTS = [
   { id: 'played-all', name: 'Completionist', emoji: '🎯', desc: 'Play all 21 games', check: s => ALL_GAME_IDS.every(id => (s[id]?.played || 0) > 0) },
   { id: 'daily', name: 'Daily Devotee', emoji: '📅', desc: 'Complete a daily challenge', check: s => s._dailyCompleted === getDailySeed() },
   { id: 'favorite-5', name: 'Picky', emoji: '⭐', desc: 'Favorite 5 games', check: s => (s._favorites?.length || 0) >= 5 },
+  { id: 'league-join', name: 'League Rookie', emoji: '⚔️', desc: 'Join a league for the first time', check: s => s._league?.joined === true },
+  { id: 'promo-1', name: 'Moving Up', emoji: '⬆️', desc: 'Get promoted once', check: s => (s._league?.promotions || 0) >= 1 },
+  { id: 'promo-5', name: 'Climber', emoji: '🏔️', desc: 'Get promoted 5 times', check: s => (s._league?.promotions || 0) >= 5 },
+  { id: 'promo-10', name: 'Ascender', emoji: '🚀', desc: 'Get promoted 10 times', check: s => (s._league?.promotions || 0) >= 10 },
+  { id: 'promo-25', name: 'Relentless', emoji: '💫', desc: 'Get promoted 25 times', check: s => (s._league?.promotions || 0) >= 25 },
+  { id: 'reach-iron', name: 'Iron Will', emoji: '⚙️', desc: 'Reach Iron rank', check: s => (s._league?.bestRank || 11) <= 8 },
+  { id: 'reach-gold', name: 'Gold Digger', emoji: '🥇', desc: 'Reach Gold rank', check: s => (s._league?.bestRank || 11) <= 5 },
+  { id: 'reach-diamond', name: 'Diamond Cutter', emoji: '💠', desc: 'Reach Diamond rank', check: s => (s._league?.bestRank || 11) <= 3 },
+  { id: 'reach-champion', name: 'True Champion', emoji: '👑', desc: 'Reach Champion rank', check: s => (s._league?.bestRank || 11) <= 1 },
+  { id: 'tournament-entry', name: 'Tournament Bound', emoji: '🏟️', desc: 'Enter a tournament', check: s => (s._league?.tournamentEntries || 0) >= 1 },
+  { id: 'tournament-win', name: 'Tournament Victor', emoji: '🏆', desc: 'Win a tournament', check: s => (s._league?.tournamentWins || 0) >= 1 },
+  { id: 'tournament-3wins', name: 'Tournament Legend', emoji: '🌟', desc: 'Win 3 tournaments', check: s => (s._league?.tournamentWins || 0) >= 3 },
+  { id: 'first-place', name: 'First Place', emoji: '🥇', desc: 'Finish 1st in a tournament', check: s => (s._league?.firstPlaceFinishes || 0) >= 1 },
+  { id: 'league-wins-50', name: 'League Warrior', emoji: '⚔️', desc: 'Win 50 league games', check: s => (s._league?.totalWins || 0) >= 50 },
+  { id: 'league-wins-100', name: 'League Master', emoji: '🏅', desc: 'Win 100 league games', check: s => (s._league?.totalWins || 0) >= 100 },
 ]
 
 function maxStreak(s) {
@@ -150,6 +165,24 @@ export default function useStats(gameId) {
   const earnedAchievements = ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id)
   const newAchievements = earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id))
 
+  const syncLeagueData = useCallback((playerData) => {
+    setStats(prev => {
+      const league = {
+        joined: true,
+        promotions: playerData.promotions || 0,
+        bestRank: Math.min(prev._league?.bestRank || 11, playerData.league || 11),
+        tournamentEntries: (prev._league?.tournamentEntries || 0) + (playerData.league === 2 && !prev._league?.wasInTournament ? 1 : 0),
+        tournamentWins: playerData.tournamentWins || 0,
+        firstPlaceFinishes: playerData.firstPlaceFinishes || 0,
+        totalWins: playerData.wins || 0,
+        wasInTournament: playerData.league === 2,
+      }
+      const updated = { ...prev, _league: league }
+      saveStats(updated)
+      return updated
+    })
+  }, [])
+
   const markAchievementsSeen = useCallback(() => {
     setStats(prev => {
       const updated = { ...prev, _seenAchievements: earnedAchievements }
@@ -165,6 +198,6 @@ export default function useStats(gameId) {
     gameStats, recordGame, clearStats, allStats,
     xp, recent, favorites, setFavorite, isFavorite,
     earnedAchievements, newAchievements, markAchievementsSeen,
-    markDailyCompleted, totalPlayedCount, totalWonCount,
+    markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
   }
 }

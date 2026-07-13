@@ -210,6 +210,29 @@ body::after {
   padding: 20px;
   animation: fadeSlideUp 0.3s ease-out;
 }
+
+/* ===== FULL PAGE (Stats, Achievements) ===== */
+.full-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  animation: fadeSlideUp 0.3s ease-out;
+}
+.full-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.full-page-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  color: var(--text-light);
+  margin: 0;
+}
+.full-page-content {
+  animation: fadeSlideUp 0.3s ease-out 0.1s backwards;
+}
 .settings-page-header {
   display: flex;
   align-items: center;
@@ -3419,6 +3442,39 @@ body::after {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
+}
+
+/* ===== TOURNAMENT ===== */
+.league-zone.tournament-entry {
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+}
+.league-row.tournament-winner {
+  border-color: rgba(255, 215, 0, 0.4);
+  background: rgba(255, 215, 0, 0.08);
+}
+.league-row.tournament-winner .league-row-pos {
+  color: #ffd700;
+}
+.league-champion-banner {
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(185, 70, 255, 0.1));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  animation: popIn 0.4s ease;
+}
+.league-champion-banner h3 {
+  color: #ffd700;
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+.league-champion-banner p {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0;
 }
 
 /* Mobile: full width */

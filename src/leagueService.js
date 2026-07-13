@@ -4,13 +4,14 @@ import {
   onSnapshot, limit as firestoreLimit
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { MAX_PER_LEAGUE, LEAGUE_RANKS, getNextWednesdayMidnightPST } from './leagues'
+import { MAX_PER_LEAGUE, LEAGUE_RANKS, RANK_PROMO_DEMO, getNextWednesdayMidnightUTC, TOURNAMENT_SIZES } from './leagues'
 
 export { increment }
 
 const PLAYERS = 'players'
 const LEAGUES = 'leagues'
 const MATCHES = 'matches'
+const TOURNAMENTS = 'tournaments'
 
 export async function getOrCreatePlayer(userId, name) {
   const ref = doc(db, PLAYERS, userId)
@@ -19,11 +20,14 @@ export async function getOrCreatePlayer(userId, name) {
   const player = {
     name: name || `Player${Math.floor(Math.random() * 9999)}`,
     xp: 0,
-    league: 10,
+    league: 11,
     leagueInstanceId: null,
     wins: 0,
     losses: 0,
     streak: 0,
+    promotions: 0,
+    tournamentWins: 0,
+    firstPlaceFinishes: 0,
     createdAt: Date.now(),
     lastActive: Date.now(),
   }
@@ -187,19 +191,36 @@ export async function processSeasonReset(leagueId) {
   const players = await getLeaguePlayers(league.players)
   players.sort((a, b) => b.xp - a.xp)
 
-  const promoted = players.slice(0, 3)
-  const demoted = players.slice(-3)
-  const stayers = players.slice(3, -3)
-
   const currentRank = league.rank
+  const pd = RANK_PROMO_DEMO[currentRank] || { promote: 0, demote: 0 }
+  const promoteCount = pd.promote
+  const demoteCount = pd.demote
+
+  const promoted = players.slice(0, promoteCount)
+  const demoted = demoteCount > 0 ? players.slice(-demoteCount) : []
+  const stayers = players.slice(promoteCount, demoteCount > 0 ? -demoteCount : undefined)
+
   const promoteRank = Math.max(1, currentRank - 1)
-  const demoteRank = Math.min(10, currentRank + 1)
+  const demoteRank = Math.min(11, currentRank + 1)
 
   for (const p of promoted) {
-    const newLeague = await findOrCreateLeagueInstance(promoteRank)
-    await leaveLeague(leagueId, p.id)
-    await joinLeague(newLeague.id, p.id)
-    await updatePlayer(p.id, { league: promoteRank, leagueInstanceId: newLeague.id })
+    if (promoteRank === 2) {
+      await addToTournament(p.id)
+      await updatePlayer(p.id, {
+        league: promoteRank,
+        leagueInstanceId: null,
+        promotions: increment(1),
+      })
+    } else {
+      const newLeague = await findOrCreateLeagueInstance(promoteRank)
+      await leaveLeague(leagueId, p.id)
+      await joinLeague(newLeague.id, p.id)
+      await updatePlayer(p.id, {
+        league: promoteRank,
+        leagueInstanceId: newLeague.id,
+        promotions: increment(1),
+      })
+    }
   }
 
   for (const p of demoted) {
@@ -218,6 +239,170 @@ export async function processSeasonReset(leagueId) {
     status: 'completed',
     completedAt: Date.now(),
   })
+}
+
+export async function addToTournament(userId) {
+  const q = query(
+    collection(db, TOURNAMENTS),
+    where('stage', '==', 'tournament'),
+    where('status', '==', 'active')
+  )
+  const snap = await getDocs(q)
+
+  for (const d of snap.docs) {
+    const data = d.data()
+    if (data.players.length < TOURNAMENT_SIZES.tournament) {
+      await updateDoc(doc(db, TOURNAMENTS, d.id), {
+        players: arrayUnion(userId),
+      })
+      await updatePlayer(userId, { leagueInstanceId: d.id })
+      return { id: d.id, ...data }
+    }
+  }
+
+  const newRef = doc(collection(db, TOURNAMENTS))
+  const tournament = {
+    stage: 'tournament',
+    season: Date.now(),
+    players: [userId],
+    status: 'active',
+    createdAt: Date.now(),
+  }
+  await setDoc(newRef, tournament)
+  await updatePlayer(userId, { leagueInstanceId: newRef.id })
+  return { id: newRef.id, ...tournament }
+}
+
+export function subscribeToTournament(tournamentId, callback) {
+  const ref = doc(db, TOURNAMENTS, tournamentId)
+  return onSnapshot(ref, (snap) => {
+    if (snap.exists()) callback({ id: tournamentId, ...snap.data() })
+  })
+}
+
+export async function getTournament(tournamentId) {
+  const ref = doc(db, TOURNAMENTS, tournamentId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  return { id: tournamentId, ...snap.data() }
+}
+
+export async function getActiveTournament(stage) {
+  const q = query(
+    collection(db, TOURNAMENTS),
+    where('stage', '==', stage),
+    where('status', '==', 'active')
+  )
+  const snap = await getDocs(q)
+  if (snap.empty) return null
+  const d = snap.docs[0]
+  return { id: d.id, ...d.data() }
+}
+
+export async function processTournamentReset() {
+  const tournament = await getActiveTournament('tournament')
+  if (!tournament || tournament.players.length === 0) return
+
+  const players = await getLeaguePlayers(tournament.players)
+  players.sort((a, b) => b.xp - a.xp)
+
+  const top15 = players.slice(0, 15)
+  const bottom5 = players.slice(15)
+
+  const semiRef = doc(collection(db, TOURNAMENTS))
+  const semiFinals = {
+    stage: 'semiFinals',
+    season: tournament.season,
+    players: top15.map(p => p.id),
+    status: 'active',
+    createdAt: Date.now(),
+  }
+  await setDoc(semiRef, semiFinals)
+
+  for (const p of top15) {
+    await updatePlayer(p.id, { leagueInstanceId: semiRef.id })
+  }
+
+  for (const p of bottom5) {
+    const diamondLeague = await findOrCreateLeagueInstance(3)
+    await joinLeague(diamondLeague.id, p.id)
+    await updatePlayer(p.id, {
+      league: 3,
+      leagueInstanceId: diamondLeague.id,
+    })
+  }
+
+  const tRef = doc(db, TOURNAMENTS, tournament.id)
+  await updateDoc(tRef, { status: 'completed', completedAt: Date.now() })
+}
+
+export async function processSemiFinalsReset() {
+  const semi = await getActiveTournament('semiFinals')
+  if (!semi || semi.players.length === 0) return
+
+  const players = await getLeaguePlayers(semi.players)
+  players.sort((a, b) => b.xp - a.xp)
+
+  const top10 = players.slice(0, 10)
+  const bottom5 = players.slice(10)
+
+  const finalsRef = doc(collection(db, TOURNAMENTS))
+  const finals = {
+    stage: 'finals',
+    season: semi.season,
+    players: top10.map(p => p.id),
+    status: 'active',
+    createdAt: Date.now(),
+  }
+  await setDoc(finalsRef, finals)
+
+  for (const p of top10) {
+    await updatePlayer(p.id, { leagueInstanceId: finalsRef.id })
+  }
+
+  for (const p of bottom5) {
+    const diamondLeague = await findOrCreateLeagueInstance(3)
+    await joinLeague(diamondLeague.id, p.id)
+    await updatePlayer(p.id, {
+      league: 3,
+      leagueInstanceId: diamondLeague.id,
+    })
+  }
+
+  const sRef = doc(db, TOURNAMENTS, semi.id)
+  await updateDoc(sRef, { status: 'completed', completedAt: Date.now() })
+}
+
+export async function processFinalsReset() {
+  const finals = await getActiveTournament('finals')
+  if (!finals || finals.players.length === 0) return
+
+  const players = await getLeaguePlayers(finals.players)
+  players.sort((a, b) => b.xp - a.xp)
+
+  const winners = players.slice(0, 3)
+
+  for (const p of winners) {
+    const isFirst = p.id === winners[0]?.id
+    await updatePlayer(p.id, {
+      league: 1,
+      tournamentWins: increment(1),
+      ...(isFirst ? { firstPlaceFinishes: increment(1) } : {}),
+    })
+  }
+
+  const remaining = players.slice(3)
+  for (const p of remaining) {
+    const masterLeague = await findOrCreateLeagueInstance(2)
+    await joinLeague(masterLeague.id, p.id)
+    await updatePlayer(p.id, {
+      league: 2,
+      leagueInstanceId: masterLeague.id,
+    })
+  }
+
+  const fRef = doc(db, TOURNAMENTS, finals.id)
+  await updateDoc(fRef, { status: 'completed', completedAt: Date.now() })
 }
 
 export async function getAllLeaguesForPlayer(userId) {

@@ -22,7 +22,8 @@ import FlappyBird from './components/FlappyBird'
 import Minesweeper from './components/Minesweeper'
 import LeagueScreen from './components/LeagueScreen'
 import Confetti from './components/Confetti'
-import AchievementsModal from './components/AchievementsModal'
+import AchievementsPage from './components/AchievementsPage'
+import StatsPage from './components/StatsPage'
 import { VolumeSlider } from './components/VolumeSlider'
 import SettingsPage from './components/SettingsPage'
 import ThemePicker from './components/ThemePicker'
@@ -130,55 +131,6 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
         </div>
       )}
       <div className="game-select-play">Play Now →</div>
-    </div>
-  )
-}
-
-function StatsModal({ allStats, onClose, onClear, xp, totalPlayedCount, totalWonCount }) {
-  const closeRef = useRef(null)
-  const previousFocus = useRef(null)
-
-  useEffect(() => {
-    previousFocus.current = document.activeElement
-    closeRef.current?.focus()
-    function handleKey(e) {
-      if (e.key === 'Escape') { e.preventDefault(); onClose() }
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => { document.removeEventListener('keydown', handleKey); previousFocus.current?.focus() }
-  }, [onClose])
-
-  return (
-    <div className="stats-overlay" onClick={onClose}>
-      <div className="stats-modal" role="dialog" aria-modal="true" aria-labelledby="stats-dialog-title" onClick={e => e.stopPropagation()}>
-        <h2 className="stats-title" id="stats-dialog-title">Your Stats</h2>
-        <div className="stats-total">
-          <span>{totalPlayedCount} games played</span>
-          <span>{totalWonCount} won</span>
-          <span>⭐ {xp.toLocaleString()} XP</span>
-          {totalPlayedCount > 0 && <span>{Math.round((totalWonCount / totalPlayedCount) * 100)}% win rate</span>}
-        </div>
-        <div className="stats-list">
-          {GAMES.map(g => {
-            const s = allStats[g.id]
-            if (!s || s.played === 0) return null
-            return (
-              <div key={g.id} className="stats-row">
-                <span className="stats-row-emoji">{g.emoji}</span>
-                <span className="stats-row-name">{g.label}</span>
-                <span className="stats-row-detail">{s.won}/{s.played}</span>
-                {s.bestStreak > 0 && <span className="stats-row-streak">🔥 {s.bestStreak}</span>}
-              </div>
-            )
-          })}
-        </div>
-        <div className="stats-footer">
-          <button className="stats-close" ref={closeRef} onClick={onClose}>Close</button>
-          {totalPlayedCount > 0 && (
-            <button className="stats-clear-btn" onClick={onClear}>🗑️ Clear All Stats</button>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
@@ -451,13 +403,16 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, user, onSignIn, onSignOut }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, user, onSignIn, onSignOut }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
         <div className="settings-bar-left">
           <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
           <GamesDropdown onNavigate={onNavigateGame} />
+          <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️</button>
+          <button className="settings-btn nav-btn" onClick={onStats} title="Stats" aria-label="Stats">📊</button>
+          <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅</button>
           <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
         </div>
         <div className="settings-bar-right">
@@ -482,8 +437,6 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, user, onSign
 function App() {
   const [activeGame, setActiveGame] = useState(null)
   const [muted, setMuted] = useState(isMuted())
-  const [showStats, setShowStats] = useState(false)
-  const [showAchievements, setShowAchievements] = useState(false)
   const [theme, setTheme] = useState(() => getSaved('arcade-theme', 'neon'))
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
   const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
@@ -503,7 +456,7 @@ function App() {
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
     newAchievements, markAchievementsSeen,
-    markDailyCompleted, totalPlayedCount, totalWonCount,
+    markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
   } = useStats('_global')
 
   const dailyGame = useMemo(() => {
@@ -576,6 +529,7 @@ function App() {
             if (p) {
               const xp = calculateWinXP(e.detail.gameId, p.streak || 0)
               updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1) })
+              syncLeagueData({ ...p, wins: (p.wins || 0) + 1 })
             }
           })
         }).catch(() => {})
@@ -583,7 +537,7 @@ function App() {
     }
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
-  }, [userId])
+  }, [userId, syncLeagueData])
 
   useEffect(() => {
     function handleGameComplete(e) {
@@ -592,6 +546,7 @@ function App() {
         import('./leagueService').then(({ getPlayer, updatePlayer, ensurePlayerInLeague, increment }) => {
           getPlayer(userId).then(p => {
             if (!p) return
+            syncLeagueData(p)
             if (!p.leagueInstanceId) {
               ensurePlayerInLeague(userId).catch(() => {})
             }
@@ -603,11 +558,11 @@ function App() {
     }
     window.addEventListener('arcade-game-complete', handleGameComplete)
     return () => window.removeEventListener('arcade-game-complete', handleGameComplete)
-  }, [userId])
+  }, [userId, syncLeagueData])
 
   useEffect(() => {
     if (newAchievements.length > 0) {
-      setShowAchievements(true)
+      setCurrentPage('achievements')
       markAchievementsSeen()
     }
   }, [newAchievements, markAchievementsSeen])
@@ -705,6 +660,9 @@ function App() {
     onNavigateGame: handleNavigateGame,
     onCloak: () => setCurrentPage('cloak'),
     onSettings: () => setCurrentPage('settings'),
+    onLeagues: () => setCurrentPage('leagues'),
+    onStats: () => setCurrentPage('stats'),
+    onAchievements: () => setCurrentPage('achievements'),
     user,
     onSignIn: () => setCurrentPage('signin'),
     onSignOut: () => signOut().catch(() => {}),
@@ -715,8 +673,6 @@ function App() {
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
         <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} />
-        {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
-        {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )
@@ -736,8 +692,6 @@ function App() {
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
         <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} />
-        {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
-        {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )
@@ -748,6 +702,25 @@ function App() {
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
         <CloakScreen onBack={() => setCurrentPage('home')} />
+      </div>
+    )
+  }
+
+  if (currentPage === 'stats') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <StatsPage games={GAMES} allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setCurrentPage('home')} onClear={() => { setCurrentPage('home'); setShowConfirmClear(true) }} />
+        {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+      </div>
+    )
+  }
+
+  if (currentPage === 'achievements') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setCurrentPage('home')} />
       </div>
     )
   }
@@ -774,8 +747,6 @@ function App() {
           <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
         </main>
         <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
-        {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
-        {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
@@ -793,14 +764,11 @@ function App() {
           <span className="xp-badge">⭐ {xp.toLocaleString()} XP</span>
           <span className="xp-detail">{totalPlayedCount} played · {totalWonCount} won</span>
         </div>
-        <div className="home-action-bar">
-          <button className="home-action-btn" onClick={() => setShowAchievements(true)} title="Achievements" aria-label="View achievements">🏅 Achievements</button>
-          <button className="home-action-btn" onClick={() => setCurrentPage('leagues')} title="Leagues" aria-label="View leagues">⚔️ Leagues</button>
-          <button className="home-action-btn" onClick={() => setShowStats(true)} title="Stats" aria-label="View statistics">📊 Stats</button>
-          {user && user.isAnonymous && (
+        {user && user.isAnonymous && (
+          <div className="home-action-bar">
             <button className="home-action-btn signin-prompt" onClick={() => setCurrentPage('signin')} title="Sign in to save data" aria-label="Sign in">☁️ Sign In</button>
-          )}
-        </div>
+          </div>
+        )}
       </header>
       <main className="game-container">
         {recentGames.length > 0 && (
@@ -874,8 +842,6 @@ function App() {
         )}
       </main>
       <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
-      {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
-      {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
     </div>
   )

@@ -1,6 +1,4 @@
-export const MAX_PER_LEAGUE = 15
-export const PROMOTE_COUNT = 3
-export const DEMOTE_COUNT = 3
+export const MAX_PER_LEAGUE = 20
 
 export const LEAGUE_RANKS = [
   { rank: 1, name: 'Champion', emoji: '👑', color: '#ffd700' },
@@ -8,45 +6,66 @@ export const LEAGUE_RANKS = [
   { rank: 3, name: 'Diamond', emoji: '💠', color: '#00d4ff' },
   { rank: 4, name: 'Platinum', emoji: '🔷', color: '#3b82f6' },
   { rank: 5, name: 'Gold', emoji: '🥇', color: '#f59e0b' },
-  { rank: 6, name: 'Silver', emoji: '🥈', color: '#94a3b8' },
+  { rank: 6, name: 'Copper', emoji: '🪙', color: '#b87333' },
   { rank: 7, name: 'Bronze', emoji: '🥉', color: '#cd7f32' },
   { rank: 8, name: 'Iron', emoji: '⚙️', color: '#6b7280' },
   { rank: 9, name: 'Stone', emoji: '🪨', color: '#78716c' },
   { rank: 10, name: 'Wood', emoji: '🪵', color: '#a3a3a3' },
+  { rank: 11, name: 'Paper', emoji: '📄', color: '#d4d4d4' },
 ]
 
+export const RANK_PROMO_DEMO = {
+  11: { promote: 15, demote: 0 },
+  10: { promote: 12, demote: 3 },
+  9:  { promote: 12, demote: 5 },
+  8:  { promote: 10, demote: 5 },
+  7:  { promote: 8,  demote: 6 },
+  6:  { promote: 8,  demote: 5 },
+  5:  { promote: 7,  demote: 7 },
+  4:  { promote: 5,  demote: 8 },
+  3:  { promote: 3,  demote: 10 },
+  2:  { promote: 8,  demote: 10 },
+}
+
 export function getRankInfo(rank) {
-  return LEAGUE_RANKS.find(r => r.rank === rank) || LEAGUE_RANKS[9]
+  return LEAGUE_RANKS.find(r => r.rank === rank) || LEAGUE_RANKS[10]
 }
 
-export function getPromotionZone() {
-  return PROMOTE_COUNT
+export function getPromotionZone(rank) {
+  return (RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[11]).promote
 }
 
-export function getDemotionZone() {
-  return DEMOTE_COUNT
+export function getDemotionZone(rank) {
+  return (RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[11]).demote
 }
 
-export function getStayZone(totalPlayers) {
-  return totalPlayers - PROMOTE_COUNT - DEMOTE_COUNT
+export function getStayZone(rank, totalPlayers) {
+  const pd = RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[11]
+  return totalPlayers - pd.promote - pd.demote
 }
 
-export function getNextWednesdayMidnightPST() {
+export const TOURNAMENT_SIZES = {
+  tournament: 20,
+  semiFinals: 15,
+  finals: 10,
+}
+
+export function getNextWednesdayMidnightUTC() {
   const now = new Date()
-  const laTimeStr = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
-  const laTime = new Date(laTimeStr)
-  const day = laTime.getDay()
+  const day = now.getUTCDay()
   let daysAhead = (3 - day + 7) % 7
   if (daysAhead === 0) daysAhead = 7
-  const target = new Date(laTime)
-  target.setDate(target.getDate() + daysAhead)
-  target.setHours(0, 0, 0, 0)
-  const laOffset = now.getTime() - laTime.getTime()
-  return target.getTime() + laOffset
+  const target = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + daysAhead,
+    0, 0, 0, 0
+  ))
+  return target.getTime()
 }
 
 export function getTimeUntilSeasonEnd() {
-  return Math.max(0, getNextWednesdayMidnightPST() - Date.now())
+  return Math.max(0, getNextWednesdayMidnightUTC() - Date.now())
 }
 
 export function formatSeasonTime(ms) {
