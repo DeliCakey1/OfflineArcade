@@ -108,13 +108,13 @@ body::after {
 
 /* ===== WAVE BAR ===== */
 .has-wave-bar {
-  margin-left: 8px;
+  margin-left: 14px;
 }
 .wave-bar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 8px;
+  width: 14px;
   height: 100vh;
   z-index: 9999;
   background: linear-gradient(
