@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import RockPaperScissors from './components/RockPaperScissors'
 import SplitStealGiveAway from './components/SplitStealGiveAway'
 import GuessTheNumber from './components/GuessTheNumber'
@@ -20,181 +20,58 @@ import Tetris from './components/Tetris'
 import Breakout from './components/Breakout'
 import FlappyBird from './components/FlappyBird'
 import Minesweeper from './components/Minesweeper'
-import { isMuted, toggleMute } from './useSound'
-import useStats from './useStats'
+import Confetti from './components/Confetti'
+import AchievementsModal from './components/AchievementsModal'
+import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
+import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
 import { THEMES, THEME_ORDER } from './themes'
 import './index.css'
 
-const GAMES = [
-  {
-    id: 'rps',
-    label: 'Rock Paper Scissors',
-    emoji: '✊',
-    desc: 'Classic showdown against the bot!',
-    color: '#3b82f6',
-    component: RockPaperScissors,
-  },
-  {
-    id: 'ssg',
-    label: 'Split Steal Give Away',
-    emoji: '💰',
-    desc: 'Your custom game! Outsmart the bot to win the prize.',
-    color: '#f59e0b',
-    component: SplitStealGiveAway,
-  },
-  {
-    id: 'gtn',
-    label: 'Guess The Number',
-    emoji: '🔢',
-    desc: 'Crack the bot\'s number! Choose your difficulty!',
-    color: '#22c55e',
-    component: GuessTheNumber,
-  },
-  {
-    id: 'gtn-hc',
-    label: 'Hot or Cold',
-    emoji: '🌡️',
-    desc: 'Getting warmer or colder? Use the clues!',
-    color: '#ef4444',
-    component: GuessTheNumberHotCold,
-  },
-  {
-    id: 'hol',
-    label: 'Higher or Lower',
-    emoji: '🃏',
-    desc: 'Guess if the next card is higher or lower!',
-    color: '#8b5cf6',
-    component: HigherOrLower,
-  },
-  {
-    id: 'dice',
-    label: 'Dice Roll',
-    emoji: '🎲',
-    desc: 'Bet on the dice! Exact, Range, or Parity.',
-    color: '#06b6d4',
-    component: DiceRoll,
-  },
-  {
-    id: 'coin',
-    label: 'Coin Flip Streak',
-    emoji: '🪙',
-    desc: 'Call Heads or Tails. Build a streak to win!',
-    color: '#f97316',
-    component: CoinFlipStreak,
-  },
-  {
-    id: 'memory',
-    label: 'Memory Match',
-    emoji: '🧠',
-    desc: 'Find all matching pairs! Fewest moves wins.',
-    color: '#ec4899',
-    component: MemoryMatch,
-  },
-  {
-    id: 'word',
-    label: 'Word Scramble',
-    emoji: '📚',
-    desc: 'Unscramble the letters to guess the word!',
-    color: '#14b8a6',
-    component: WordScramble,
-  },
-  {
-    id: 'merge',
-    label: 'Number Merge',
-    emoji: '🔢',
-    desc: 'Slide tiles to merge same numbers. Reach the goal!',
-    color: '#f59e0b',
-    component: NumberMerge,
-  },
-  {
-    id: 'reaction',
-    label: 'Reaction Time',
-    emoji: '⚡',
-    desc: 'Click as fast as you can when it turns green!',
-    color: '#eab308',
-    component: ReactionTime,
-  },
-  {
-    id: 'typing',
-    label: 'Typing Speed',
-    emoji: '⌨️',
-    desc: 'Type each word as fast as you can!',
-    color: '#8b5cf6',
-    component: TypingSpeed,
-  },
-  {
-    id: 'simon',
-    label: 'Simon Says',
-    emoji: '🎵',
-    desc: 'Watch the sequence, then repeat it!',
-    color: '#ef4444',
-    component: SimonSays,
-  },
-  {
-    id: 'slots',
-    label: 'Slots',
-    emoji: '🎰',
-    desc: 'Spin the reels! Match symbols to win big!',
-    color: '#f59e0b',
-    component: Slots,
-  },
-  {
-    id: 'blackjack',
-    label: 'Blackjack',
-    emoji: '🃏',
-    desc: 'Get as close to 21 as you can without going over!',
-    color: '#22c55e',
-    component: Blackjack,
-  },
-  {
-    id: 'whack',
-    label: 'Whack-a-Mole',
-    emoji: '🔨',
-    desc: 'Whack the moles as fast as you can!',
-    color: '#8b5cf6',
-    component: WhackAMole,
-  },
-  {
-    id: 'snake',
-    label: 'Snake',
-    emoji: '🐍',
-    desc: 'Eat food, grow longer, don\'t hit yourself!',
-    color: '#22c55e',
-    component: SnakeGame,
-  },
-  {
-    id: 'tetris',
-    label: 'Tetris',
-    emoji: '🧱',
-    desc: 'Stack blocks, clear lines, rack up points!',
-    color: '#00d4ff',
-    component: Tetris,
-  },
-  {
-    id: 'breakout',
-    label: 'Breakout',
-    emoji: '🏓',
-    desc: 'Smash all the bricks with the ball!',
-    color: '#ff2d7b',
-    component: Breakout,
-  },
-  {
-    id: 'flappy',
-    label: 'Flappy Bird',
-    emoji: '🐦',
-    desc: 'Tap to flap, dodge the pipes!',
-    color: '#ffe600',
-    component: FlappyBird,
-  },
-  {
-    id: 'minesweeper',
-    label: 'Minesweeper',
-    emoji: '💣',
-    desc: 'Clear the field without hitting a mine!',
-    color: '#f97316',
-    component: Minesweeper,
-  },
+const CATEGORIES = [
+  { id: 'all', label: 'All', emoji: '🎮' },
+  { id: 'chance', label: 'Chance', emoji: '🎲' },
+  { id: 'brain', label: 'Brain', emoji: '🧠' },
+  { id: 'reflex', label: 'Reflex', emoji: '⚡' },
+  { id: 'card', label: 'Card', emoji: '🃏' },
+  { id: 'classic', label: 'Classic', emoji: '🕹️' },
 ]
+
+const GAMES = [
+  { id: 'rps', label: 'Rock Paper Scissors', emoji: '✊', desc: 'Classic showdown against the bot!', color: '#3b82f6', component: RockPaperScissors, category: 'chance' },
+  { id: 'ssg', label: 'Split Steal Give Away', emoji: '💰', desc: 'Your custom game! Outsmart the bot to win the prize.', color: '#f59e0b', component: SplitStealGiveAway, category: 'card' },
+  { id: 'gtn', label: 'Guess The Number', emoji: '🔢', desc: "Crack the bot's number! Choose your difficulty!", color: '#22c55e', component: GuessTheNumber, category: 'brain' },
+  { id: 'gtn-hc', label: 'Hot or Cold', emoji: '🌡️', desc: 'Getting warmer or colder? Use the clues!', color: '#ef4444', component: GuessTheNumberHotCold, category: 'brain' },
+  { id: 'hol', label: 'Higher or Lower', emoji: '🃏', desc: 'Guess if the next card is higher or lower!', color: '#8b5cf6', component: HigherOrLower, category: 'card' },
+  { id: 'dice', label: 'Dice Roll', emoji: '🎲', desc: 'Bet on the dice! Exact, Range, or Parity.', color: '#06b6d4', component: DiceRoll, category: 'chance' },
+  { id: 'coin', label: 'Coin Flip Streak', emoji: '🪙', desc: 'Call Heads or Tails. Build a streak to win!', color: '#f97316', component: CoinFlipStreak, category: 'chance' },
+  { id: 'memory', label: 'Memory Match', emoji: '🧠', desc: 'Find all matching pairs! Fewest moves wins.', color: '#ec4899', component: MemoryMatch, category: 'brain' },
+  { id: 'word', label: 'Word Scramble', emoji: '📚', desc: 'Unscramble the letters to guess the word!', color: '#14b8a6', component: WordScramble, category: 'brain' },
+  { id: 'merge', label: 'Number Merge', emoji: '🔢', desc: 'Slide tiles to merge same numbers. Reach the goal!', color: '#f59e0b', component: NumberMerge, category: 'classic' },
+  { id: 'reaction', label: 'Reaction Time', emoji: '⚡', desc: 'Click as fast as you can when it turns green!', color: '#eab308', component: ReactionTime, category: 'reflex' },
+  { id: 'typing', label: 'Typing Speed', emoji: '⌨️', desc: 'Type each word as fast as you can!', color: '#8b5cf6', component: TypingSpeed, category: 'reflex' },
+  { id: 'simon', label: 'Simon Says', emoji: '🎵', desc: 'Watch the sequence, then repeat it!', color: '#ef4444', component: SimonSays, category: 'reflex' },
+  { id: 'slots', label: 'Slots', emoji: '🎰', desc: 'Spin the reels! Match symbols to win big!', color: '#f59e0b', component: Slots, category: 'chance' },
+  { id: 'blackjack', label: 'Blackjack', emoji: '🃏', desc: 'Get as close to 21 as you can without going over!', color: '#22c55e', component: Blackjack, category: 'card' },
+  { id: 'whack', label: 'Whack-a-Mole', emoji: '🔨', desc: 'Whack the moles as fast as you can!', color: '#8b5cf6', component: WhackAMole, category: 'reflex' },
+  { id: 'snake', label: 'Snake', emoji: '🐍', desc: "Eat food, grow longer, don't hit yourself!", color: '#22c55e', component: SnakeGame, category: 'classic' },
+  { id: 'tetris', label: 'Tetris', emoji: '🧱', desc: 'Stack blocks, clear lines, rack up points!', color: '#00d4ff', component: Tetris, category: 'classic' },
+  { id: 'breakout', label: 'Breakout', emoji: '🏓', desc: 'Smash all the bricks with the ball!', color: '#ff2d7b', component: Breakout, category: 'classic' },
+  { id: 'flappy', label: 'Flappy Bird', emoji: '🐦', desc: 'Tap to flap, dodge the pipes!', color: '#ffe600', component: FlappyBird, category: 'classic' },
+  { id: 'minesweeper', label: 'Minesweeper', emoji: '💣', desc: 'Clear the field without hitting a mine!', color: '#f97316', component: Minesweeper, category: 'brain' },
+]
+
+function getSaved(key, fallback) {
+  try { return localStorage.getItem(key) ?? fallback } catch { return fallback }
+}
+
+function formatCountdown(ms) {
+  const h = Math.floor(ms / 3600000)
+  const m = Math.floor((ms % 3600000) / 60000)
+  const s = Math.floor((ms % 60000) / 1000)
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
 
 function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave', cancelText = 'Stay' }) {
   const cancelRef = useRef(null)
@@ -204,16 +81,10 @@ function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave'
     previousFocus.current = document.activeElement
     cancelRef.current?.focus()
     function handleKey(e) {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onCancel()
-      }
+      if (e.key === 'Escape') { e.preventDefault(); onCancel() }
     }
     document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      previousFocus.current?.focus()
-    }
+    return () => { document.removeEventListener('keydown', handleKey); previousFocus.current?.focus() }
   }, [onCancel])
 
   return (
@@ -230,14 +101,18 @@ function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave'
   )
 }
 
-function GameCard({ game, stats, onClick }) {
+function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
   const gameStats = stats[game.id]
   return (
-    <button
-      className="game-select-card"
-      onClick={onClick}
-      style={{ '--card-accent': game.color }}
-    >
+    <button className="game-select-card" onClick={onClick} style={{ '--card-accent': game.color }}>
+      <button
+        className={`fav-btn ${isFav ? 'active' : ''}`}
+        onClick={e => { e.stopPropagation(); onFavToggle(game.id) }}
+        title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+        aria-label={isFav ? `Remove ${game.label} from favorites` : `Add ${game.label} to favorites`}
+      >
+        {isFav ? '⭐' : '☆'}
+      </button>
       <div className="game-select-emoji">{game.emoji}</div>
       <div className="game-select-label">{game.label}</div>
       <div className="game-select-desc">{game.desc}</div>
@@ -252,9 +127,7 @@ function GameCard({ game, stats, onClick }) {
   )
 }
 
-function StatsModal({ allStats, onClose, onClear }) {
-  const totalPlayed = Object.values(allStats).reduce((s, g) => s + g.played, 0)
-  const totalWon = Object.values(allStats).reduce((s, g) => s + g.won, 0)
+function StatsModal({ allStats, onClose, onClear, xp, totalPlayedCount, totalWonCount }) {
   const closeRef = useRef(null)
   const previousFocus = useRef(null)
 
@@ -262,16 +135,10 @@ function StatsModal({ allStats, onClose, onClear }) {
     previousFocus.current = document.activeElement
     closeRef.current?.focus()
     function handleKey(e) {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        onClose()
-      }
+      if (e.key === 'Escape') { e.preventDefault(); onClose() }
     }
     document.addEventListener('keydown', handleKey)
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      previousFocus.current?.focus()
-    }
+    return () => { document.removeEventListener('keydown', handleKey); previousFocus.current?.focus() }
   }, [onClose])
 
   return (
@@ -279,9 +146,10 @@ function StatsModal({ allStats, onClose, onClear }) {
       <div className="stats-modal" role="dialog" aria-modal="true" aria-labelledby="stats-dialog-title" onClick={e => e.stopPropagation()}>
         <h2 className="stats-title" id="stats-dialog-title">Your Stats</h2>
         <div className="stats-total">
-          <span>{totalPlayed} games played</span>
-          <span>{totalWon} won</span>
-          {totalPlayed > 0 && <span>{Math.round((totalWon / totalPlayed) * 100)}% win rate</span>}
+          <span>{totalPlayedCount} games played</span>
+          <span>{totalWonCount} won</span>
+          <span>⭐ {xp.toLocaleString()} XP</span>
+          {totalPlayedCount > 0 && <span>{Math.round((totalWonCount / totalPlayedCount) * 100)}% win rate</span>}
         </div>
         <div className="stats-list">
           {GAMES.map(g => {
@@ -299,17 +167,13 @@ function StatsModal({ allStats, onClose, onClear }) {
         </div>
         <div className="stats-footer">
           <button className="stats-close" ref={closeRef} onClick={onClose}>Close</button>
-          {totalPlayed > 0 && (
+          {totalPlayedCount > 0 && (
             <button className="stats-clear-btn" onClick={onClear}>🗑️ Clear All Stats</button>
           )}
         </div>
       </div>
     </div>
   )
-}
-
-function getSaved(key, fallback) {
-  try { return localStorage.getItem(key) ?? fallback } catch { return fallback }
 }
 
 function ThemePicker({ current, onChange }) {
@@ -322,11 +186,7 @@ function ThemePicker({ current, onChange }) {
       {open && (
         <div className="theme-dropdown">
           {THEME_ORDER.map(id => (
-            <button
-              key={id}
-              className={`theme-option ${id === current ? 'active' : ''}`}
-              onClick={() => { onChange(id); setOpen(false) }}
-            >
+            <button key={id} className={`theme-option ${id === current ? 'active' : ''}`} onClick={() => { onChange(id); setOpen(false) }}>
               <span className="theme-option-emoji">{THEMES[id].emoji}</span>
               <span className="theme-option-name">{THEMES[id].name}</span>
             </button>
@@ -337,15 +197,13 @@ function ThemePicker({ current, onChange }) {
   )
 }
 
-function GamesDropdown({ inGame, onNavigate }) {
+function GamesDropdown({ onNavigate }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
     if (!open) return
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
@@ -357,11 +215,7 @@ function GamesDropdown({ inGame, onNavigate }) {
       </button>
       <div className={`theme-dropdown games-dropdown ${open ? 'open' : ''}`}>
         {GAMES.map(g => (
-          <button
-            key={g.id}
-            className="theme-option"
-            onClick={() => { setOpen(false); onNavigate(g.id) }}
-          >
+          <button key={g.id} className="theme-option" onClick={() => { setOpen(false); onNavigate(g.id) }}>
             <span className="theme-option-emoji">{g.emoji}</span>
             <span className="theme-option-name">{g.label}</span>
           </button>
@@ -370,6 +224,30 @@ function GamesDropdown({ inGame, onNavigate }) {
     </div>
   )
 }
+
+function VolumeSlider({ volume, onChange }) {
+  return (
+    <div className="volume-slider-wrap" title={`Volume: ${Math.round(volume * 100)}%`}>
+      <span className="volume-icon">{volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊'}</span>
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.05"
+        value={volume}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className="volume-slider"
+        aria-label="Sound volume"
+      />
+    </div>
+  )
+}
+
+const CLOAK_BLOCKED_KEYS = new Set([
+  'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+  'Enter', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE',
+  'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Escape',
+])
 
 function CloakScreen({ onBack }) {
   const [mode, setMode] = useState(() => getSaved('arcade-cloak', 'none'))
@@ -385,13 +263,6 @@ function CloakScreen({ onBack }) {
   })
   const [recording, setRecording] = useState(false)
   const recordingRef = useRef(false)
-  const panicBufRef = useRef([])
-
-  const BLOCKED_KEYS = new Set([
-    'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-    'Enter', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE',
-    'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Escape',
-  ])
 
   function keyDisplayName(code) {
     if (code.startsWith('Key')) return code.slice(3)
@@ -411,16 +282,9 @@ function CloakScreen({ onBack }) {
     function handleKey(e) {
       e.preventDefault()
       e.stopPropagation()
-      if (e.code === 'Escape') {
-        setRecording(false)
-        recordingRef.current = false
-        return
-      }
-      if (e.code === 'Backspace') {
-        setPanicSequence(prev => prev.slice(0, -1))
-        return
-      }
-      if (BLOCKED_KEYS.has(e.code)) return
+      if (e.code === 'Escape') { setRecording(false); recordingRef.current = false; return }
+      if (e.code === 'Backspace') { setPanicSequence(prev => prev.slice(0, -1)); return }
+      if (CLOAK_BLOCKED_KEYS.has(e.code)) return
       setPanicSequence(prev => [...prev, e.code])
     }
     window.addEventListener('keydown', handleKey, true)
@@ -434,12 +298,8 @@ function CloakScreen({ onBack }) {
     let html = '<!doctype html>\n' + document.documentElement.outerHTML
     html = html.replace(/(href|src)="(\/[^"]+)"/g, (_, attr, path) => `${attr}="${base}${path}"`)
     html = html.replace('</head>', '<script>window.__ABOUT_BLANK__ = true</script></head>')
-    if (cloakTitle) {
-      html = html.replace(/<title>[^<]*<\/title>/, `<title>${cloakTitle}</title>`)
-    }
-    if (cloakFavicon) {
-      html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" type="image/svg+xml" href="${cloakFavicon}" />`)
-    }
+    if (cloakTitle) html = html.replace(/<title>[^<]*<\/title>/, `<title>${cloakTitle}</title>`)
+    if (cloakFavicon) html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" type="image/svg+xml" href="${cloakFavicon}" />`)
     win.document.write(html)
     win.document.close()
   }
@@ -510,14 +370,12 @@ function CloakScreen({ onBack }) {
         <h2 className="cloak-title">Tab Cloaking</h2>
         <p className="cloak-subtitle">Disguise the tab to look like something else</p>
       </div>
-
       {isActive && (
         <div className="cloak-status">
           <span className="cloak-status-dot" />
           <span>Active: {mode === 'custom' ? `Redirecting to ${url}` : 'about:blank mode'}</span>
         </div>
       )}
-
       <div className="cloak-section">
         <div className="cloak-section-header">
           <span className="cloak-section-emoji">🔗</span>
@@ -529,40 +387,21 @@ function CloakScreen({ onBack }) {
         <div className="cloak-inputs">
           <label className="cloak-label">
             Website URL
-            <input
-              className="cloak-input"
-              type="url"
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              placeholder="https://canvas.instructure.com"
-            />
+            <input className="cloak-input" type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://canvas.instructure.com" />
           </label>
           <label className="cloak-label">
             Tab Title <span className="cloak-optional">(for the about:blank tab)</span>
-            <input
-              className="cloak-input"
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Dashboard | Canvas LMS"
-            />
+            <input className="cloak-input" type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Dashboard | Canvas LMS" />
           </label>
           <label className="cloak-label">
             Tab Favicon URL <span className="cloak-optional">(for the about:blank tab)</span>
-            <input
-              className="cloak-input"
-              type="url"
-              value={favicon}
-              onChange={e => setFavicon(e.target.value)}
-              placeholder="https://example.com/favicon.ico"
-            />
+            <input className="cloak-input" type="url" value={favicon} onChange={e => setFavicon(e.target.value)} placeholder="https://example.com/favicon.ico" />
           </label>
         </div>
         <button className="cloak-save-btn" onClick={handleSaveCustom} disabled={!url || url === 'https://'}>
           {mode === 'custom' ? '✓ Saved — Click to Update' : 'Save & Activate'}
         </button>
       </div>
-
       <div className="cloak-section">
         <div className="cloak-section-header">
           <span className="cloak-section-emoji">🔲</span>
@@ -571,39 +410,27 @@ function CloakScreen({ onBack }) {
             <p className="cloak-section-desc">Opens the arcade in an about:blank tab. Address bar shows nothing.</p>
           </div>
         </div>
-        <button
-          className={`cloak-save-btn ${mode === 'blank' ? 'cloak-active' : ''}`}
-          onClick={handleEnableBlank}
-        >
+        <button className={`cloak-save-btn ${mode === 'blank' ? 'cloak-active' : ''}`} onClick={handleEnableBlank}>
           {mode === 'blank' ? '✓ Active — Click to Re-open' : 'Open in about:blank'}
         </button>
       </div>
-
       <div className="cloak-section">
         <div className="cloak-section-header">
           <span className="cloak-section-emoji">🚨</span>
           <div>
             <h3 className="cloak-section-title">Panic Key</h3>
-            <p className="cloak-section-desc">Press a key or sequence of keys to instantly redirect to a safe website. Works on both the main tab and about:blank.</p>
+            <p className="cloak-section-desc">Press a key or sequence of keys to instantly redirect to a safe website.</p>
           </div>
         </div>
         <div className="cloak-inputs">
           <label className="cloak-label">
             Redirect URL
-            <input
-              className="cloak-input"
-              type="url"
-              value={panicUrl}
-              onChange={e => setPanicUrl(e.target.value)}
-              placeholder="https://google.com"
-            />
+            <input className="cloak-input" type="url" value={panicUrl} onChange={e => setPanicUrl(e.target.value)} placeholder="https://google.com" />
           </label>
           <div className="cloak-label">
             Key Sequence
             <div className="panic-sequence-display">
-              {panicSequence.length === 0 && !recording && (
-                <span className="panic-empty">No keys recorded</span>
-              )}
+              {panicSequence.length === 0 && !recording && <span className="panic-empty">No keys recorded</span>}
               {panicSequence.map((code, i) => (
                 <span key={i} className="panic-key-chip">
                   {keyDisplayName(code)}
@@ -615,55 +442,31 @@ function CloakScreen({ onBack }) {
               <button
                 className={`panic-record-btn ${recording ? 'recording' : ''}`}
                 onClick={() => {
-                  if (recording) {
-                    setRecording(false)
-                    recordingRef.current = false
-                  } else {
-                    setPanicSequence([])
-                    setRecording(true)
-                    recordingRef.current = true
-                  }
+                  if (recording) { setRecording(false); recordingRef.current = false }
+                  else { setPanicSequence([]); setRecording(true); recordingRef.current = true }
                 }}
               >
                 {recording ? '● Recording... (Esc to stop)' : 'Record Sequence'}
               </button>
-              {panicSequence.length > 0 && !recording && (
-                <button className="panic-clear-btn" onClick={() => setPanicSequence([])}>Clear</button>
-              )}
+              {panicSequence.length > 0 && !recording && <button className="panic-clear-btn" onClick={() => setPanicSequence([])}>Clear</button>}
             </div>
-            <p className="panic-hint">
-              Press keys to record. Blocked: Space, Enter, Escape, Arrows, WASD, E, 1-4. Backspace removes last key.
-            </p>
+            <p className="panic-hint">Blocked: Space, Enter, Escape, Arrows, WASD, E, 1-4. Backspace removes last key.</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            className="cloak-save-btn"
-            onClick={handleSavePanic}
-            disabled={!panicUrl || panicUrl === 'https://' || panicSequence.length === 0}
-            style={{ flex: 1 }}
-          >
+          <button className="cloak-save-btn" onClick={handleSavePanic} disabled={!panicUrl || panicUrl === 'https://' || panicSequence.length === 0} style={{ flex: 1 }}>
             Save Panic Key
           </button>
           {(panicSequence.length > 0 || (panicUrl && panicUrl !== 'https://')) && (
-            <button className="cloak-save-btn" onClick={handleClearPanic} style={{ flex: 'none', padding: '12px 20px', background: 'linear-gradient(135deg, #ef4444, #f97316)' }}>
-              Clear
-            </button>
+            <button className="cloak-save-btn" onClick={handleClearPanic} style={{ flex: 'none', padding: '12px 20px', background: 'linear-gradient(135deg, #ef4444, #f97316)' }}>Clear</button>
           )}
         </div>
       </div>
-
       <div className="cloak-section cloak-revert-section">
-        <button className="cloak-revert-btn" onClick={() => setShowRevertConfirm(true)}>
-          ↩️ Revert to Normal
-        </button>
+        <button className="cloak-revert-btn" onClick={() => setShowRevertConfirm(true)}>↩️ Revert to Normal</button>
         <p className="cloak-revert-desc">Clear all cloaking. The site will load normally.</p>
       </div>
-
-      {saved && (
-        <div className="cloak-saved-toast">Settings saved!</div>
-      )}
-
+      {saved && <div className="cloak-saved-toast">Settings saved!</div>}
       {showRevertConfirm && (
         <div className="stats-overlay" onClick={() => setShowRevertConfirm(false)}>
           <div className="stats-modal confirm-modal" onClick={e => e.stopPropagation()}>
@@ -680,19 +483,16 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, onStats, inGame, onHome, onNavigateGame, onCloak }) {
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onStats, inGame, onHome, onNavigateGame, onCloak, onAchievements }) {
   return (
     <div className="settings-bar" role="toolbar" aria-label="Game settings">
       <div className="settings-bar-left">
-        <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">
-          🏠
-        </button>
-        <GamesDropdown inGame={inGame} onNavigate={onNavigateGame} />
-        <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">
-          🎭
-        </button>
+        <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
+        <GamesDropdown onNavigate={onNavigateGame} />
+        <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
       </div>
       <div className="settings-bar-right">
+        <VolumeSlider volume={volume} onChange={onVolumeChange} />
         <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'} aria-label={muted ? 'Unmute sound' : 'Mute sound'}>
           {muted ? '🔇' : '🔊'}
         </button>
@@ -708,9 +508,8 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
         <button className="settings-btn" onClick={onWaveBarToggle} title={waveBar ? 'Disable Wave Bar' : 'Enable Wave Bar'} aria-label={waveBar ? 'Disable wave bar' : 'Enable wave bar'}>
           {waveBar ? '🌊' : '🫧'}
         </button>
-        <button className="settings-btn" onClick={onStats} title="Stats" aria-label="View statistics">
-          📊
-        </button>
+        <button className="settings-btn" onClick={onAchievements} title="Achievements" aria-label="View achievements">🏅</button>
+        <button className="settings-btn" onClick={onStats} title="Stats" aria-label="View statistics">📊</button>
         <ThemePicker current={theme} onChange={onThemeChange} />
       </div>
     </div>
@@ -721,6 +520,7 @@ function App() {
   const [activeGame, setActiveGame] = useState(null)
   const [muted, setMuted] = useState(isMuted())
   const [showStats, setShowStats] = useState(false)
+  const [showAchievements, setShowAchievements] = useState(false)
   const [theme, setTheme] = useState(() => getSaved('arcade-theme', 'neon'))
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
   const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
@@ -730,7 +530,32 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [showCloak, setShowCloak] = useState(false)
   const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
-  const { allStats, clearStats } = useStats('_global')
+  const [volume, setVolumeState] = useState(() => getVolume())
+  const [category, setCategory] = useState('all')
+  const [search, setSearch] = useState('')
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
+
+  const {
+    allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
+    newAchievements, markAchievementsSeen,
+    markDailyCompleted, totalPlayedCount, totalWonCount,
+  } = useStats('_global')
+
+  const dailyGame = useMemo(() => {
+    const dg = getDailyGame(ALL_GAME_IDS)
+    return { ...dg, game: GAMES.find(g => g.id === dg.gameId) }
+  }, [])
+
+  const playDaily = useCallback(() => {
+    markDailyCompleted()
+    setActiveGame(dailyGame.gameId)
+  }, [dailyGame.gameId, markDailyCompleted])
+
+  useEffect(() => {
+    const timer = setInterval(() => setDailyCountdown(getTimeUntilTomorrow()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const vars = THEMES[theme]?.vars || THEMES.neon.vars
@@ -740,25 +565,23 @@ function App() {
     try { localStorage.setItem('arcade-theme', theme) } catch {}
   }, [theme])
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('no-animations', !animations)
-    try { localStorage.setItem('arcade-animations', animations ? 'on' : 'off') } catch {}
-  }, [animations])
+  useEffect(() => { document.documentElement.classList.toggle('no-animations', !animations); try { localStorage.setItem('arcade-animations', animations ? 'on' : 'off') } catch {} }, [animations])
+  useEffect(() => { document.documentElement.classList.toggle('no-glass', !glass); try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {} }, [glass])
+  useEffect(() => { document.documentElement.classList.toggle('no-bg', !bg); try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {} }, [bg])
+  useEffect(() => { document.documentElement.classList.toggle('has-wave-bar', waveBar); try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {} }, [waveBar])
 
   useEffect(() => {
-    document.documentElement.classList.toggle('no-glass', !glass)
-    try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {}
-  }, [glass])
+    function handleWin() { setShowConfetti(true) }
+    window.addEventListener('arcade-win', handleWin)
+    return () => window.removeEventListener('arcade-win', handleWin)
+  }, [])
 
   useEffect(() => {
-    document.documentElement.classList.toggle('no-bg', !bg)
-    try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {}
-  }, [bg])
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('has-wave-bar', waveBar)
-    try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {}
-  }, [waveBar])
+    if (newAchievements.length > 0) {
+      setShowAchievements(true)
+      markAchievementsSeen()
+    }
+  }, [newAchievements, markAchievementsSeen])
 
   useEffect(() => {
     let buf = []
@@ -775,47 +598,75 @@ function App() {
       buf.push(e.code)
       if (buf.length >= sequence.length) {
         const tail = buf.slice(-sequence.length)
-        if (tail.every((k, i) => k === sequence[i])) {
-          buf = []
-          window.location.replace(url)
-        }
+        if (tail.every((k, i) => k === sequence[i])) { buf = []; window.location.replace(url) }
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  function handleMuteToggle() {
-    toggleMute()
-    setMuted(isMuted())
+  useEffect(() => {
+    if (activeGame || showCloak) return
+    function handleKey(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      const idx = GAMES.findIndex(g => g.id === activeGame)
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        const next = idx < GAMES.length - 1 ? idx + 1 : 0
+        setActiveGame(GAMES[next].id)
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        const prev = idx > 0 ? idx - 1 : GAMES.length - 1
+        setActiveGame(GAMES[prev].id)
+      } else if (e.key === 'Escape' && activeGame) {
+        e.preventDefault()
+        if (isPlaying) setConfirmNav({ type: 'home' })
+        else setActiveGame(null)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [activeGame, isPlaying, showCloak])
+
+  function handleMuteToggle() { toggleMute(); setMuted(isMuted()) }
+
+  function handleVolumeChange(val) {
+    setVolume(val)
+    setVolumeState(val)
   }
 
   function handleHome() {
-    if (isPlaying) {
-      setConfirmNav({ type: 'home' })
-    } else {
-      setActiveGame(null)
-    }
+    if (isPlaying) setConfirmNav({ type: 'home' })
+    else setActiveGame(null)
   }
 
   function handleNavigateGame(gameId) {
-    if (isPlaying && activeGame !== gameId) {
-      setConfirmNav({ type: 'game', gameId })
-    } else {
-      setActiveGame(gameId)
-    }
+    if (isPlaying && activeGame !== gameId) setConfirmNav({ type: 'game', gameId })
+    else setActiveGame(gameId)
   }
 
   function confirmNavAction() {
-    if (confirmNav.type === 'home') {
-      setActiveGame(null)
-      setIsPlaying(false)
-    } else if (confirmNav.type === 'game') {
-      setActiveGame(confirmNav.gameId)
-      setIsPlaying(false)
-    }
+    if (confirmNav.type === 'home') { setActiveGame(null); setIsPlaying(false) }
+    else if (confirmNav.type === 'game') { setActiveGame(confirmNav.gameId); setIsPlaying(false) }
     setConfirmNav(null)
   }
+
+  const filteredGames = useMemo(() => {
+    let list = [...GAMES]
+    if (category !== 'all') list = list.filter(g => g.category === category)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(g => g.label.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q))
+    }
+    const favIds = new Set(favorites)
+    const favs = list.filter(g => favIds.has(g.id))
+    const rest = list.filter(g => !favIds.has(g.id))
+    return [...favs, ...rest]
+  }, [category, search, favorites])
+
+  const recentGames = useMemo(() => {
+    return recent.map(id => GAMES.find(g => g.id === id)).filter(Boolean)
+  }, [recent])
 
   const settings = {
     muted, onMuteToggle: handleMuteToggle,
@@ -824,7 +675,9 @@ function App() {
     glass, onGlassToggle: () => setGlass(g => !g),
     bg, onBgToggle: () => setBg(b => !b),
     waveBar, onWaveBarToggle: () => setWaveBar(w => !w),
+    volume, onVolumeChange: handleVolumeChange,
     onStats: () => setShowStats(true),
+    onAchievements: () => setShowAchievements(true),
     inGame: !!activeGame,
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
@@ -842,15 +695,9 @@ function App() {
           <h1 className="arcade-title">ARCADE GAMES</h1>
         </header>
         <nav className="tab-bar">
-          <button className="tab-btn back-btn" onClick={handleHome}>
-            ← Back to Games
-          </button>
+          <button className="tab-btn back-btn" onClick={handleHome}>← Back to Games</button>
           {GAMES.map(g => (
-            <button
-              key={g.id}
-              className={`tab-btn ${activeGame === g.id ? 'active' : ''}`}
-              onClick={() => handleNavigateGame(g.id)}
-            >
+            <button key={g.id} className={`tab-btn ${activeGame === g.id ? 'active' : ''}`} onClick={() => handleNavigateGame(g.id)}>
               {g.emoji} {g.label}
             </button>
           ))}
@@ -858,23 +705,11 @@ function App() {
         <main className="game-container">
           <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
         </main>
-        {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
-        {confirmNav && (
-          <ConfirmModal
-            message={`You're in the middle of a game. Are you sure you want to leave?`}
-            onConfirm={confirmNavAction}
-            onCancel={() => setConfirmNav(null)}
-          />
-        )}
-        {showConfirmClear && (
-          <ConfirmModal
-            message="This will permanently delete all your stats. Are you sure?"
-            confirmText="Clear Stats"
-            cancelText="Cancel"
-            onConfirm={() => { clearStats(); setShowConfirmClear(false) }}
-            onCancel={() => setShowConfirmClear(false)}
-          />
-        )}
+        <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
+        {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
+        {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
+        {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
+        {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
       </div>
     )
@@ -887,29 +722,86 @@ function App() {
       <header className="arcade-header">
         <h1 className="arcade-title">ARCADE GAMES</h1>
         <p className="arcade-subtitle">Pick a game and challenge the bot!</p>
+        <div className="xp-bar">
+          <span className="xp-badge">⭐ {xp.toLocaleString()} XP</span>
+          <span className="xp-detail">{totalPlayedCount} played · {totalWonCount} won</span>
+        </div>
       </header>
       <main className="game-container">
-        <div className="game-select-grid">
-          {GAMES.map(game => (
-            <GameCard
-              key={game.id}
-              game={game}
-              stats={allStats}
-              onClick={() => setActiveGame(game.id)}
-            />
+        {recentGames.length > 0 && (
+          <div className="recent-section">
+            <h3 className="section-title">🕐 Continue Playing</h3>
+            <div className="recent-row">
+              {recentGames.map(g => (
+                <button key={g.id} className="recent-card" onClick={() => setActiveGame(g.id)} style={{ '--card-accent': g.color }}>
+                  <span className="recent-emoji">{g.emoji}</span>
+                  <span className="recent-label">{g.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {dailyGame.game && (
+          <div className="daily-challenge" onClick={playDaily}>
+            <div className="daily-left">
+              <span className="daily-emoji">📅</span>
+              <div>
+                <div className="daily-label">Daily Challenge</div>
+                <div className="daily-game-name">{dailyGame.game.emoji} {dailyGame.game.label} — {dailyGame.difficulty}</div>
+              </div>
+            </div>
+            <div className="daily-right">
+              <div className="daily-countdown">{formatCountdown(dailyCountdown)}</div>
+              <div className="daily-hint">Resets tomorrow</div>
+            </div>
+          </div>
+        )}
+        <div className="search-bar">
+          <span className="search-icon">🔍</span>
+          <input
+            className="search-input"
+            type="text"
+            placeholder="Search games..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            aria-label="Search games"
+          />
+          {search && <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">×</button>}
+        </div>
+        <div className="category-tabs" role="tablist">
+          {CATEGORIES.map(c => (
+            <button
+              key={c.id}
+              className={`category-tab ${category === c.id ? 'active' : ''}`}
+              onClick={() => setCategory(c.id)}
+              role="tab"
+              aria-selected={category === c.id}
+            >
+              {c.emoji} {c.label}
+            </button>
           ))}
         </div>
+        {filteredGames.length === 0 ? (
+          <div className="no-results">No games found</div>
+        ) : (
+          <div className="game-select-grid">
+            {filteredGames.map((game) => (
+              <GameCard
+                key={game.id}
+                game={game}
+                stats={allStats}
+                isFav={isFavorite(game.id)}
+                onFavToggle={setFavorite}
+                onClick={() => setActiveGame(game.id)}
+              />
+            ))}
+          </div>
+        )}
       </main>
-      {showStats && <StatsModal allStats={allStats} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
-      {showConfirmClear && (
-        <ConfirmModal
-          message="This will permanently delete all your stats. Are you sure?"
-          confirmText="Clear Stats"
-          cancelText="Cancel"
-          onConfirm={() => { clearStats(); setShowConfirmClear(false) }}
-          onCancel={() => setShowConfirmClear(false)}
-        />
-      )}
+      <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
+      {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
+      {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
+      {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
     </div>
   )

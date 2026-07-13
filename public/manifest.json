@@ -1,0 +1,18 @@
+{
+  "name": "Offline Arcade",
+  "short_name": "Arcade",
+  "description": "21 playable browser games with themes, stats, and more",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1033",
+  "theme_color": "#b946ff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
