@@ -410,9 +410,9 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
         <div className="settings-bar-left">
           <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
           <GamesDropdown onNavigate={onNavigateGame} />
-          <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️</button>
-          <button className="settings-btn nav-btn" onClick={onStats} title="Stats" aria-label="Stats">📊</button>
-          <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅</button>
+          <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
+          <button className="settings-btn nav-btn" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
+          <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
           <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
         </div>
         <div className="settings-bar-right">

@@ -824,6 +824,19 @@ body::after {
   transform: scale(0.92);
 }
 
+.nav-btn .nav-label {
+  display: none;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Fredoka', sans-serif;
+  margin-left: 2px;
+}
+@media (min-width: 768px) {
+  .nav-btn .nav-label {
+    display: inline;
+  }
+}
+
 /* ===== HEADER ===== */
 .arcade-header { text-align: center; padding: 32px 20px 16px; animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
@@ -3096,6 +3109,30 @@ body::after {
 .fav-btn.active { filter: drop-shadow(0 0 6px rgba(255, 230, 0, 0.6)); }
 
 /* ===== ACHIEVEMENTS ===== */
+.ach-category {
+  margin-bottom: 24px;
+}
+.ach-category-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-glass);
+}
+.ach-category-emoji {
+  font-size: 20px;
+}
+.ach-category-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
 .ach-grid {
   display: flex;
   flex-direction: column;
