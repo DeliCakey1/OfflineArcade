@@ -61,7 +61,8 @@ export default function LeagueScreen({ onBack, userId, onNavigateGame }) {
         }
         setLoading(false)
       } catch (e) {
-        setError('Failed to load league data. Check your connection.')
+        console.error('League init error:', e)
+        setError('Failed to load league data: ' + (e.message || e.code || 'Unknown error'))
         setLoading(false)
       }
     }
