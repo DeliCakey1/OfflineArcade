@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signInWithGoogle, signInWithGitHub, signInWithApple, signInWithDiscord } from '../auth'
+import { signInWithGoogle, signInWithGitHub, signInWithApple, signInWithDiscord, signInWithMicrosoft } from '../auth'
 
 export default function SignInPage({ onBack }) {
   const [loading, setLoading] = useState(null)
@@ -13,6 +13,7 @@ export default function SignInPage({ onBack }) {
       else if (provider === 'github') await signInWithGitHub()
       else if (provider === 'apple') await signInWithApple()
       else if (provider === 'discord') await signInWithDiscord()
+      else if (provider === 'microsoft') await signInWithMicrosoft()
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
         setError(null)
@@ -50,6 +51,13 @@ export default function SignInPage({ onBack }) {
             {loading === 'github' ? <span className="signin-spinner" /> : '🐙'}
           </span>
           <span className="signin-btn-label">Continue with GitHub</span>
+        </button>
+
+        <button className="signin-btn microsoft" onClick={() => handleSignIn('microsoft')} disabled={loading !== null}>
+          <span className="signin-btn-icon">
+            {loading === 'microsoft' ? <span className="signin-spinner" /> : '🪟'}
+          </span>
+          <span className="signin-btn-label">Continue with Microsoft</span>
         </button>
 
         <button className="signin-btn apple" disabled>

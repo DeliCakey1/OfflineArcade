@@ -11,6 +11,7 @@ const githubProvider = new GithubAuthProvider()
 const appleProvider = new OAuthProvider('apple.com')
 const discordProvider = new OAuthProvider('discord.com')
 discordProvider.addScope('identify')
+const microsoftProvider = new OAuthProvider('microsoft.com')
 
 const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 
@@ -41,6 +42,12 @@ export async function signInWithDiscord() {
   if (!auth) return null
   if (isMobile()) return signInWithRedirect(auth, discordProvider)
   return signInWithPopup(auth, discordProvider)
+}
+
+export async function signInWithMicrosoft() {
+  if (!auth) return null
+  if (isMobile()) return signInWithRedirect(auth, microsoftProvider)
+  return signInWithPopup(auth, microsoftProvider)
 }
 
 export async function handleRedirectResult() {
