@@ -104,7 +104,7 @@ function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave'
 function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
   const gameStats = stats[game.id]
   return (
-    <button className="game-select-card" onClick={onClick} style={{ '--card-accent': game.color }}>
+    <div className="game-select-card" onClick={onClick} style={{ '--card-accent': game.color }} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}>
       <button
         className={`fav-btn ${isFav ? 'active' : ''}`}
         onClick={e => { e.stopPropagation(); onFavToggle(game.id) }}
@@ -123,7 +123,7 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
         </div>
       )}
       <div className="game-select-play">Play Now →</div>
-    </button>
+    </div>
   )
 }
 

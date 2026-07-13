@@ -119,9 +119,11 @@ export default function useStats(gameId) {
   const setFavorite = useCallback((id, val) => {
     setStats(prev => {
       const favs = prev._favorites || []
+      const isFav = favs.includes(id)
+      const shouldAdd = val !== undefined ? val : !isFav
       const updated = {
         ...prev,
-        _favorites: val ? [...new Set([...favs, id])] : favs.filter(f => f !== id),
+        _favorites: shouldAdd ? [...new Set([...favs, id])] : favs.filter(f => f !== id),
       }
       saveStats(updated)
       return updated
