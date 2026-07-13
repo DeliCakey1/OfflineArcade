@@ -26,6 +26,8 @@ import AchievementsModal from './components/AchievementsModal'
 import { VolumeSlider } from './components/VolumeSlider'
 import SettingsPage from './components/SettingsPage'
 import ThemePicker from './components/ThemePicker'
+import SignInPage from './components/SignInPage'
+import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
 import { calculateWinXP } from './leagues'
@@ -449,7 +451,7 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, user, onSignIn, onSignOut }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -459,6 +461,17 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings }) {
           <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
         </div>
         <div className="settings-bar-right">
+          {user && !user.isAnonymous && (
+            <div className="user-badge">
+              <span className="user-avatar">{(user.displayName || user.email || 'U')[0].toUpperCase()}</span>
+              <span className="user-name">{user.displayName || user.email?.split('@')[0] || 'User'}</span>
+            </div>
+          )}
+          {user && !user.isAnonymous ? (
+            <button className="settings-btn" onClick={onSignOut} title="Sign Out" aria-label="Sign out">🚪</button>
+          ) : (
+            <button className="settings-btn" onClick={onSignIn} title="Sign In to Save Data" aria-label="Sign in">👤</button>
+          )}
           <button className="settings-btn" onClick={onSettings} title="Settings" aria-label="Settings">⚙️</button>
         </div>
       </div>
@@ -521,12 +534,37 @@ function App() {
   useEffect(() => { document.documentElement.classList.toggle('no-bg', !bg); try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {} }, [bg])
   useEffect(() => { document.documentElement.classList.toggle('has-wave-bar', waveBar); try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {} }, [waveBar])
 
+  const [user, setUser] = useState(null)
+
   useEffect(() => {
-    import('./firebase').then(({ ensureAuth }) => {
-      ensureAuth().then(user => {
-        if (user) setUserId(user.uid)
-      })
-    }).catch(() => {})
+    handleRedirectResult().catch(() => {})
+    const unsub = onAuthChange((u) => {
+      if (u) {
+        const wasAnonymous = !user && u.metadata.creationTime === u.metadata.lastSignInTime
+        setUser(u)
+        setUserId(u.uid)
+        if (wasAnonymous && !u.isAnonymous) {
+          import('./leagueService').then(({ getOrCreatePlayer, getPlayer, updatePlayer }) => {
+            getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player')
+            const localXp = (() => { try { return JSON.parse(localStorage.getItem('arcade-stats') || '{}')._xp?.total || 0 } catch { return 0 } })()
+            if (localXp > 0) {
+              getPlayer(u.uid).then(p => {
+                if (p && (p.xp || 0) < localXp) {
+                  updatePlayer(u.uid, { xp: localXp })
+                }
+              })
+            }
+          }).catch(() => {})
+        }
+      } else {
+        setUser(null)
+        setUserId(null)
+        import('./firebase').then(({ ensureAuth }) => {
+          ensureAuth().then(u => { if (u) { setUser(u); setUserId(u.uid) } })
+        }).catch(() => {})
+      }
+    })
+    return () => unsub()
   }, [])
 
   useEffect(() => {
@@ -667,16 +705,28 @@ function App() {
     onNavigateGame: handleNavigateGame,
     onCloak: () => setCurrentPage('cloak'),
     onSettings: () => setCurrentPage('settings'),
+    user,
+    onSignIn: () => setCurrentPage('signin'),
+    onSignOut: () => signOut().catch(() => {}),
   }
 
   if (currentPage === 'settings') {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} />
+        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} />
         {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
         {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+      </div>
+    )
+  }
+
+  if (currentPage === 'signin') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <SignInPage onBack={() => setCurrentPage('home')} />
       </div>
     )
   }
@@ -747,6 +797,9 @@ function App() {
           <button className="home-action-btn" onClick={() => setShowAchievements(true)} title="Achievements" aria-label="View achievements">🏅 Achievements</button>
           <button className="home-action-btn" onClick={() => setCurrentPage('leagues')} title="Leagues" aria-label="View leagues">⚔️ Leagues</button>
           <button className="home-action-btn" onClick={() => setShowStats(true)} title="Stats" aria-label="View statistics">📊 Stats</button>
+          {user && user.isAnonymous && (
+            <button className="home-action-btn signin-prompt" onClick={() => setCurrentPage('signin')} title="Sign in to save data" aria-label="Sign in">☁️ Sign In</button>
+          )}
         </div>
       </header>
       <main className="game-container">

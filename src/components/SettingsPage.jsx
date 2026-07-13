@@ -1,12 +1,33 @@
 import { VolumeSlider } from './VolumeSlider'
 import ThemePicker from './ThemePicker'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, onSignIn, onSignOut }) {
   return (
     <div className="settings-page">
       <div className="settings-page-header">
         <button className="quit-btn" onClick={onBack}>← Back</button>
         <h2>⚙️ Settings</h2>
+      </div>
+
+      <div className="settings-section">
+        <h3 className="settings-section-title">👤 Account</h3>
+        {user && !user.isAnonymous ? (
+          <div className="settings-row">
+            <div className="settings-card-btn active" style={{ cursor: 'default' }}>
+              <span className="user-avatar" style={{ width: 28, height: 28, fontSize: 13 }}>{(user.displayName || user.email || 'U')[0].toUpperCase()}</span>
+              <span className="settings-card-label">{user.displayName || user.email || 'Signed In'}</span>
+            </div>
+            <button className="settings-card-btn" onClick={onSignOut}>
+              <span className="settings-card-icon">🚪</span>
+              <span className="settings-card-label">Sign Out</span>
+            </button>
+          </div>
+        ) : (
+          <button className="settings-card-btn full-width" onClick={onSignIn}>
+            <span className="settings-card-icon">☁️</span>
+            <span className="settings-card-label">Sign In to Save Data Across Devices</span>
+          </button>
+        )}
       </div>
 
       <div className="settings-section">

@@ -293,6 +293,153 @@ body::after {
 .settings-slider-card .volume-slider {
   flex: 1;
 }
+
+/* ===== USER BADGE ===== */
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: default;
+}
+.user-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+.user-name {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== SIGN-IN PAGE ===== */
+.signin-page {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 20px;
+  animation: fadeSlideUp 0.3s ease-out;
+}
+.signin-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.signin-header h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  color: var(--text-light);
+  margin: 0;
+}
+.signin-info {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.signin-info-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+.signin-info h3 {
+  font-size: 18px;
+  color: var(--text-light);
+  margin: 0 0 6px;
+}
+.signin-info p {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.signin-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.signin-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  min-height: 52px;
+}
+.signin-btn:hover:not(:disabled) {
+  border-color: var(--neon-purple);
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+}
+.signin-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.signin-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.signin-btn.google:hover:not(:disabled) { border-color: #4285f4; }
+.signin-btn.github:hover:not(:disabled) { border-color: #f0f6fc; }
+.signin-btn.apple:hover:not(:disabled) { border-color: #fff; }
+.signin-btn-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+.signin-btn.google .signin-btn-icon { color: #4285f4; }
+.signin-btn.github .signin-btn-icon { color: #f0f6fc; }
+.signin-btn.apple .signin-btn-icon { color: #fff; }
+.signin-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-glass);
+  border-top-color: var(--text-light);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg) } }
+.signin-error {
+  text-align: center;
+  padding: 10px;
+  background: rgba(255, 50, 50, 0.1);
+  border: 1px solid rgba(255, 50, 50, 0.3);
+  border-radius: 10px;
+  color: var(--neon-red);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.signin-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 .cloak-screen {
   position: fixed;
   inset: 0;
@@ -2808,6 +2955,10 @@ body::after {
 }
 .home-action-btn:active {
   transform: scale(0.95);
+}
+.home-action-btn.signin-prompt {
+  border-color: rgba(0, 212, 255, 0.4);
+  color: var(--neon-blue);
 }
 
 /* ===== RECENT GAMES ===== */
