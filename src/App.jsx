@@ -20,6 +20,7 @@ import Tetris from './components/Tetris'
 import Breakout from './components/Breakout'
 import FlappyBird from './components/FlappyBird'
 import Minesweeper from './components/Minesweeper'
+import LeagueScreen from './components/LeagueScreen'
 import Confetti from './components/Confetti'
 import AchievementsModal from './components/AchievementsModal'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
@@ -483,7 +484,7 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onStats, inGame, onHome, onNavigateGame, onCloak, onAchievements }) {
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onStats, inGame, onHome, onNavigateGame, onCloak, onAchievements, onLeagues }) {
   return (
     <div className="settings-bar" role="toolbar" aria-label="Game settings">
       <div className="settings-bar-left">
@@ -509,6 +510,7 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
           {waveBar ? '🌊' : '🫧'}
         </button>
         <button className="settings-btn" onClick={onAchievements} title="Achievements" aria-label="View achievements">🏅</button>
+        <button className="settings-btn" onClick={onLeagues} title="Leagues" aria-label="View leagues">⚔️</button>
         <button className="settings-btn" onClick={onStats} title="Stats" aria-label="View statistics">📊</button>
         <ThemePicker current={theme} onChange={onThemeChange} />
       </div>
@@ -535,6 +537,8 @@ function App() {
   const [search, setSearch] = useState('')
   const [showConfetti, setShowConfetti] = useState(false)
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
+  const [showLeagues, setShowLeagues] = useState(false)
+  const [userId, setUserId] = useState(null)
 
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
@@ -569,6 +573,14 @@ function App() {
   useEffect(() => { document.documentElement.classList.toggle('no-glass', !glass); try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {} }, [glass])
   useEffect(() => { document.documentElement.classList.toggle('no-bg', !bg); try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {} }, [bg])
   useEffect(() => { document.documentElement.classList.toggle('has-wave-bar', waveBar); try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {} }, [waveBar])
+
+  useEffect(() => {
+    import('./firebase').then(({ ensureAuth }) => {
+      ensureAuth().then(user => {
+        if (user) setUserId(user.uid)
+      })
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     function handleWin() { setShowConfetti(true) }
@@ -681,6 +693,7 @@ function App() {
     volume, onVolumeChange: handleVolumeChange,
     onStats: () => setShowStats(true),
     onAchievements: () => setShowAchievements(true),
+    onLeagues: () => setShowLeagues(true),
     inGame: !!activeGame,
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
@@ -714,6 +727,7 @@ function App() {
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
+        {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} onNavigateGame={(id) => { setShowLeagues(false); setActiveGame(id) }} />}
       </div>
     )
   }
@@ -806,6 +820,7 @@ function App() {
       {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
+      {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} onNavigateGame={(id) => { setShowLeagues(false); setActiveGame(id) }} />}
     </div>
   )
 }
