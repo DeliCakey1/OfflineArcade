@@ -3,12 +3,13 @@ import { getFirestore } from 'firebase/firestore'
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth'
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCGtzsORtawgLVGm3z0Msg_pjdh_Cx00w4",
+  authDomain: "offline-arcade-468cd.firebaseapp.com",
+  projectId: "offline-arcade-468cd",
+  storageBucket: "offline-arcade-468cd.firebasestorage.app",
+  messagingSenderId: "542077080040",
+  appId: "1:542077080040:web:82d3eff8ef24615a5cd45d",
+  measurementId: "G-XJS0DQBBDT"
 }
 
 let app = null
