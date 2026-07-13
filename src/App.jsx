@@ -586,11 +586,11 @@ function App() {
     function handleWin(e) {
       setShowConfetti(true)
       if (userId && e.detail?.gameId) {
-        import('./leagueService').then(({ updatePlayer, getPlayer }) => {
+        import('./leagueService').then(({ updatePlayer, getPlayer, increment }) => {
           getPlayer(userId).then(p => {
             if (p) {
               const xp = calculateWinXP(e.detail.gameId, p.streak || 0)
-              updatePlayer(userId, { xp: (p.xp || 0) + xp, wins: (p.wins || 0) + 1, streak: (p.streak || 0) + 1 })
+              updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1) })
             }
           })
         }).catch(() => {})
@@ -601,13 +601,18 @@ function App() {
   }, [userId])
 
   useEffect(() => {
-    function handleGameComplete() {
+    function handleGameComplete(e) {
       if (!userId) return
-      import('./leagueService').then(({ getPlayer, ensurePlayerInLeague }) => {
-        getPlayer(userId).then(p => {
-          if (p && !p.leagueInstanceId) {
-            ensurePlayerInLeague(userId).catch(() => {})
-          }
+      const { won } = e.detail || {}
+        import('./leagueService').then(({ getPlayer, updatePlayer, ensurePlayerInLeague, increment }) => {
+          getPlayer(userId).then(p => {
+            if (!p) return
+            if (!p.leagueInstanceId) {
+              ensurePlayerInLeague(userId).catch(() => {})
+            }
+            if (!won) {
+              updatePlayer(userId, { losses: increment(1), streak: 0 }).catch(() => {})
+            }
         })
       }).catch(() => {})
     }

@@ -6,6 +6,8 @@ import {
 import { db } from './firebase'
 import { MAX_PER_LEAGUE, LEAGUE_RANKS, getNextWednesdayMidnightPST } from './leagues'
 
+export { increment }
+
 const PLAYERS = 'players'
 const LEAGUES = 'leagues'
 const MATCHES = 'matches'

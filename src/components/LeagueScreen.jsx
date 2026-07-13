@@ -87,6 +87,16 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   }, [league?.players])
 
   useEffect(() => {
+    if (!league?.players?.length) return
+    let cancelled = false
+    const refresh = () => {
+      getLeaguePlayers(league.players).then(p => { if (!cancelled) setPlayers(p) }).catch(() => {})
+    }
+    const interval = setInterval(refresh, 10000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [league?.players])
+
+  useEffect(() => {
     const tick = () => setSeasonTime(getTimeUntilSeasonEnd())
     tick()
     const interval = setInterval(tick, 1000)
