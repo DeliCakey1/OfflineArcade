@@ -4,7 +4,7 @@ import {
   onSnapshot, limit as firestoreLimit
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { MAX_PER_LEAGUE, LEAGUE_RANKS, RANK_PROMO_DEMO, getNextWednesdayMidnightUTC, TOURNAMENT_SIZES } from './leagues'
+import { MAX_PER_LEAGUE, LEAGUE_RANKS, RANK_PROMO_DEMO, getNextWednesdayMidnightUTC, TOURNAMENT_SIZES, isInLockoutPeriod } from './leagues'
 
 export { increment }
 
@@ -172,6 +172,7 @@ export async function finishMatch(matchId, winnerId, loserId) {
 }
 
 export async function ensurePlayerInLeague(userId) {
+  if (isInLockoutPeriod()) return null
   const p = await getPlayer(userId)
   if (!p) return null
   if (p.leagueInstanceId) {

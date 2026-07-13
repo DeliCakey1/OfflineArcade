@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import {
   getRankInfo, getPromotionZone, getDemotionZone,
-  getTimeUntilSeasonEnd, formatSeasonTime, LEAGUE_RANKS, RANK_PROMO_DEMO
+  getTimeUntilSeasonEnd, formatSeasonTime, LEAGUE_RANKS, RANK_PROMO_DEMO,
+  isInLockoutPeriod
 } from '../leagues'
 import {
   getOrCreatePlayer, findOrCreateLeagueInstance, joinLeague,
@@ -71,6 +72,10 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
 
           const lg = await getLeagueInstance(p.leagueInstanceId)
           if (!lg || lg.status === 'completed') {
+            if (isInLockoutPeriod()) {
+              if (!cancelled) setLoading(false)
+              return
+            }
             const newLg = await ensurePlayerInLeague(userId)
             if (!cancelled) setLeague(newLg)
           } else {
@@ -241,6 +246,33 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   }
 
   if (player && !player.leagueInstanceId && !league && !tournament) {
+    const lockout = isInLockoutPeriod()
+    return (
+      <div className="league-page">
+        <div className="league-page-header">
+          <button className="quit-btn" onClick={onBack}>← Back</button>
+          <div className="league-header-text">
+            <h2>⚔️ Leagues</h2>
+          </div>
+        </div>
+        {lockout ? (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+            <h3 style={{ color: 'var(--neon-yellow)', marginBottom: 8 }}>Season ending soon!</h3>
+            <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>League placement is locked within 24 hours of a season reset. Check back after the next season starts!</p>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🎮</div>
+            <h3 style={{ color: 'var(--text-light)', marginBottom: 8 }}>Complete a game to join!</h3>
+            <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>Play and finish any game to be placed in a league with other players.</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (player && player.leagueInstanceId && !league && !tournament && isInLockoutPeriod()) {
     return (
       <div className="league-page">
         <div className="league-page-header">
@@ -250,9 +282,9 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
           </div>
         </div>
         <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🎮</div>
-          <h3 style={{ color: 'var(--text-light)', marginBottom: 8 }}>Complete a game to join!</h3>
-          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>Play and finish any game to be placed in a league with other players.</p>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+          <h3 style={{ color: 'var(--neon-yellow)', marginBottom: 8 }}>Season ending soon!</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>Your league season has ended and placement for the next season is locked. Check back after the reset!</p>
         </div>
       </div>
     )

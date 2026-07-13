@@ -1,7 +1,31 @@
+import { useState } from 'react'
 import { VolumeSlider } from './VolumeSlider'
 import ThemePicker from './ThemePicker'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, onSignIn, onSignOut }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut }) {
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+
+  function startEditName() {
+    setNameInput(playerName || '')
+    setEditingName(true)
+  }
+
+  function saveName() {
+    const trimmed = nameInput.trim()
+    if (trimmed && trimmed !== playerName) {
+      onNameChange(trimmed)
+    }
+    setEditingName(false)
+  }
+
+  function handleNameKeyDown(e) {
+    if (e.key === 'Enter') saveName()
+    if (e.key === 'Escape') setEditingName(false)
+  }
+
+  const displayName = playerName || user?.displayName || user?.email || 'Signed In'
+
   return (
     <div className="settings-page">
       <div className="settings-page-header">
@@ -12,16 +36,40 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
       <div className="settings-section">
         <h3 className="settings-section-title">👤 Account</h3>
         {user && !user.isAnonymous ? (
-          <div className="settings-row">
-            <div className="settings-card-btn active" style={{ cursor: 'default' }}>
-              <span className="user-avatar" style={{ width: 28, height: 28, fontSize: 13 }}>{(user.displayName || user.email || 'U')[0].toUpperCase()}</span>
-              <span className="settings-card-label">{user.displayName || user.email || 'Signed In'}</span>
+          <>
+            <div className="settings-row">
+              <div className="settings-card-btn active" style={{ cursor: 'default' }}>
+                <span className="user-avatar" style={{ width: 28, height: 28, fontSize: 13 }}>{(displayName[0] || 'U').toUpperCase()}</span>
+                <span className="settings-card-label">{displayName}</span>
+              </div>
+              <button className="settings-card-btn" onClick={onSignOut}>
+                <span className="settings-card-icon">🚪</span>
+                <span className="settings-card-label">Sign Out</span>
+              </button>
             </div>
-            <button className="settings-card-btn" onClick={onSignOut}>
-              <span className="settings-card-icon">🚪</span>
-              <span className="settings-card-label">Sign Out</span>
-            </button>
-          </div>
+            <div className="settings-row">
+              {editingName ? (
+                <div className="settings-card-btn active" style={{ cursor: 'default', flex: 1 }}>
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={handleNameKeyDown}
+                    onBlur={saveName}
+                    maxLength={20}
+                    autoFocus
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-light)', fontFamily: 'inherit', fontSize: 14, width: '100%', outline: 'none' }}
+                    placeholder="Enter a name..."
+                  />
+                </div>
+              ) : (
+                <button className="settings-card-btn" onClick={startEditName} style={{ flex: 1 }}>
+                  <span className="settings-card-icon">✏️</span>
+                  <span className="settings-card-label">Edit Name</span>
+                </button>
+              )}
+            </div>
+          </>
         ) : (
           <button className="settings-card-btn full-width" onClick={onSignIn}>
             <span className="settings-card-icon">☁️</span>

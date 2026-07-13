@@ -68,6 +68,10 @@ export function getTimeUntilSeasonEnd() {
   return Math.max(0, getNextWednesdayMidnightUTC() - Date.now())
 }
 
+export function isInLockoutPeriod() {
+  return getTimeUntilSeasonEnd() < 24 * 60 * 60 * 1000
+}
+
 export function formatSeasonTime(ms) {
   const days = Math.floor(ms / (24 * 60 * 60 * 1000))
   const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))

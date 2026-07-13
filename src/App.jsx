@@ -403,7 +403,7 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, user, onSignIn, onSignOut }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, user, playerName, onSignIn, onSignOut }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -418,8 +418,8 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
         <div className="settings-bar-right">
           {user && !user.isAnonymous && (
             <div className="user-badge">
-              <span className="user-avatar">{(user.displayName || user.email || 'U')[0].toUpperCase()}</span>
-              <span className="user-name">{user.displayName || user.email?.split('@')[0] || 'User'}</span>
+              <span className="user-avatar">{((playerName || user.displayName || user.email || 'U')[0]).toUpperCase()}</span>
+              <span className="user-name">{playerName || user.displayName || user.email?.split('@')[0] || 'User'}</span>
             </div>
           )}
           {user && !user.isAnonymous ? (
@@ -452,6 +452,7 @@ function App() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
   const [userId, setUserId] = useState(null)
+  const [playerName, setPlayerName] = useState(null)
 
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
@@ -509,9 +510,15 @@ function App() {
             }
           }).catch(() => {})
         }
+        import('./leagueService').then(({ getPlayer }) => {
+          getPlayer(u.uid).then(p => {
+            if (p) setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
+          })
+        }).catch(() => {})
       } else {
         setUser(null)
         setUserId(null)
+        setPlayerName(null)
         import('./firebase').then(({ ensureAuth }) => {
           ensureAuth().then(u => { if (u) { setUser(u); setUserId(u.uid) } })
         }).catch(() => {})
@@ -664,15 +671,25 @@ function App() {
     onStats: () => setCurrentPage('stats'),
     onAchievements: () => setCurrentPage('achievements'),
     user,
+    playerName,
     onSignIn: () => setCurrentPage('signin'),
     onSignOut: () => signOut().catch(() => {}),
   }
+
+  const handleUpdatePlayerName = useCallback((newName) => {
+    setPlayerName(newName)
+    if (userId) {
+      import('./leagueService').then(({ updatePlayer }) => {
+        updatePlayer(userId, { name: newName })
+      }).catch(() => {})
+    }
+  }, [userId])
 
   if (currentPage === 'settings') {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} />
+        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} />
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )
