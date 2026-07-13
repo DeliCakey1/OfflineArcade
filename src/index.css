@@ -202,6 +202,97 @@ body::after {
 .games-dropdown::-webkit-scrollbar { width: 5px; }
 .games-dropdown::-webkit-scrollbar-track { background: transparent; }
 .games-dropdown::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 3px; }
+
+/* ===== SETTINGS PAGE ===== */
+.settings-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  animation: fadeSlideUp 0.3s ease-out;
+}
+.settings-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.settings-page-header h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  color: var(--text-light);
+  margin: 0;
+}
+.settings-section {
+  margin-bottom: 24px;
+}
+.settings-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.settings-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.settings-card-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+.settings-card-btn:hover {
+  border-color: var(--neon-purple);
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+}
+.settings-card-btn:active {
+  transform: scale(0.97);
+}
+.settings-card-btn.active {
+  border-color: var(--neon-green);
+  background: rgba(0, 255, 136, 0.1);
+}
+.settings-card-btn.full-width {
+  flex: 1;
+}
+.settings-card-icon {
+  font-size: 20px;
+  min-width: 28px;
+  text-align: center;
+}
+.settings-card-label {
+  font-size: 14px;
+}
+.settings-slider-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  min-height: 48px;
+}
+.settings-slider-card .volume-slider {
+  flex: 1;
+}
 .cloak-screen {
   position: fixed;
   inset: 0;

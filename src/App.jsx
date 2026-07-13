@@ -23,6 +23,9 @@ import Minesweeper from './components/Minesweeper'
 import LeagueScreen from './components/LeagueScreen'
 import Confetti from './components/Confetti'
 import AchievementsModal from './components/AchievementsModal'
+import { VolumeSlider } from './components/VolumeSlider'
+import SettingsPage from './components/SettingsPage'
+import ThemePicker from './components/ThemePicker'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
 import { calculateWinXP } from './leagues'
@@ -178,27 +181,6 @@ function StatsModal({ allStats, onClose, onClear, xp, totalPlayedCount, totalWon
   )
 }
 
-function ThemePicker({ current, onChange }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="theme-picker">
-      <button className="settings-btn" onClick={() => setOpen(!open)} title="Change Theme" aria-expanded={open} aria-haspopup="listbox">
-        {THEMES[current].emoji}
-      </button>
-      {open && (
-        <div className="theme-dropdown">
-          {THEME_ORDER.map(id => (
-            <button key={id} className={`theme-option ${id === current ? 'active' : ''}`} onClick={() => { onChange(id); setOpen(false) }}>
-              <span className="theme-option-emoji">{THEMES[id].emoji}</span>
-              <span className="theme-option-name">{THEMES[id].name}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function GamesDropdown({ onNavigate }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -223,24 +205,6 @@ function GamesDropdown({ onNavigate }) {
           </button>
         ))}
       </div>
-    </div>
-  )
-}
-
-function VolumeSlider({ volume, onChange }) {
-  return (
-    <div className="volume-slider-wrap" title={`Volume: ${Math.round(volume * 100)}%`}>
-      <span className="volume-icon">{volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊'}</span>
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.05"
-        value={volume}
-        onChange={e => onChange(parseFloat(e.target.value))}
-        className="volume-slider"
-        aria-label="Sound volume"
-      />
     </div>
   )
 }
@@ -485,7 +449,7 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, inGame, onHome, onNavigateGame, onCloak }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -494,25 +458,9 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
           <GamesDropdown onNavigate={onNavigateGame} />
           <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
         </div>
-      </div>
-      <div className="settings-scroll-row">
-        <VolumeSlider volume={volume} onChange={onVolumeChange} />
-        <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'} aria-label={muted ? 'Unmute sound' : 'Mute sound'}>
-          {muted ? '🔇' : '🔊'}
-        </button>
-        <button className="settings-btn" onClick={onAnimToggle} title={animations ? 'Disable Animations' : 'Enable Animations'} aria-label={animations ? 'Disable animations' : 'Enable animations'}>
-          {animations ? '✨' : '🚫'}
-        </button>
-        <button className="settings-btn" onClick={onGlassToggle} title={glass ? 'Disable Glassmorphism' : 'Enable Glassmorphism'} aria-label={glass ? 'Disable glassmorphism' : 'Enable glassmorphism'}>
-          {glass ? '💎' : '🪟'}
-        </button>
-        <button className="settings-btn" onClick={onBgToggle} title={bg ? 'Disable Background' : 'Enable Background'} aria-label={bg ? 'Disable background' : 'Enable background'}>
-          {bg ? '🖼️' : '⬛'}
-        </button>
-        <button className="settings-btn" onClick={onWaveBarToggle} title={waveBar ? 'Disable Wave Bar' : 'Enable Wave Bar'} aria-label={waveBar ? 'Disable wave bar' : 'Enable wave bar'}>
-          {waveBar ? '🌊' : '🫧'}
-        </button>
-        <ThemePicker current={theme} onChange={onThemeChange} />
+        <div className="settings-bar-right">
+          <button className="settings-btn" onClick={onSettings} title="Settings" aria-label="Settings">⚙️</button>
+        </div>
       </div>
     </div>
   )
@@ -530,14 +478,13 @@ function App() {
   const [confirmNav, setConfirmNav] = useState(null)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [showCloak, setShowCloak] = useState(false)
+  const [currentPage, setCurrentPage] = useState('home')
   const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
   const [volume, setVolumeState] = useState(() => getVolume())
   const [category, setCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [showConfetti, setShowConfetti] = useState(false)
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
-  const [showLeagues, setShowLeagues] = useState(false)
   const [userId, setUserId] = useState(null)
 
   const {
@@ -650,7 +597,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (activeGame || showCloak) return
+    if (activeGame || currentPage !== 'home') return
     function handleKey(e) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
       const idx = GAMES.findIndex(g => g.id === activeGame)
@@ -670,7 +617,7 @@ function App() {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [activeGame, isPlaying, showCloak])
+  }, [activeGame, isPlaying, currentPage])
 
   function handleMuteToggle() { toggleMute(); setMuted(isMuted()) }
 
@@ -682,19 +629,19 @@ function App() {
   function handleHome() {
     setShowConfetti(false)
     if (isPlaying) setConfirmNav({ type: 'home' })
-    else setActiveGame(null)
+    else { setActiveGame(null); setCurrentPage('home') }
   }
 
   function handleNavigateGame(gameId) {
     setShowConfetti(false)
     if (isPlaying && activeGame !== gameId) setConfirmNav({ type: 'game', gameId })
-    else setActiveGame(gameId)
+    else { setActiveGame(gameId); setCurrentPage('home') }
   }
 
   function confirmNavAction() {
     setShowConfetti(false)
-    if (confirmNav.type === 'home') { setActiveGame(null); setIsPlaying(false) }
-    else if (confirmNav.type === 'game') { setActiveGame(confirmNav.gameId); setIsPlaying(false) }
+    if (confirmNav.type === 'home') { setActiveGame(null); setIsPlaying(false); setCurrentPage('home') }
+    else if (confirmNav.type === 'game') { setActiveGame(confirmNav.gameId); setIsPlaying(false); setCurrentPage('home') }
     setConfirmNav(null)
   }
 
@@ -716,17 +663,43 @@ function App() {
   }, [recent])
 
   const settings = {
-    muted, onMuteToggle: handleMuteToggle,
-    theme, onThemeChange: setTheme,
-    animations, onAnimToggle: () => setAnimations(a => !a),
-    glass, onGlassToggle: () => setGlass(g => !g),
-    bg, onBgToggle: () => setBg(b => !b),
-    waveBar, onWaveBarToggle: () => setWaveBar(w => !w),
-    volume, onVolumeChange: handleVolumeChange,
-    inGame: !!activeGame,
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
-    onCloak: () => setShowCloak(true),
+    onCloak: () => setCurrentPage('cloak'),
+    onSettings: () => setCurrentPage('settings'),
+  }
+
+  if (currentPage === 'settings') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} />
+        {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
+        {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
+        {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+      </div>
+    )
+  }
+
+  if (currentPage === 'leagues') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} />
+        {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
+        {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
+        {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+      </div>
+    )
+  }
+
+  if (currentPage === 'cloak') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <CloakScreen onBack={() => setCurrentPage('home')} />
+      </div>
+    )
   }
 
   if (activeGame) {
@@ -755,8 +728,6 @@ function App() {
         {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-        {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
-        {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} onPlayGame={(id) => { setShowLeagues(false); setActiveGame(id) }} />}
       </div>
     )
   }
@@ -774,7 +745,7 @@ function App() {
         </div>
         <div className="home-action-bar">
           <button className="home-action-btn" onClick={() => setShowAchievements(true)} title="Achievements" aria-label="View achievements">🏅 Achievements</button>
-          <button className="home-action-btn" onClick={() => setShowLeagues(true)} title="Leagues" aria-label="View leagues">⚔️ Leagues</button>
+          <button className="home-action-btn" onClick={() => setCurrentPage('leagues')} title="Leagues" aria-label="View leagues">⚔️ Leagues</button>
           <button className="home-action-btn" onClick={() => setShowStats(true)} title="Stats" aria-label="View statistics">📊 Stats</button>
         </div>
       </header>
@@ -853,8 +824,6 @@ function App() {
       {showStats && <StatsModal allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setShowStats(false)} onClear={() => { setShowStats(false); setShowConfirmClear(true) }} />}
       {showAchievements && <AchievementsModal earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setShowAchievements(false)} />}
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-      {showCloak && <CloakScreen onBack={() => setShowCloak(false)} />}
-      {showLeagues && <LeagueScreen onBack={() => setShowLeagues(false)} userId={userId} onPlayGame={(id) => { setShowLeagues(false); setActiveGame(id) }} />}
     </div>
   )
 }
