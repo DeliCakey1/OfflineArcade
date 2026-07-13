@@ -485,15 +485,17 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onStats, inGame, onHome, onNavigateGame, onCloak, onAchievements, onLeagues }) {
+function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, inGame, onHome, onNavigateGame, onCloak }) {
   return (
-    <div className="settings-bar" role="toolbar" aria-label="Game settings">
-      <div className="settings-bar-left">
-        <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
-        <GamesDropdown onNavigate={onNavigateGame} />
-        <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
+    <div className="settings-bar-wrap">
+      <div className="settings-bar">
+        <div className="settings-bar-left">
+          <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
+          <GamesDropdown onNavigate={onNavigateGame} />
+          <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
+        </div>
       </div>
-      <div className="settings-bar-right">
+      <div className="settings-scroll-row">
         <VolumeSlider volume={volume} onChange={onVolumeChange} />
         <button className="settings-btn" onClick={onMuteToggle} title={muted ? 'Unmute' : 'Mute'} aria-label={muted ? 'Unmute sound' : 'Mute sound'}>
           {muted ? '🔇' : '🔊'}
@@ -510,9 +512,6 @@ function SettingsBar({ muted, onMuteToggle, theme, onThemeChange, animations, on
         <button className="settings-btn" onClick={onWaveBarToggle} title={waveBar ? 'Disable Wave Bar' : 'Enable Wave Bar'} aria-label={waveBar ? 'Disable wave bar' : 'Enable wave bar'}>
           {waveBar ? '🌊' : '🫧'}
         </button>
-        <button className="settings-btn" onClick={onAchievements} title="Achievements" aria-label="View achievements">🏅</button>
-        <button className="settings-btn" onClick={onLeagues} title="Leagues" aria-label="View leagues">⚔️</button>
-        <button className="settings-btn" onClick={onStats} title="Stats" aria-label="View statistics">📊</button>
         <ThemePicker current={theme} onChange={onThemeChange} />
       </div>
     </div>
@@ -704,9 +703,6 @@ function App() {
     bg, onBgToggle: () => setBg(b => !b),
     waveBar, onWaveBarToggle: () => setWaveBar(w => !w),
     volume, onVolumeChange: handleVolumeChange,
-    onStats: () => setShowStats(true),
-    onAchievements: () => setShowAchievements(true),
-    onLeagues: () => setShowLeagues(true),
     inGame: !!activeGame,
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
@@ -755,6 +751,11 @@ function App() {
         <div className="xp-bar">
           <span className="xp-badge">⭐ {xp.toLocaleString()} XP</span>
           <span className="xp-detail">{totalPlayedCount} played · {totalWonCount} won</span>
+        </div>
+        <div className="home-action-bar">
+          <button className="home-action-btn" onClick={() => setShowAchievements(true)} title="Achievements" aria-label="View achievements">🏅 Achievements</button>
+          <button className="home-action-btn" onClick={() => setShowLeagues(true)} title="Leagues" aria-label="View leagues">⚔️ Leagues</button>
+          <button className="home-action-btn" onClick={() => setShowStats(true)} title="Stats" aria-label="View statistics">📊 Stats</button>
         </div>
       </header>
       <main className="game-container">
