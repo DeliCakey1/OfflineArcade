@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { MAX_PER_LEAGUE, LEAGUE_RANKS, RANK_PROMO_DEMO, getNextWednesdayMidnightUTC, TOURNAMENT_SIZES, isInLockoutPeriod } from './leagues'
+import { TOURNAMENT_COIN_REWARDS, LEAGUE_COIN_REWARDS } from './shopItems'
 
 export { increment }
 
@@ -28,6 +29,9 @@ export async function getOrCreatePlayer(userId, name) {
     promotions: 0,
     tournamentWins: 0,
     firstPlaceFinishes: 0,
+    coins: 0,
+    title: null,
+    nameplate: null,
     createdAt: Date.now(),
     lastActive: Date.now(),
   }
@@ -159,10 +163,12 @@ export async function finishMatch(matchId, winnerId, loserId) {
   })
   const xpGain = 10
   const xpLoss = 5
+  const coinReward = 10
   await updateDoc(doc(db, PLAYERS, winnerId), {
     wins: increment(1),
     xp: increment(xpGain),
     streak: increment(1),
+    coins: increment(coinReward),
   })
   await updateDoc(doc(db, PLAYERS, loserId), {
     losses: increment(1),
@@ -204,13 +210,19 @@ export async function processSeasonReset(leagueId) {
   const promoteRank = Math.max(1, currentRank - 1)
   const demoteRank = Math.min(11, currentRank + 1)
 
-  for (const p of promoted) {
+  const leagueRewards = LEAGUE_COIN_REWARDS[currentRank] || { first: 100, second: 75, third: 50 }
+  const coinRewardPositions = [leagueRewards.first, leagueRewards.second, leagueRewards.third]
+
+  for (let i = 0; i < promoted.length; i++) {
+    const p = promoted[i]
+    const coinReward = coinRewardPositions[i] || 0
     if (promoteRank === 2) {
       await addToTournament(p.id)
       await updatePlayer(p.id, {
         league: promoteRank,
         leagueInstanceId: null,
         promotions: increment(1),
+        coins: increment(coinReward),
       })
     } else {
       const newLeague = await findOrCreateLeagueInstance(promoteRank)
@@ -220,6 +232,7 @@ export async function processSeasonReset(leagueId) {
         league: promoteRank,
         leagueInstanceId: newLeague.id,
         promotions: increment(1),
+        coins: increment(coinReward),
       })
     }
   }
@@ -382,12 +395,15 @@ export async function processFinalsReset() {
   players.sort((a, b) => b.xp - a.xp)
 
   const winners = players.slice(0, 3)
+  const coinRewards = [TOURNAMENT_COIN_REWARDS.first, TOURNAMENT_COIN_REWARDS.second, TOURNAMENT_COIN_REWARDS.third]
 
-  for (const p of winners) {
-    const isFirst = p.id === winners[0]?.id
+  for (let i = 0; i < winners.length; i++) {
+    const p = winners[i]
+    const isFirst = i === 0
     await updatePlayer(p.id, {
       league: 1,
       tournamentWins: increment(1),
+      coins: increment(coinRewards[i]),
       ...(isFirst ? { firstPlaceFinishes: increment(1) } : {}),
     })
   }

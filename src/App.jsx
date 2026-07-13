@@ -24,6 +24,8 @@ import LeagueScreen from './components/LeagueScreen'
 import Confetti from './components/Confetti'
 import AchievementsPage from './components/AchievementsPage'
 import StatsPage from './components/StatsPage'
+import ShopPage from './components/ShopPage'
+import AdminPanel from './components/AdminPanel'
 import { VolumeSlider } from './components/VolumeSlider'
 import SettingsPage from './components/SettingsPage'
 import ThemePicker from './components/ThemePicker'
@@ -31,7 +33,8 @@ import SignInPage from './components/SignInPage'
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
-import { calculateWinXP } from './leagues'
+import { calculateWinXP, calculateWinCoins } from './leagues'
+import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
 import './index.css'
 
@@ -403,7 +406,7 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, user, playerName, onSignIn, onSignOut }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, user, playerName, onSignIn, onSignOut, coins }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -413,9 +416,11 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
           <button className="settings-btn nav-btn" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
           <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
+          <button className="settings-btn nav-btn" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
           <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
         </div>
         <div className="settings-bar-right">
+          <div className="coins-badge" title="Coins">🪙 {coins?.toLocaleString() || '0'}</div>
           {user && !user.isAnonymous && (
             <div className="user-badge">
               <span className="user-avatar">{((playerName || user.displayName || user.email || 'U')[0]).toUpperCase()}</span>
@@ -444,7 +449,10 @@ function App() {
   const [confirmNav, setConfirmNav] = useState(null)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentPage, setCurrentPage] = useState('home')
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (window.location.pathname === '/admin-panel') return 'admin'
+    return 'home'
+  })
   const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
   const [volume, setVolumeState] = useState(() => getVolume())
   const [category, setCategory] = useState('all')
@@ -456,8 +464,10 @@ function App() {
 
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
-    newAchievements, markAchievementsSeen,
+    newAchievements, markAchievementsSeen, earnedAchievements,
     markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
+    coins, ownedItems, activeTitle, activeNameplate,
+    purchaseItem, equipTitle, equipNameplate, addCoins, checkAchievementCoins,
   } = useStats('_global')
 
   const dailyGame = useMemo(() => {
@@ -535,16 +545,20 @@ function App() {
           getPlayer(userId).then(p => {
             if (p) {
               const xp = calculateWinXP(e.detail.gameId, p.streak || 0)
-              updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1) })
+              const coinReward = calculateWinCoins(e.detail.gameId, p.streak || 0)
+              updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) })
               syncLeagueData({ ...p, wins: (p.wins || 0) + 1 })
             }
           })
         }).catch(() => {})
+      } else if (e.detail?.gameId) {
+        const localCoins = calculateWinCoins(e.detail.gameId, 0)
+        addCoins(localCoins)
       }
     }
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
-  }, [userId, syncLeagueData])
+  }, [userId, syncLeagueData, addCoins])
 
   useEffect(() => {
     function handleGameComplete(e) {
@@ -569,10 +583,14 @@ function App() {
 
   useEffect(() => {
     if (newAchievements.length > 0) {
+      const reward = checkAchievementCoins(allStats._seenAchievements || [], newAchievements)
+      if (reward > 0) {
+        addCoins(reward)
+      }
       setCurrentPage('achievements')
       markAchievementsSeen()
     }
-  }, [newAchievements, markAchievementsSeen])
+  }, [newAchievements, markAchievementsSeen, checkAchievementCoins, addCoins, allStats._seenAchievements])
 
   useEffect(() => {
     let buf = []
@@ -670,10 +688,12 @@ function App() {
     onLeagues: () => setCurrentPage('leagues'),
     onStats: () => setCurrentPage('stats'),
     onAchievements: () => setCurrentPage('achievements'),
+    onShop: () => setCurrentPage('shop'),
     user,
     playerName,
     onSignIn: () => setCurrentPage('signin'),
     onSignOut: () => signOut().catch(() => {}),
+    coins,
   }
 
   const handleUpdatePlayerName = useCallback((newName) => {
@@ -742,6 +762,35 @@ function App() {
     )
   }
 
+  if (currentPage === 'admin') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <AdminPanel onBack={() => setCurrentPage('home')} />
+      </div>
+    )
+  }
+
+  if (currentPage === 'shop') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <ShopPage
+          onBack={() => setCurrentPage('home')}
+          coins={coins}
+          ownedItems={ownedItems}
+          activeTitle={activeTitle}
+          activeNameplate={activeNameplate}
+          onPurchase={purchaseItem}
+          onEquipTitle={equipTitle}
+          onEquipNameplate={equipNameplate}
+          isChampion={earnedAchievements.includes('reach-champion')}
+          isAdmin={isAdminLoggedIn()}
+        />
+      </div>
+    )
+  }
+
   if (activeGame) {
     const game = GAMES.find(g => g.id === activeGame)
     const ActiveComponent = game.component
@@ -779,6 +828,7 @@ function App() {
         <p className="arcade-subtitle">Pick a game and challenge the bot!</p>
         <div className="xp-bar">
           <span className="xp-badge">⭐ {xp.toLocaleString()} XP</span>
+          <span className="coins-home-badge">🪙 {coins.toLocaleString()}</span>
           <span className="xp-detail">{totalPlayedCount} played · {totalWonCount} won</span>
         </div>
         {user && user.isAnonymous && (

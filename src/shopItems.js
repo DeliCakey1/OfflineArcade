@@ -1,0 +1,162 @@
+export const SHOP_CATEGORIES = {
+  titles: { id: 'titles', label: 'Titles', emoji: '🏷️', desc: 'Show off below your name in leagues' },
+  nameplates: { id: 'nameplates', label: 'Nameplates', emoji: '✨', desc: 'Style your name in league standings' },
+}
+
+export const TITLES = [
+  { id: 'title-gaming-geek', name: 'Gaming Geek', emoji: '🎮', price: 100, rarity: 'common' },
+  { id: 'title-speedster', name: 'Speedster', emoji: '⚡', price: 100, rarity: 'common' },
+  { id: 'title-lucky-charm', name: 'Lucky Charm', emoji: '🍀', price: 100, rarity: 'common' },
+  { id: 'title-rookie', name: 'Rookie', emoji: '🌱', price: 50, rarity: 'common' },
+  { id: 'title-brainiac', name: 'Brainiac', emoji: '🧠', price: 150, rarity: 'common' },
+  { id: 'title-card-shark', name: 'Card Shark', emoji: '🦈', price: 150, rarity: 'common' },
+  { id: 'title-high-roller', name: 'High Roller', emoji: '🎰', price: 200, rarity: 'uncommon' },
+  { id: 'title-streak-master', name: 'Streak Master', emoji: '🔥', price: 250, rarity: 'uncommon' },
+  { id: 'title-shadow', name: 'Shadow', emoji: '🌑', price: 200, rarity: 'uncommon' },
+  { id: 'title-phantom', name: 'Phantom', emoji: '👻', price: 200, rarity: 'uncommon' },
+  { id: 'title-veteran', name: 'Veteran', emoji: '🎖️', price: 300, rarity: 'uncommon' },
+  { id: 'title-pro-gamer', name: 'Pro Gamer', emoji: '🎯', price: 400, rarity: 'rare' },
+  { id: 'title-the-unbeatable', name: 'The Unbeatable', emoji: '💎', price: 500, rarity: 'rare' },
+  { id: 'title-arcade-legend', name: 'Arcade Legend', emoji: '🕹️', price: 500, rarity: 'rare' },
+  { id: 'title-nightmare', name: 'Nightmare', emoji: '💀', price: 750, rarity: 'epic' },
+  { id: 'title-destroyer', name: 'Destroyer', emoji: '☠️', price: 750, rarity: 'epic' },
+  { id: 'title-the-undefeated', name: 'The Undefeated', emoji: '👑', price: 1000, rarity: 'epic' },
+  { id: 'title-grandmaster', name: 'Grandmaster', emoji: '🏆', price: 1000, rarity: 'epic' },
+  { id: 'title-god-tier', name: 'God Tier', emoji: '🌟', price: 1500, rarity: 'legendary' },
+  { id: 'title-supreme', name: 'Supreme', emoji: '💫', price: 1500, rarity: 'legendary' },
+  { id: 'title-eternal', name: 'Eternal', emoji: '♾️', price: 2000, rarity: 'legendary' },
+  { id: 'title-the-legend', name: 'The Legend', emoji: '⚡', price: 2000, rarity: 'legendary' },
+  { id: 'title-true-champion', name: 'True Champion', emoji: '🏆', price: 2500, rarity: 'champion', championOnly: true },
+  { id: 'title-reigning-king', name: 'Reigning King', emoji: '👑', price: 3000, rarity: 'champion', championOnly: true },
+]
+
+export const NAMEPLATE_COLORS = [
+  { id: 'np-red', name: 'Red', color: '#ff3333', price: 100, type: 'solid' },
+  { id: 'np-orange', name: 'Orange', color: '#ff6b2b', price: 100, type: 'solid' },
+  { id: 'np-yellow', name: 'Yellow', color: '#ffe600', price: 100, type: 'solid' },
+  { id: 'np-green', name: 'Green', color: '#39ff14', price: 100, type: 'solid' },
+  { id: 'np-blue', name: 'Blue', color: '#3b82f6', price: 100, type: 'solid' },
+  { id: 'np-purple', name: 'Purple', color: '#b946ff', price: 100, type: 'solid' },
+  { id: 'np-pink', name: 'Pink', color: '#ff2d7b', price: 100, type: 'solid' },
+  { id: 'np-cyan', name: 'Cyan', color: '#00d4ff', price: 100, type: 'solid' },
+  { id: 'np-white', name: 'White', color: '#ffffff', price: 150, type: 'solid' },
+  { id: 'np-gold', name: 'Gold', color: '#ffd700', price: 200, type: 'solid' },
+
+  { id: 'np-grad-sunset', name: 'Sunset', gradient: 'linear-gradient(90deg, #ff6b2b, #ff2d7b)', price: 250, type: 'gradient' },
+  { id: 'np-grad-ocean', name: 'Ocean', gradient: 'linear-gradient(90deg, #3b82f6, #00d4ff)', price: 250, type: 'gradient' },
+  { id: 'np-grad-forest', name: 'Forest', gradient: 'linear-gradient(90deg, #22c55e, #14b8a6)', price: 250, type: 'gradient' },
+  { id: 'np-grad-fire', name: 'Fire', gradient: 'linear-gradient(90deg, #ff3333, #ff6b2b, #ffe600)', price: 300, type: 'gradient' },
+  { id: 'np-grad-royal', name: 'Royal', gradient: 'linear-gradient(90deg, #b946ff, #3b82f6)', price: 300, type: 'gradient' },
+  { id: 'np-grad-rainbow', name: 'Rainbow', gradient: 'linear-gradient(90deg, #ff3333, #ff6b2b, #ffe600, #39ff14, #3b82f6, #b946ff)', price: 500, type: 'gradient' },
+  { id: 'np-grad-gold', name: 'Gold Gradient', gradient: 'linear-gradient(90deg, #ffd700, #ffaa00, #ffd700)', price: 400, type: 'gradient' },
+
+  { id: 'np-solid-border', name: 'Solid Border', borderColor: '#b946ff', price: 200, type: 'border' },
+  { id: 'np-solid-border-red', name: 'Red Border', borderColor: '#ff3333', price: 200, type: 'border' },
+  { id: 'np-solid-border-green', name: 'Green Border', borderColor: '#39ff14', price: 200, type: 'border' },
+  { id: 'np-solid-border-gold', name: 'Gold Border', borderColor: '#ffd700', price: 300, type: 'border' },
+  { id: 'np-grad-border', name: 'Gradient Border', gradientBorder: 'linear-gradient(90deg, #b946ff, #00d4ff)', price: 400, type: 'border' },
+  { id: 'np-grad-border-fire', name: 'Fire Border', gradientBorder: 'linear-gradient(90deg, #ff3333, #ff6b2b, #ffe600)', price: 400, type: 'border' },
+  { id: 'np-grad-border-rainbow', name: 'Rainbow Border', gradientBorder: 'linear-gradient(90deg, #ff3333, #ff6b2b, #ffe600, #39ff14, #3b82f6, #b946ff)', price: 600, type: 'border' },
+
+  { id: 'np-fx-neon-glow', name: 'Neon Glow', neonColor: '#39ff14', price: 500, type: 'effect' },
+  { id: 'np-fx-neon-pink', name: 'Neon Pink', neonColor: '#ff2d7b', price: 500, type: 'effect' },
+  { id: 'np-fx-neon-blue', name: 'Neon Blue', neonColor: '#00d4ff', price: 500, type: 'effect' },
+  { id: 'np-fx-rainbow-wave', name: 'Rainbow Wave', price: 750, type: 'effect' },
+  { id: 'np-fx-gold-shimmer', name: 'Gold Shimmer', price: 600, type: 'effect' },
+  { id: 'np-fx-champion-glow', name: 'Champion Glow', championOnly: true, price: 800, type: 'effect' },
+  { id: 'np-fx-diamond-dust', name: 'Diamond Dust', championOnly: true, price: 1000, type: 'effect' },
+]
+
+export const ALL_NAMEPLATES = NAMEPLATE_COLORS
+
+export const ACHIEVEMENT_COIN_REWARDS = {
+  'first-win': 25,
+  'played-1': 10,
+  'played-25': 25,
+  'played-50': 50,
+  'played-100': 75,
+  'played-250': 100,
+  'played-500': 150,
+  'played-1000': 200,
+  'won-10': 25,
+  'won-50': 50,
+  'won-100': 100,
+  'won-250': 150,
+  'won-500': 250,
+  'played-all': 100,
+  'won-all': 200,
+  'favorite-5': 25,
+  'favorite-10': 50,
+  'daily': 50,
+  'daily-7': 100,
+  'streak-3': 25,
+  'streak-5': 50,
+  'streak-10': 75,
+  'streak-25': 150,
+  'streak-50': 250,
+  'streak-100': 500,
+  'multi-streak-3': 75,
+  'multi-streak-5': 150,
+  'xp-100': 25,
+  'xp-500': 50,
+  'xp-1000': 75,
+  'xp-2500': 100,
+  'xp-5000': 200,
+  'xp-10000': 300,
+  'xp-25000': 500,
+  'league-join': 25,
+  'promo-1': 25,
+  'promo-5': 75,
+  'promo-10': 150,
+  'promo-25': 250,
+  'promo-50': 500,
+  'reach-iron': 25,
+  'reach-bronze': 50,
+  'reach-silver': 75,
+  'reach-gold': 100,
+  'reach-platinum': 150,
+  'reach-diamond': 200,
+  'reach-champion': 500,
+  'tournament-entry': 50,
+  'tournament-win': 200,
+  'tournament-3wins': 500,
+  'tournament-5wins': 1000,
+  'first-place': 200,
+  'first-place-3': 500,
+  'league-wins-10': 25,
+  'league-wins-50': 75,
+  'league-wins-100': 150,
+}
+
+export const TOURNAMENT_COIN_REWARDS = { first: 2000, second: 1500, third: 1000 }
+
+export const LEAGUE_COIN_REWARDS = {
+  11: { first: 100, second: 75, third: 50 },
+  10: { first: 120, second: 90, third: 60 },
+  9: { first: 150, second: 110, third: 75 },
+  8: { first: 200, second: 150, third: 100 },
+  7: { first: 250, second: 185, third: 125 },
+  6: { first: 300, second: 225, third: 150 },
+  5: { first: 400, second: 300, third: 200 },
+  4: { first: 500, second: 375, third: 250 },
+  3: { first: 750, second: 550, third: 375 },
+}
+
+export const RARITY_COLORS = {
+  common: '#a3a3a3',
+  uncommon: '#22c55e',
+  rare: '#3b82f6',
+  epic: '#b946ff',
+  legendary: '#ffd700',
+  champion: '#ff2d7b',
+}
+
+export function isOwned(ownedIds, itemId) {
+  return ownedIds.includes(itemId)
+}
+
+export function canBuy(coins, ownedIds, item) {
+  if (isOwned(ownedIds, item.id)) return false
+  if (item.championOnly) return false
+  return coins >= item.price
+}

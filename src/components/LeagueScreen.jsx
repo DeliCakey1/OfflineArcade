@@ -13,6 +13,7 @@ import {
   processFinalsReset, updatePlayer, ensurePlayerInLeague,
 } from '../leagueService'
 import { MAX_PER_LEAGUE } from '../leagues'
+import { TITLES, ALL_NAMEPLATES } from '../shopItems'
 
 const LEAGUE_GAMES = [
   { id: 'rps', label: 'RPS', emoji: '✊' },
@@ -33,6 +34,53 @@ const TOURNAMENT_LABELS = {
   tournament: { name: 'Tournament', emoji: '🏟️', size: 20 },
   semiFinals: { name: 'Semi-Finals', emoji: '⚔️', size: 15 },
   finals: { name: 'Finals', emoji: '🏆', size: 10 },
+}
+
+function getNameplateStyle(nameplateId) {
+  if (!nameplateId) return null
+  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
+  if (!np) return null
+  if (np.type === 'solid') return { color: np.color }
+  if (np.type === 'gradient') return { background: np.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }
+  return null
+}
+
+function getNameplateBorderStyle(nameplateId) {
+  if (!nameplateId) return null
+  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
+  if (!np) return null
+  if (np.type === 'border') {
+    if (np.gradientBorder) return { borderImage: `${np.gradientBorder} 1`, borderImageSlice: 1, borderWidth: 2, borderStyle: 'solid' }
+    return { borderColor: np.borderColor, borderWidth: 2, borderStyle: 'solid' }
+  }
+  return null
+}
+
+function getNameplateEffectClass(nameplateId) {
+  if (!nameplateId) return ''
+  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
+  if (!np) return ''
+  if (np.type === 'effect') {
+    if (np.neonColor) return 'np-fx-neon'
+    if (np.id === 'np-fx-rainbow-wave') return 'np-fx-rainbow'
+    if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
+    if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
+    if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
+  }
+  return ''
+}
+
+function getNameplateNeonColor(nameplateId) {
+  if (!nameplateId) return null
+  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
+  if (!np || np.type !== 'effect' || !np.neonColor) return null
+  return np.neonColor
+}
+
+function getTitleName(titleId) {
+  if (!titleId) return null
+  const t = TITLES.find(ti => ti.id === titleId)
+  return t ? t.name : null
 }
 
 export default function LeagueScreen({ onBack, userId, onPlayGame }) {
@@ -394,7 +442,17 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
             return (
               <div key={p.id} className={`league-row ${isYou ? 'you' : ''} ${isPromo ? 'promo' : isDemo ? 'demo' : ''}`}>
                 <span className="league-row-pos">#{pos}</span>
-                <span className="league-row-name">{p.name}{isYou ? ' (you)' : ''}</span>
+                <div className="league-row-name-col">
+                  <span
+                    className={`league-row-name ${getNameplateEffectClass(p.nameplate)} ${getNameplateNeonColor(p.nameplate) ? 'np-fx-neon' : ''}`}
+                    style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplate), '--np-neon-color': getNameplateNeonColor(p.nameplate) || undefined }}
+                  >
+                    {p.name}{isYou ? ' (you)' : ''}
+                  </span>
+                  {getTitleName(p.title) && (
+                    <span className="league-row-title">{getTitleName(p.title)}</span>
+                  )}
+                </div>
                 <span className="league-row-xp">⭐{p.xp}</span>
                 <span className="league-row-record">{p.wins}W/{p.losses}L</span>
               </div>

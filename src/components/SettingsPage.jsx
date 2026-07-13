@@ -1,10 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { VolumeSlider } from './VolumeSlider'
 import ThemePicker from './ThemePicker'
+import {
+  verifyPassword,
+  isAdminLoggedIn,
+  loginAdmin,
+  logoutAdmin,
+  canAttemptLogin,
+  setLoginCooldown,
+  getRemainingCooldown,
+} from '../adminAuth'
 
 export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
+  const [showAdminModal, setShowAdminModal] = useState(false)
+  const [adminPassword, setAdminPassword] = useState('')
+  const [adminError, setAdminError] = useState('')
+  const [adminCooldown, setAdminCooldown] = useState(0)
+  const [adminLoading, setAdminLoading] = useState(false)
+  const [adminActive, setAdminActive] = useState(isAdminLoggedIn())
+  const adminInputRef = useRef(null)
+
+  useEffect(() => {
+    if (showAdminModal && adminInputRef.current) {
+      adminInputRef.current.focus()
+    }
+  }, [showAdminModal])
+
+  useEffect(() => {
+    if (adminCooldown <= 0) return
+    const timer = setTimeout(() => setAdminCooldown(c => Math.max(0, c - 100)), 100)
+    return () => clearTimeout(timer)
+  }, [adminCooldown])
 
   function startEditName() {
     setNameInput(playerName || '')
@@ -24,10 +52,51 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
     if (e.key === 'Escape') setEditingName(false)
   }
 
+  async function handleAdminLogin(e) {
+    e.preventDefault()
+    if (!canAttemptLogin()) {
+      const remaining = getRemainingCooldown()
+      setAdminCooldown(remaining)
+      setAdminError(`Too many attempts. Wait ${Math.ceil(remaining / 1000)}s.`)
+      return
+    }
+
+    setAdminLoading(true)
+    setAdminError('')
+
+    const valid = await verifyPassword(adminPassword)
+    if (valid) {
+      loginAdmin()
+      setAdminActive(true)
+      setShowAdminModal(false)
+      setAdminPassword('')
+    } else {
+      setLoginCooldown()
+      setAdminCooldown(getRemainingCooldown())
+      setAdminError('Incorrect password.')
+      setAdminPassword('')
+    }
+    setAdminLoading(false)
+  }
+
+  function handleAdminLogout() {
+    logoutAdmin()
+    setAdminActive(false)
+  }
+
   const displayName = playerName || user?.displayName || user?.email || 'Signed In'
 
   return (
     <div className="settings-page">
+      <button
+        className="admin-lock-btn"
+        onClick={() => setShowAdminModal(true)}
+        title="Admin"
+        aria-label="Admin panel"
+      >
+        🔒
+      </button>
+
       <div className="settings-page-header">
         <button className="quit-btn" onClick={onBack}>← Back</button>
         <h2>⚙️ Settings</h2>
@@ -77,6 +146,22 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           </button>
         )}
       </div>
+
+      {adminActive && (
+        <div className="settings-section admin-active-section">
+          <h3 className="settings-section-title">👑 Admin Mode</h3>
+          <div className="settings-row">
+            <div className="settings-card-btn active" style={{ cursor: 'default' }}>
+              <span className="settings-card-icon">👑</span>
+              <span className="settings-card-label">Admin Mode Active</span>
+            </div>
+            <button className="settings-card-btn" onClick={handleAdminLogout}>
+              <span className="settings-card-icon">🔒</span>
+              <span className="settings-card-label">Lock</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="settings-section">
         <h3 className="settings-section-title">🔊 Audio</h3>
@@ -128,6 +213,48 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           <span className="settings-card-label">Tab Cloaking</span>
         </button>
       </div>
+
+      {showAdminModal && (
+        <div className="stats-overlay" onClick={() => { setShowAdminModal(false); setAdminPassword(''); setAdminError('') }}>
+          <div className="stats-modal admin-modal" onClick={e => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <span className="admin-modal-icon">🔐</span>
+              <h3>Admin Access</h3>
+            </div>
+            <form onSubmit={handleAdminLogin}>
+              <input
+                ref={adminInputRef}
+                type="password"
+                className="admin-password-input"
+                value={adminPassword}
+                onChange={e => setAdminPassword(e.target.value)}
+                placeholder="Enter admin key..."
+                disabled={adminLoading || adminCooldown > 0}
+                autoComplete="off"
+              />
+              {adminError && (
+                <div className="admin-error">{adminError}</div>
+              )}
+              <div className="admin-modal-actions">
+                <button
+                  type="button"
+                  className="admin-cancel-btn"
+                  onClick={() => { setShowAdminModal(false); setAdminPassword(''); setAdminError('') }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="admin-login-btn"
+                  disabled={adminLoading || adminCooldown > 0 || !adminPassword}
+                >
+                  {adminLoading ? 'Verifying...' : adminCooldown > 0 ? `Wait ${Math.ceil(adminCooldown / 1000)}s...` : 'Unlock'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

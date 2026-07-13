@@ -3521,3 +3521,600 @@ body::after {
     padding: 16px;
   }
 }
+
+/* ===== COINS ===== */
+.coins-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(255, 230, 0, 0.15), rgba(255, 107, 43, 0.15));
+  border: 1px solid rgba(255, 230, 0, 0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--neon-yellow);
+  white-space: nowrap;
+}
+.coins-home-badge {
+  background: linear-gradient(135deg, rgba(255, 230, 0, 0.15), rgba(255, 107, 43, 0.15));
+  border: 1px solid rgba(255, 230, 0, 0.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--neon-yellow);
+}
+.shop-coins-badge {
+  margin-left: auto;
+  background: linear-gradient(135deg, rgba(255, 230, 0, 0.15), rgba(255, 107, 43, 0.15));
+  border: 1px solid rgba(255, 230, 0, 0.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--neon-yellow);
+}
+
+/* ===== SHOP PAGE ===== */
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.shop-tab {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  color: var(--text-dim);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+.shop-tab:hover {
+  border-color: var(--neon-purple);
+  color: var(--text-light);
+  transform: translateY(-1px);
+}
+.shop-tab.active {
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 12px rgba(185, 70, 255, 0.3);
+}
+.shop-sub-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.shop-sub-tabs::-webkit-scrollbar { display: none; }
+.shop-sub-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  color: var(--text-dim);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.shop-sub-tab:hover {
+  background: var(--bg-card);
+  color: var(--text-light);
+}
+.shop-sub-tab.active {
+  background: rgba(185, 70, 255, 0.2);
+  color: var(--neon-purple);
+  border-color: var(--neon-purple);
+}
+.shop-section-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  text-align: center;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.shop-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s ease;
+  animation: fadeSlideUp 0.3s ease-out backwards;
+}
+.shop-card:hover {
+  border-color: var(--neon-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(185, 70, 255, 0.2);
+}
+.shop-card.owned {
+  border-color: rgba(57, 255, 20, 0.3);
+}
+.shop-card.equipped {
+  border-color: var(--neon-green);
+  background: rgba(57, 255, 20, 0.08);
+}
+.shop-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.shop-card-emoji {
+  font-size: 28px;
+}
+.shop-card-rarity {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.shop-card-preview {
+  margin-bottom: 8px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.shop-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+.shop-card-champion-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--neon-pink);
+  background: rgba(255, 45, 123, 0.1);
+  border: 1px solid rgba(255, 45, 123, 0.3);
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin-bottom: 6px;
+  display: inline-block;
+}
+.shop-card-bottom {
+  margin-top: 8px;
+}
+.shop-card-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.shop-card-btn.buy-btn {
+  background: linear-gradient(135deg, var(--neon-yellow), var(--neon-orange));
+  color: #1a1033;
+}
+.shop-card-btn.buy-btn:hover:not(.disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(255, 230, 0, 0.3);
+}
+.shop-card-btn.buy-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+.shop-card-btn.equip-btn {
+  background: rgba(185, 70, 255, 0.2);
+  border: 1px solid var(--neon-purple);
+  color: var(--neon-purple);
+}
+.shop-card-btn.equip-btn:hover {
+  background: rgba(185, 70, 255, 0.3);
+  transform: translateY(-1px);
+}
+.shop-card-btn.equipped-btn {
+  background: rgba(57, 255, 20, 0.15);
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+}
+.shop-bought-toast {
+  text-align: center;
+  padding: 10px;
+  background: rgba(57, 255, 20, 0.1);
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  border-radius: 10px;
+  color: var(--neon-green);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 12px;
+  animation: popIn 0.3s ease;
+}
+
+/* ===== NAMEPLATE PREVIEWS ===== */
+.np-preview-text {
+  font-size: 14px;
+  font-weight: 700;
+}
+.np-border-preview {
+  display: inline-block;
+}
+.np-rainbow-text {
+  background: linear-gradient(90deg, #ff3333, #ff6b2b, #ffe600, #39ff14, #3b82f6, #b946ff, #ff3333);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rainbowShift 3s linear infinite;
+}
+.np-gold-shimmer-text {
+  background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700, #ffaa00, #ffd700);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s ease-in-out infinite;
+}
+.np-diamond-text {
+  background: linear-gradient(135deg, #00d4ff, #ffffff, #00d4ff, #ffffff);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@keyframes rainbowShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* ===== LEAGUE ROW NAMEPLATE EFFECTS ===== */
+.league-row-name-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.league-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 4px;
+}
+.league-row-title {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 600;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+.np-fx-neon {
+  text-shadow: 0 0 8px var(--np-neon-color, #39ff14), 0 0 16px var(--np-neon-color, #39ff14);
+}
+.np-fx-rainbow {
+  background: linear-gradient(90deg, #ff3333, #ff6b2b, #ffe600, #39ff14, #3b82f6, #b946ff, #ff3333);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rainbowShift 3s linear infinite;
+}
+.np-fx-shimmer {
+  background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700, #ffaa00, #ffd700);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s ease-in-out infinite;
+}
+.np-fx-champion {
+  color: #ffd700;
+  text-shadow: 0 0 12px #ffd700, 0 0 24px #ff6b2b;
+}
+.np-fx-diamond {
+  background: linear-gradient(135deg, #00d4ff, #ffffff, #00d4ff, #ffffff);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ===== ADMIN LOCK BUTTON ===== */
+.admin-lock-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.12;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+  padding: 4px;
+  line-height: 1;
+}
+.admin-lock-btn:hover {
+  opacity: 0.5;
+}
+.settings-page {
+  position: relative;
+}
+
+/* ===== ADMIN ACTIVE SECTION ===== */
+.admin-active-section {
+  border: 1px solid rgba(255, 215, 0, 0.3) !important;
+  background: rgba(255, 215, 0, 0.05) !important;
+}
+
+/* ===== ADMIN LOGIN FORM ===== */
+.admin-login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.admin-login-form {
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 40px 32px;
+  animation: fadeSlideUp 0.3s ease-out;
+}
+.admin-lock-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.admin-login-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 22px;
+  color: var(--text-light);
+  margin: 0 0 4px;
+}
+.admin-login-subtitle {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin: 0 0 24px;
+}
+.admin-password-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  color: var(--text-light);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  outline: none;
+  text-align: center;
+  letter-spacing: 4px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+.admin-password-input:focus {
+  border-color: var(--neon-purple);
+}
+.admin-password-input::placeholder {
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.admin-error {
+  color: var(--neon-red);
+  font-size: 13px;
+  margin-top: 10px;
+  font-weight: 600;
+}
+.admin-login-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 16px;
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.admin-login-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(185, 70, 255, 0.4);
+}
+.admin-login-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== ADMIN MODAL (in settings) ===== */
+.admin-modal {
+  text-align: center;
+}
+.admin-modal-header {
+  margin-bottom: 20px;
+}
+.admin-modal-icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 8px;
+}
+.admin-modal-header h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 20px;
+  color: var(--text-light);
+  margin: 0;
+}
+.admin-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.admin-cancel-btn {
+  flex: 1;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.admin-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+}
+
+/* ===== ADMIN DASHBOARD ===== */
+.admin-dashboard {
+  animation: fadeSlideUp 0.3s ease-out;
+}
+.admin-welcome {
+  text-align: center;
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 28px 20px;
+  margin-bottom: 20px;
+}
+.admin-badge-large {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+}
+.admin-welcome h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 22px;
+  color: var(--neon-yellow);
+  margin: 0 0 8px;
+}
+.admin-welcome p {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.5;
+}
+.admin-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.admin-section-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 20px 16px;
+  text-align: center;
+}
+.admin-section-card:hover {
+  border-color: var(--neon-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(185, 70, 255, 0.2);
+}
+.admin-section-emoji {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+.admin-section-card h4 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  color: var(--text-light);
+  margin: 0 0 4px;
+}
+.admin-section-card p {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0;
+}
+.admin-coming-soon {
+  opacity: 0.5;
+}
+.admin-coming-soon:hover {
+  border-color: var(--border-glass);
+  transform: none;
+  box-shadow: none;
+  cursor: default;
+}
+.admin-logout-btn {
+  width: 100%;
+  padding: 14px;
+  background: rgba(255, 45, 123, 0.1);
+  border: 1px solid rgba(255, 45, 123, 0.3);
+  border-radius: 12px;
+  color: var(--neon-red);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.admin-logout-btn:hover {
+  background: rgba(255, 45, 123, 0.2);
+  transform: translateY(-1px);
+}
+
+/* ===== SHOP ADMIN BADGES ===== */
+.shop-admin-badge {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 107, 43, 0.2));
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--neon-yellow);
+  white-space: nowrap;
+}
+.shop-card-admin-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--neon-yellow);
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin-bottom: 6px;
+  display: inline-block;
+}
+.shop-admin-banner {
+  text-align: center;
+  padding: 10px 16px;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 10px;
+  color: var(--neon-yellow);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}

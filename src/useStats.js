@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react'
+import { ACHIEVEMENT_COIN_REWARDS } from './shopItems'
+import { isAdminLoggedIn } from './adminAuth'
 
 const STORAGE_KEY = 'arcade-stats'
 
@@ -231,6 +233,10 @@ export default function useStats(gameId) {
   const xp = stats._xp?.total || 0
   const recent = stats._recent || []
   const favorites = stats._favorites || []
+  const coins = stats._coins || 0
+  const ownedItems = stats._ownedItems || []
+  const activeTitle = stats._activeTitle || null
+  const activeNameplate = stats._activeNameplate || null
   const earnedAchievements = ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id)
   const newAchievements = earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id))
 
@@ -247,6 +253,9 @@ export default function useStats(gameId) {
         wasInTournament: playerData.league === 2,
       }
       const updated = { ...prev, _league: league }
+      if (playerData.coins != null) {
+        updated._coins = playerData.coins
+      }
       saveStats(updated)
       return updated
     })
@@ -260,6 +269,67 @@ export default function useStats(gameId) {
     })
   }, [earnedAchievements])
 
+  const addCoins = useCallback((amount) => {
+    if (amount <= 0) return
+    setStats(prev => {
+      const updated = { ...prev, _coins: (prev._coins || 0) + amount }
+      saveStats(updated)
+      return updated
+    })
+  }, [])
+
+  const spendCoins = useCallback((amount) => {
+    setStats(prev => {
+      const current = prev._coins || 0
+      if (current < amount) return prev
+      const updated = { ...prev, _coins: current - amount }
+      saveStats(updated)
+      return updated
+    })
+  }, [])
+
+  const purchaseItem = useCallback((itemId, price) => {
+    setStats(prev => {
+      const admin = isAdminLoggedIn()
+      const current = prev._coins || 0
+      if (!admin && current < price) return prev
+      if ((prev._ownedItems || []).includes(itemId)) return prev
+      const updated = {
+        ...prev,
+        _coins: admin ? current : current - price,
+        _ownedItems: [...(prev._ownedItems || []), itemId],
+      }
+      saveStats(updated)
+      return updated
+    })
+  }, [])
+
+  const equipTitle = useCallback((titleId) => {
+    setStats(prev => {
+      const updated = { ...prev, _activeTitle: titleId }
+      saveStats(updated)
+      return updated
+    })
+  }, [])
+
+  const equipNameplate = useCallback((nameplateId) => {
+    setStats(prev => {
+      const updated = { ...prev, _activeNameplate: nameplateId }
+      saveStats(updated)
+      return updated
+    })
+  }, [])
+
+  const checkAchievementCoins = useCallback((prevSeenIds, newSeenIds) => {
+    let totalReward = 0
+    for (const id of newSeenIds) {
+      if (!prevSeenIds.includes(id)) {
+        totalReward += ACHIEVEMENT_COIN_REWARDS[id] || 0
+      }
+    }
+    return totalReward
+  }, [])
+
   const totalPlayedCount = totalPlayed(stats)
   const totalWonCount = totalWon(stats)
 
@@ -268,5 +338,9 @@ export default function useStats(gameId) {
     xp, recent, favorites, setFavorite, isFavorite,
     earnedAchievements, newAchievements, markAchievementsSeen,
     markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
+    coins, ownedItems, activeTitle, activeNameplate,
+    addCoins, spendCoins, purchaseItem, equipTitle, equipNameplate,
+    checkAchievementCoins,
+    isAdminLoggedIn,
   }
 }

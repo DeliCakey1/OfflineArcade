@@ -110,3 +110,7 @@ export function calculateWinXP(gameId, streak = 0) {
   const streakBonus = Math.min(streak, 10)
   return base + streakBonus
 }
+
+export function calculateWinCoins(gameId, streak = 0) {
+  return calculateWinXP(gameId, streak)
+}
