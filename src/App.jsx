@@ -16,6 +16,10 @@ import Slots from './components/Slots'
 import Blackjack from './components/Blackjack'
 import WhackAMole from './components/WhackAMole'
 import SnakeGame from './components/SnakeGame'
+import Tetris from './components/Tetris'
+import Breakout from './components/Breakout'
+import FlappyBird from './components/FlappyBird'
+import Minesweeper from './components/Minesweeper'
 import { isMuted, toggleMute } from './useSound'
 import useStats from './useStats'
 import { THEMES, THEME_ORDER } from './themes'
@@ -157,6 +161,38 @@ const GAMES = [
     desc: 'Eat food, grow longer, don\'t hit yourself!',
     color: '#22c55e',
     component: SnakeGame,
+  },
+  {
+    id: 'tetris',
+    label: 'Tetris',
+    emoji: '🧱',
+    desc: 'Stack blocks, clear lines, rack up points!',
+    color: '#00d4ff',
+    component: Tetris,
+  },
+  {
+    id: 'breakout',
+    label: 'Breakout',
+    emoji: '🏓',
+    desc: 'Smash all the bricks with the ball!',
+    color: '#ff2d7b',
+    component: Breakout,
+  },
+  {
+    id: 'flappy',
+    label: 'Flappy Bird',
+    emoji: '🐦',
+    desc: 'Tap to flap, dodge the pipes!',
+    color: '#ffe600',
+    component: FlappyBird,
+  },
+  {
+    id: 'minesweeper',
+    label: 'Minesweeper',
+    emoji: '💣',
+    desc: 'Clear the field without hitting a mine!',
+    color: '#f97316',
+    component: Minesweeper,
   },
 ]
 
