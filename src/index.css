@@ -120,10 +120,9 @@ body::after {
   background: linear-gradient(
     180deg,
     var(--neon-pink) 0%,
-    var(--neon-blue) 20%,
-    var(--neon-cyan) 40%,
-    var(--neon-green) 60%,
-    var(--neon-yellow) 80%,
+    var(--neon-blue) 25%,
+    var(--neon-green) 50%,
+    var(--neon-yellow) 75%,
     var(--neon-pink) 100%
   );
   background-size: 100% 300%;
