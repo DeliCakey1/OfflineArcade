@@ -52,11 +52,10 @@ export default function SignInPage({ onBack }) {
           <span className="signin-btn-label">Continue with GitHub</span>
         </button>
 
-        <button className="signin-btn apple" onClick={() => handleSignIn('apple')} disabled={loading !== null}>
-          <span className="signin-btn-icon">
-            {loading === 'apple' ? <span className="signin-spinner" /> : ''}
-          </span>
+        <button className="signin-btn apple" disabled>
+          <span className="signin-btn-icon"></span>
           <span className="signin-btn-label">Continue with Apple</span>
+          <span className="signin-coming-soon">Coming Soon</span>
         </button>
 
         <button className="signin-btn discord" disabled>
