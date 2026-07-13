@@ -636,16 +636,19 @@ function App() {
   }
 
   function handleHome() {
+    setShowConfetti(false)
     if (isPlaying) setConfirmNav({ type: 'home' })
     else setActiveGame(null)
   }
 
   function handleNavigateGame(gameId) {
+    setShowConfetti(false)
     if (isPlaying && activeGame !== gameId) setConfirmNav({ type: 'game', gameId })
     else setActiveGame(gameId)
   }
 
   function confirmNavAction() {
+    setShowConfetti(false)
     if (confirmNav.type === 'home') { setActiveGame(null); setIsPlaying(false) }
     else if (confirmNav.type === 'game') { setActiveGame(confirmNav.gameId); setIsPlaying(false) }
     setConfirmNav(null)
