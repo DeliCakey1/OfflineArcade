@@ -396,8 +396,25 @@ body::after {
   transform: scale(0.98);
 }
 .signin-btn:disabled {
-  opacity: 0.6;
-  cursor: wait;
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+}
+.signin-btn:disabled:hover {
+  transform: none;
+  border-color: var(--border-glass);
+  background: var(--bg-glass);
+}
+.signin-coming-soon {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  padding: 2px 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 6px;
 }
 .signin-btn.google:hover:not(:disabled) { border-color: #4285f4; }
 .signin-btn.github:hover:not(:disabled) { border-color: #f0f6fc; }
