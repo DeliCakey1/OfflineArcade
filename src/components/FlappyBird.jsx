@@ -42,7 +42,11 @@ export default function FlappyBird({ onPlayingChange }) {
   useEffect(() => { startedRef.current = started }, [started])
 
   const flap = useCallback(() => {
-    if (gameOverRef.current || !startedRef.current) return
+    if (gameOverRef.current) return
+    if (!startedRef.current) {
+      startedRef.current = true
+      setStarted(true)
+    }
     gameRef.current.birdVY = FLAP_POWER
     sound('click')
   }, [sound])
