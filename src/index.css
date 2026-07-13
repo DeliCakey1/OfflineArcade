@@ -402,6 +402,7 @@ body::after {
 .signin-btn.google:hover:not(:disabled) { border-color: #4285f4; }
 .signin-btn.github:hover:not(:disabled) { border-color: #f0f6fc; }
 .signin-btn.apple:hover:not(:disabled) { border-color: #fff; }
+.signin-btn.discord:hover:not(:disabled) { border-color: #5865f2; }
 .signin-btn-icon {
   width: 24px;
   height: 24px;
@@ -414,6 +415,7 @@ body::after {
 .signin-btn.google .signin-btn-icon { color: #4285f4; }
 .signin-btn.github .signin-btn-icon { color: #f0f6fc; }
 .signin-btn.apple .signin-btn-icon { color: #fff; }
+.signin-btn.discord .signin-btn-icon { color: #5865f2; }
 .signin-spinner {
   width: 18px;
   height: 18px;

@@ -9,6 +9,8 @@ import { auth } from './firebase'
 const googleProvider = new GoogleAuthProvider()
 const githubProvider = new GithubAuthProvider()
 const appleProvider = new OAuthProvider('apple.com')
+const discordProvider = new OAuthProvider('discord.com')
+discordProvider.addScope('identify')
 
 const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 
@@ -33,6 +35,12 @@ export async function signInWithApple() {
   if (!auth) return null
   if (isMobile()) return signInWithRedirect(auth, appleProvider)
   return signInWithPopup(auth, appleProvider)
+}
+
+export async function signInWithDiscord() {
+  if (!auth) return null
+  if (isMobile()) return signInWithRedirect(auth, discordProvider)
+  return signInWithPopup(auth, discordProvider)
 }
 
 export async function handleRedirectResult() {
