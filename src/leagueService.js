@@ -448,11 +448,29 @@ export async function searchPlayersByName(searchTerm) {
   const term = searchTerm.trim()
   if (!term) return []
   const lower = term.toLowerCase()
-  const snap = await getDocs(collection(db, PLAYERS))
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(p => p.name && p.name.toLowerCase().includes(lower))
-    .slice(0, 20)
+
+  const leagueSnap = await getDocs(collection(db, LEAGUES))
+  const playerIds = new Set()
+  for (const d of leagueSnap.docs) {
+    const data = d.data()
+    if (data.players) data.players.forEach(id => playerIds.add(id))
+  }
+
+  const tSnap = await getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active')))
+  for (const d of tSnap.docs) {
+    const data = d.data()
+    if (data.players) data.players.forEach(id => playerIds.add(id))
+  }
+
+  if (playerIds.size === 0) return []
+  const ids = [...playerIds]
+  const results = []
+  for (const id of ids) {
+    const p = await getPlayer(id)
+    if (p && p.name && p.name.toLowerCase().includes(lower)) results.push(p)
+    if (results.length >= 20) break
+  }
+  return results
 }
 
 export async function getAllLeaguesForPlayer(userId) {

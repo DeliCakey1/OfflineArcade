@@ -201,7 +201,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
     const timer = setTimeout(() => {
       searchPlayersByName(term).then(results => {
         if (!cancelled) { setPlayerSearchResults(results); setPlayerSearchLoading(false) }
-      }).catch(() => { if (!cancelled) setPlayerSearchLoading(false) })
+      }).catch(err => { console.error('Player search failed:', err); if (!cancelled) { setPlayerSearchResults([]); setPlayerSearchLoading(false) } })
     }, 300)
     return () => { cancelled = true; clearTimeout(timer) }
   }, [playerSearch])
