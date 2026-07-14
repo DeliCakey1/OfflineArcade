@@ -448,28 +448,11 @@ export async function searchPlayersByName(searchTerm) {
   const term = searchTerm.trim()
   if (!term) return []
   const lower = term.toLowerCase()
-  const qLow = query(
-    collection(db, PLAYERS),
-    where('name', '>=', term.toLowerCase()),
-    where('name', '<=', term.toLowerCase() + '\uf8ff'),
-    firestoreLimit(50)
-  )
-  const qCap = query(
-    collection(db, PLAYERS),
-    where('name', '>=', term.charAt(0).toUpperCase() + term.slice(1).toLowerCase()),
-    where('name', '<=', term.charAt(0).toUpperCase() + term.slice(1).toLowerCase() + '\uf8ff'),
-    firestoreLimit(50)
-  )
-  const [snapLow, snapCap] = await Promise.all([getDocs(qLow), getDocs(qCap)])
-  const seen = new Set()
-  const results = []
-  for (const d of [...snapLow.docs, ...snapCap.docs]) {
-    if (seen.has(d.id)) continue
-    seen.add(d.id)
-    const p = { id: d.id, ...d.data() }
-    if (p.name && p.name.toLowerCase().includes(lower)) results.push(p)
-  }
-  return results.slice(0, 20)
+  const snap = await getDocs(collection(db, PLAYERS))
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(p => p.name && p.name.toLowerCase().includes(lower))
+    .slice(0, 20)
 }
 
 export async function getAllLeaguesForPlayer(userId) {
