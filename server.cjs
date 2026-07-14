@@ -39,26 +39,23 @@ function serveFile(res, filePath) {
 const ABOUT_BLANK_HTML = `<!DOCTYPE html>
 <html>
 <head><title>New Tab</title></head>
-<body style="margin:0;background:#fff">
+<body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;height:100vh;cursor:pointer">
 <script>
 (function() {
   try { history.replaceState(null, '', '/'); } catch(e) {}
   var siteHtml = null;
   fetch('/').then(function(r){ return r.text() }).then(function(html){
-    siteHtml = html.replace(/<head>/i, '<head><base href="' + location.origin + '/">');
+    var base = location.origin;
+    siteHtml = html.replace(/<head>/i, '<head><base href="' + base + '/">');
   });
-  document.addEventListener('click', function openArcade() {
-    document.removeEventListener('click', openArcade);
+  document.body.addEventListener('click', function() {
     if (!siteHtml) return;
-    var w = window.open('', '_blank');
+    var w = window.open('');
     if (w) {
-      try { w.history.replaceState(null, '', 'about:blank'); } catch(e) {}
-      w.document.open();
       w.document.write(siteHtml);
       w.document.close();
-      try { for (var i = 1; i < 100; i++) w.history.go(-i); } catch(e) {}
     }
-  }, { once: true });
+  });
 })();
 </script>
 </body>
