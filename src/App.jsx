@@ -675,6 +675,7 @@ function App() {
   const [category, setCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [showConfetti, setShowConfetti] = useState(false)
+  const hideConfetti = useCallback(() => setShowConfetti(false), [])
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
   const [userId, setUserId] = useState(null)
   const adminSwitchingRef = useRef(false)
@@ -1181,7 +1182,7 @@ function App() {
         <main className="game-container">
           <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
         </main>
-        <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
+        <Confetti active={showConfetti} onDone={hideConfetti} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         {showUsernameModal && user && !user.isAnonymous && (
@@ -1284,7 +1285,7 @@ function App() {
           </div>
         )}
       </main>
-      <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
+      <Confetti active={showConfetti} onDone={hideConfetti} />
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       {showUserSearch && <UserSearchModal onClose={() => setShowUserSearch(false)} />}
       {showUsernameModal && user && !user.isAnonymous && (
