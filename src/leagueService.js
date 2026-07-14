@@ -46,11 +46,6 @@ export async function updatePlayer(userId, data) {
   await updateDoc(ref, { ...data, lastActive: Date.now() })
 }
 
-export async function deletePlayer(userId) {
-  const ref = doc(db, PLAYERS, userId)
-  await deleteDoc(ref)
-}
-
 export async function setAdminStatus(userId, isAdmin) {
   const ref = doc(db, PLAYERS, userId)
   await setDoc(ref, { isAdmin, lastActive: Date.now() }, { merge: true })

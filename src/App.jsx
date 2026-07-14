@@ -524,18 +524,6 @@ function App() {
         }
         import('./leagueService').then(({ getPlayer }) => {
           getPlayer(u.uid).then(p => {
-            if (p && u.isAnonymous && p.lastActive) {
-              const TWO_MONTHS = 60 * 24 * 60 * 60 * 1000
-              if (Date.now() - p.lastActive > TWO_MONTHS) {
-                import('./leagueService').then(({ deletePlayer }) => {
-                  deletePlayer(u.uid).catch(() => {})
-                }).catch(() => {})
-                import('./auth').then(({ signOut }) => {
-                  signOut().then(() => window.location.reload()).catch(() => {})
-                }).catch(() => {})
-                return
-              }
-            }
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
               try {
