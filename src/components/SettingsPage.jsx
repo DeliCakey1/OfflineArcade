@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAdminPanel, user, playerName, onNameChange, onSignIn, onSignOut }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [showAdminModal, setShowAdminModal] = useState(false)
@@ -155,10 +155,6 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
               <span className="settings-card-icon">👑</span>
               <span className="settings-card-label">Admin Mode Active</span>
             </div>
-            <button className="settings-card-btn" onClick={onAdminPanel}>
-              <span className="settings-card-icon">🛡️</span>
-              <span className="settings-card-label">Admin Panel</span>
-            </button>
             <button className="settings-card-btn" onClick={handleAdminLogout}>
               <span className="settings-card-icon">🔒</span>
               <span className="settings-card-label">Lock</span>
