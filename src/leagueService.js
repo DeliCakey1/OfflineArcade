@@ -444,7 +444,7 @@ export async function processFinalsReset() {
   await updateDoc(fRef, { status: 'completed', completedAt: Date.now() })
 }
 
-export async function searchPlayersByName(searchTerm) {
+export async function searchPlayersByName(searchTerm, excludeUserId) {
   const term = searchTerm.trim()
   if (!term) return []
   const lower = term.toLowerCase()
@@ -453,22 +453,29 @@ export async function searchPlayersByName(searchTerm) {
   const playerIds = new Set()
   for (const d of leagueSnap.docs) {
     const data = d.data()
-    if (data.players) data.players.forEach(id => playerIds.add(id))
+    if (Array.isArray(data.players)) data.players.forEach(id => playerIds.add(id))
   }
 
-  const tSnap = await getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active')))
-  for (const d of tSnap.docs) {
-    const data = d.data()
-    if (data.players) data.players.forEach(id => playerIds.add(id))
-  }
+  try {
+    const tSnap = await getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active')))
+    for (const d of tSnap.docs) {
+      const data = d.data()
+      if (Array.isArray(data.players)) data.players.forEach(id => playerIds.add(id))
+    }
+  } catch {}
 
   if (playerIds.size === 0) return []
   const ids = [...playerIds]
   const results = []
-  for (const id of ids) {
-    const p = await getPlayer(id)
-    if (p && p.name && p.name.toLowerCase().includes(lower)) results.push(p)
-    if (results.length >= 20) break
+  const batchSize = 10
+  for (let i = 0; i < ids.length && results.length < 20; i += batchSize) {
+    const batch = ids.slice(i, i + batchSize)
+    const fetched = await Promise.all(batch.map(id => getPlayer(id).catch(() => null)))
+    for (const p of fetched) {
+      if (p && p.name && p.name.toLowerCase().includes(lower)) {
+        results.push(p)
+      }
+    }
   }
   return results
 }
