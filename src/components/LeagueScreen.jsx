@@ -11,6 +11,7 @@ import {
   subscribeToLeague, subscribeToPlayer, subscribeToTournament,
   processSeasonReset, processTournamentReset, processSemiFinalsReset,
   processFinalsReset, updatePlayer, ensurePlayerInLeague,
+  searchPlayersByName,
 } from '../leagueService'
 import { MAX_PER_LEAGUE } from '../leagues'
 import { TITLES, ALL_NAMEPLATES } from '../shopItems'
@@ -91,6 +92,9 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [seasonTime, setSeasonTime] = useState(0)
+  const [playerSearch, setPlayerSearch] = useState('')
+  const [playerSearchResults, setPlayerSearchResults] = useState([])
+  const [playerSearchLoading, setPlayerSearchLoading] = useState(false)
   const sound = useSound()
   const unsubLeagueRef = useRef(null)
   const unsubPlayerRef = useRef(null)
@@ -188,6 +192,19 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    const term = playerSearch.trim()
+    if (!term) { setPlayerSearchResults([]); return }
+    let cancelled = false
+    setPlayerSearchLoading(true)
+    const timer = setTimeout(() => {
+      searchPlayersByName(term).then(results => {
+        if (!cancelled) { setPlayerSearchResults(results); setPlayerSearchLoading(false) }
+      }).catch(() => { if (!cancelled) setPlayerSearchLoading(false) })
+    }, 300)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [playerSearch])
 
   const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp)
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
@@ -433,6 +450,46 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
 
       <div className="league-standings">
         <h3>{isTournament ? `${tournamentInfo.name} Standings` : 'Standings'}</h3>
+        <div className="player-search-bar">
+          <span className="player-search-icon">🔍</span>
+          <input
+            className="player-search-input"
+            type="text"
+            placeholder="Search players..."
+            value={playerSearch}
+            onChange={e => setPlayerSearch(e.target.value)}
+            aria-label="Search players"
+          />
+          {playerSearch && <button className="player-search-clear" onClick={() => { setPlayerSearch(''); setPlayerSearchResults([]) }} aria-label="Clear search">×</button>}
+        </div>
+        {playerSearch.trim() && (
+          <div className="player-search-results">
+            {playerSearchLoading ? (
+              <p className="player-search-empty">Searching...</p>
+            ) : playerSearchResults.length === 0 ? (
+              <p className="player-search-empty">No players found</p>
+            ) : (
+              playerSearchResults.map(p => {
+                const rank = LEAGUE_RANKS.find(r => r.rank === p.league)
+                return (
+                  <div key={p.id} className={`player-search-row ${p.id === userId ? 'you' : ''}`}>
+                    <div className="player-search-row-name">
+                      <span className={`player-search-name ${getNameplateEffectClass(p.nameplate)}`} style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplate), '--np-neon-color': getNameplateNeonColor(p.nameplate) || undefined }}>
+                        {p.name}{p.id === userId ? ' (you)' : ''}
+                      </span>
+                      {getTitleName(p.title) && <span className="player-search-title">{getTitleName(p.title)}</span>}
+                    </div>
+                    <div className="player-search-row-stats">
+                      {rank && <span className="player-search-rank" style={{ color: rank.color }}>{rank.emoji} {rank.name}</span>}
+                      <span>⭐ {p.xp} XP</span>
+                      <span>{p.wins}W/{p.losses}L</span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        )}
         <div className="league-standings-list">
           {sortedPlayers.map((p, i) => {
             const pos = i + 1

@@ -444,6 +444,34 @@ export async function processFinalsReset() {
   await updateDoc(fRef, { status: 'completed', completedAt: Date.now() })
 }
 
+export async function searchPlayersByName(searchTerm) {
+  const term = searchTerm.trim()
+  if (!term) return []
+  const lower = term.toLowerCase()
+  const qLow = query(
+    collection(db, PLAYERS),
+    where('name', '>=', term.toLowerCase()),
+    where('name', '<=', term.toLowerCase() + '\uf8ff'),
+    firestoreLimit(50)
+  )
+  const qCap = query(
+    collection(db, PLAYERS),
+    where('name', '>=', term.charAt(0).toUpperCase() + term.slice(1).toLowerCase()),
+    where('name', '<=', term.charAt(0).toUpperCase() + term.slice(1).toLowerCase() + '\uf8ff'),
+    firestoreLimit(50)
+  )
+  const [snapLow, snapCap] = await Promise.all([getDocs(qLow), getDocs(qCap)])
+  const seen = new Set()
+  const results = []
+  for (const d of [...snapLow.docs, ...snapCap.docs]) {
+    if (seen.has(d.id)) continue
+    seen.add(d.id)
+    const p = { id: d.id, ...d.data() }
+    if (p.name && p.name.toLowerCase().includes(lower)) results.push(p)
+  }
+  return results.slice(0, 20)
+}
+
 export async function getAllLeaguesForPlayer(userId) {
   const q = query(collection(db, LEAGUES), where('players', 'array-contains', userId))
   const snap = await getDocs(q)
