@@ -38,25 +38,32 @@ function serveFile(res, filePath) {
 
 const ABOUT_BLANK_HTML = `<!DOCTYPE html>
 <html>
-<head><title>Loading...</title></head>
-<body>
+<head><title>Offline Arcade</title></head>
+<body style="margin:0;background:#0a0a0f;color:#fff;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center">
+<div>
+<h1 style="font-size:14px;opacity:0.5;margin-bottom:20px">Offline Arcade</h1>
+<button id="openBtn" style="padding:12px 24px;font-size:16px;cursor:pointer;border:1px solid #444;background:#1a1a2e;color:#fff;border-radius:8px">Open Arcade</button>
+<p id="msg" style="font-size:11px;opacity:0.4;margin-top:12px;display:none"></p>
 <script>
-(async function() {
-  try {
-    const res = await fetch('/');
-    const html = await res.text();
-    const w = window.open('about:blank');
-    if (w) {
-      const blob = new Blob([html], { type: 'text/html' });
-      const blobUrl = URL.createObjectURL(blob);
-      w.location.href = blobUrl;
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-    }
-  } catch(e) {
-    window.location.href = '/';
+var siteHtml = null;
+fetch('/').then(function(r){ return r.text() }).then(function(html){
+  siteHtml = html.replace(/<head>/i, '<head><base href="' + location.origin + '/">');
+});
+document.getElementById('openBtn').onclick = function() {
+  if (!siteHtml) { return; }
+  var w = window.open('', '_blank');
+  if (w) {
+    w.document.open();
+    w.document.write(siteHtml);
+    w.document.close();
+  } else {
+    var msg = document.getElementById('msg');
+    msg.style.display = 'block';
+    msg.textContent = 'Popup blocked. Allow popups and click again.';
   }
-})();
+};
 </script>
+</div>
 </body>
 </html>`
 
