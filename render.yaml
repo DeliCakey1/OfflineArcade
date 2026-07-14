@@ -3,7 +3,7 @@ services:
     name: offline-arcade
     runtime: node
     buildCommand: npm install && npm run build
-    startCommand: node server.js
+    startCommand: node server.cjs
     envVars:
       - key: NODE_ENV
         value: production
