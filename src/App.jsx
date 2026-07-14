@@ -529,15 +529,10 @@ function App() {
               try {
                 const raw = localStorage.getItem('arcade-stats')
                 const local = raw ? JSON.parse(raw) : {}
-                let changed = false
-                if (p.title && !local._activeTitle) { local._activeTitle = p.title; changed = true }
-                if (p.nameplate && !local._activeNameplate) { local._activeNameplate = p.nameplate; changed = true }
-                if (p.ownedItems && p.ownedItems.length > 0) {
-                  const existing = local._ownedItems || []
-                  const merged = [...new Set([...existing, ...p.ownedItems])]
-                  if (merged.length > existing.length) { local._ownedItems = merged; changed = true }
-                }
-                if (changed) localStorage.setItem('arcade-stats', JSON.stringify(local))
+                local._activeTitle = p.title || null
+                local._activeNameplate = p.nameplate || null
+                local._ownedItems = p.ownedItems || []
+                localStorage.setItem('arcade-stats', JSON.stringify(local))
               } catch {}
               if (p.isAdmin && u.email === 'admin@offlinearcade.app') {
                 try {
@@ -560,6 +555,15 @@ function App() {
         setUser(null)
         setUserId(null)
         setPlayerName(null)
+        try {
+          const raw = localStorage.getItem('arcade-stats')
+          const local = raw ? JSON.parse(raw) : {}
+          local._activeTitle = null
+          local._activeNameplate = null
+          local._ownedItems = []
+          localStorage.setItem('arcade-stats', JSON.stringify(local))
+        } catch {}
+        try { localStorage.removeItem('arcade-admin-session') } catch {}
         if (!adminSwitchingRef.current) {
           import('./firebase').then(({ ensureAuth }) => {
             ensureAuth().then(u => { if (u) { setUser(u); setUserId(u.uid) } })
