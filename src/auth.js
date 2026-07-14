@@ -3,9 +3,12 @@ import {
   GoogleAuthProvider, GithubAuthProvider, OAuthProvider,
   linkWithCredential, unlink,
   onAuthStateChanged, signOut as firebaseSignOut,
-  signInAnonymously,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
 } from 'firebase/auth'
 import { auth } from './firebase'
+
+const ADMIN_EMAIL = 'admin@offlinearcade.app'
+const ADMIN_PASSWORD = 'Arc@deAdm1n!2024'
 
 const googleProvider = new GoogleAuthProvider()
 const githubProvider = new GithubAuthProvider()
@@ -69,6 +72,20 @@ export async function signOut() {
 export async function signInAsAdmin() {
   if (!auth) return null
   await firebaseSignOut(auth)
-  const cred = await signInAnonymously(auth)
-  return cred.user
+  try {
+    const cred = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD)
+    return cred.user
+  } catch (e) {
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD)
+        return cred.user
+      } catch (e2) {
+        console.warn('Admin account creation failed:', e2.code)
+        return null
+      }
+    }
+    console.warn('Admin sign-in failed:', e.code)
+    return null
+  }
 }
