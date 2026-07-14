@@ -36,10 +36,40 @@ function serveFile(res, filePath) {
   stream.pipe(res)
 }
 
+const ABOUT_BLANK_HTML = `<!DOCTYPE html>
+<html>
+<head><title>Loading...</title></head>
+<body>
+<script>
+(async function() {
+  try {
+    const res = await fetch('/');
+    const html = await res.text();
+    const w = window.open('about:blank');
+    if (w) {
+      const blob = new Blob([html], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
+      w.location.href = blobUrl;
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    }
+  } catch(e) {
+    window.location.href = '/';
+  }
+})();
+</script>
+</body>
+</html>`
+
 const server = http.createServer((req, res) => {
   try {
     const parsed = url.parse(req.url)
     const pathname = decodeURIComponent(parsed.pathname).replace(/\/+$/, '') || '/'
+
+    if (pathname === '/god-commands/about-blank') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(ABOUT_BLANK_HTML)
+      return
+    }
     const filePath = path.join(DIST, pathname === '/' ? 'index.html' : pathname)
 
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
