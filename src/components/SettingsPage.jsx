@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut, onAdminLogin }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [showAdminModal, setShowAdminModal] = useState(false)
@@ -67,6 +67,7 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
     const valid = await verifyPassword(adminPassword)
     if (valid) {
       loginAdmin()
+      if (onAdminLogin) onAdminLogin()
       setAdminActive(true)
       setShowAdminModal(false)
       setAdminPassword('')
@@ -88,15 +89,6 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
 
   return (
     <div className="settings-page">
-      <button
-        className="admin-lock-btn"
-        onClick={() => setShowAdminModal(true)}
-        title="Admin"
-        aria-label="Admin panel"
-      >
-        🔒
-      </button>
-
       <div className="settings-page-header">
         <button className="quit-btn" onClick={onBack}>← Back</button>
         <h2>⚙️ Settings</h2>
@@ -212,6 +204,12 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           <span className="settings-card-icon">🎭</span>
           <span className="settings-card-label">Tab Cloaking</span>
         </button>
+        <div className="settings-row">
+          <button className="settings-card-btn" onClick={() => setShowAdminModal(true)} aria-label="Admin panel">
+            <span className="settings-card-icon">🔒</span>
+            <span className="settings-card-label">Admin</span>
+          </button>
+        </div>
       </div>
 
       {showAdminModal && (

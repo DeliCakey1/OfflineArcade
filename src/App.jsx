@@ -523,7 +523,31 @@ function App() {
         }
         import('./leagueService').then(({ getPlayer }) => {
           getPlayer(u.uid).then(p => {
-            if (p) setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
+            if (p) {
+              setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
+              try {
+                const raw = localStorage.getItem('arcade-stats')
+                const local = raw ? JSON.parse(raw) : {}
+                let changed = false
+                if (p.title && !local._activeTitle) { local._activeTitle = p.title; changed = true }
+                if (p.nameplate && !local._activeNameplate) { local._activeNameplate = p.nameplate; changed = true }
+                if (p.ownedItems && p.ownedItems.length > 0) {
+                  const existing = local._ownedItems || []
+                  const merged = [...new Set([...existing, ...p.ownedItems])]
+                  if (merged.length > existing.length) { local._ownedItems = merged; changed = true }
+                }
+                if (changed) localStorage.setItem('arcade-stats', JSON.stringify(local))
+              } catch {}
+              if (p.isAdmin) {
+                try {
+                  const raw = localStorage.getItem('arcade-admin-session')
+                  const session = raw ? JSON.parse(raw) : {}
+                  if (!session.authenticated) {
+                    localStorage.setItem('arcade-admin-session', JSON.stringify({ authenticated: true, timestamp: Date.now() }))
+                  }
+                } catch {}
+              }
+            }
           })
         }).catch(() => {})
       } else {
@@ -706,11 +730,52 @@ function App() {
     }
   }, [userId])
 
+  const handleEquipTitle = useCallback((titleId) => {
+    equipTitle(titleId)
+    if (userId) {
+      import('./leagueService').then(({ updatePlayer }) => {
+        updatePlayer(userId, { title: titleId })
+      }).catch(() => {})
+    }
+  }, [userId, equipTitle])
+
+  const handleEquipNameplate = useCallback((nameplateId) => {
+    equipNameplate(nameplateId)
+    if (userId) {
+      import('./leagueService').then(({ updatePlayer }) => {
+        updatePlayer(userId, { nameplate: nameplateId })
+      }).catch(() => {})
+    }
+  }, [userId, equipNameplate])
+
+  const handlePurchase = useCallback((itemId, price) => {
+    purchaseItem(itemId, price)
+    if (userId) {
+      import('./leagueService').then(({ getPlayer, updatePlayer }) => {
+        getPlayer(userId).then(p => {
+          if (p) {
+            const owned = new Set(p.ownedItems || [])
+            owned.add(itemId)
+            updatePlayer(userId, { ownedItems: [...owned] })
+          }
+        })
+      }).catch(() => {})
+    }
+  }, [userId, purchaseItem])
+
+  const handleAdminLogin = useCallback(() => {
+    if (userId) {
+      import('./leagueService').then(({ updatePlayer }) => {
+        updatePlayer(userId, { isAdmin: true })
+      }).catch(() => {})
+    }
+  }, [userId])
+
   if (currentPage === 'settings') {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} />
+        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} onAdminLogin={handleAdminLogin} />
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )
@@ -782,9 +847,9 @@ function App() {
           ownedItems={ownedItems}
           activeTitle={activeTitle}
           activeNameplate={activeNameplate}
-          onPurchase={purchaseItem}
-          onEquipTitle={equipTitle}
-          onEquipNameplate={equipNameplate}
+          onPurchase={handlePurchase}
+          onEquipTitle={handleEquipTitle}
+          onEquipNameplate={handleEquipNameplate}
           isChampion={earnedAchievements.includes('reach-champion')}
           isAdmin={isAdminLoggedIn()}
         />

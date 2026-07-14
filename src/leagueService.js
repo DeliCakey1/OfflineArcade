@@ -32,6 +32,8 @@ export async function getOrCreatePlayer(userId, name) {
     coins: 0,
     title: null,
     nameplate: null,
+    ownedItems: [],
+    isAdmin: false,
     createdAt: Date.now(),
     lastActive: Date.now(),
   }
