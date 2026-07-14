@@ -100,7 +100,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
     let cancelled = false
     async function init() {
       try {
-        if (!userId) { setError('Sign in to access leagues'); setLoading(false); return }
+        if (!userId) { return }
         const p = await getOrCreatePlayer(userId)
         if (cancelled) return
         setPlayer(p)
