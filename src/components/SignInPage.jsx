@@ -14,6 +14,7 @@ export default function SignInPage({ onBack }) {
       else if (provider === 'apple') await signInWithApple()
       else if (provider === 'discord') await signInWithDiscord()
       else if (provider === 'microsoft') await signInWithMicrosoft()
+      window.location.reload()
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
         setError(null)
