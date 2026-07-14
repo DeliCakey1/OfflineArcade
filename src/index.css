@@ -3536,6 +3536,51 @@ body::after {
   color: var(--neon-yellow);
   white-space: nowrap;
 }
+.settings-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.xp-badge {
+  background: linear-gradient(135deg, rgba(255, 200, 0, 0.15), rgba(255, 160, 0, 0.15));
+  border: 1px solid rgba(255, 200, 0, 0.3);
+  color: #ffd700;
+}
+.league-pos-badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+}
+.league-pos-badge.promo {
+  background: rgba(0, 200, 80, 0.15);
+  border-color: rgba(0, 200, 80, 0.35);
+  color: #34d399;
+}
+.league-pos-badge.demo {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #f87171;
+}
+.league-pos-hash {
+  opacity: 0.5;
+  font-size: 11px;
+}
+.settings-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
 .coins-home-badge {
   background: linear-gradient(135deg, rgba(255, 230, 0, 0.15), rgba(255, 107, 43, 0.15));
   border: 1px solid rgba(255, 230, 0, 0.3);

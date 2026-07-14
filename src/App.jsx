@@ -33,7 +33,7 @@ import SignInPage from './components/SignInPage'
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
-import { calculateWinXP, calculateWinCoins } from './leagues'
+import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
 import './index.css'
@@ -406,7 +406,7 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, user, playerName, onSignIn, onSignOut, coins }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, user, playerName, onSignIn, onSignOut, coins, xp, leaguePos }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -420,7 +420,14 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
         </div>
         <div className="settings-bar-right">
-          <div className="coins-badge" title="Coins">🪙 {coins?.toLocaleString() || '0'}</div>
+          {leaguePos && (
+            <div className={`stat-badge league-pos-badge ${leaguePos.isPromo ? 'promo' : leaguePos.isDemo ? 'demo' : ''}`} title={`League Rank ${leaguePos.position}/${leaguePos.total}`}>
+              <span className="league-pos-hash">#</span>{leaguePos.position}
+            </div>
+          )}
+          <div className="stat-badge xp-badge" title="Total XP">⭐ {xp?.toLocaleString() || '0'}</div>
+          <div className="stat-badge coins-badge" title="Coins">🪙 {coins?.toLocaleString() || '0'}</div>
+          <div className="settings-divider" />
           {user && !user.isAnonymous && (
             <div className="user-badge">
               <span className="user-avatar">{((playerName || user.displayName || user.email || 'U')[0]).toUpperCase()}</span>
@@ -463,6 +470,7 @@ function App() {
   const [userId, setUserId] = useState(null)
   const adminSwitchingRef = useRef(false)
   const [playerName, setPlayerName] = useState(null)
+  const [leaguePos, setLeaguePos] = useState(null)
 
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
@@ -630,6 +638,29 @@ function App() {
   }, [newAchievements, markAchievementsSeen, checkAchievementCoins, addCoins, allStats._seenAchievements])
 
   useEffect(() => {
+    if (!userId) { setLeaguePos(null); return }
+    let cancelled = false
+    import('./leagueService').then(({ getPlayer, getLeaguePlayers, getLeagueInstance }) => {
+      getPlayer(userId).then(p => {
+        if (cancelled || !p || !p.leagueInstanceId) { setLeaguePos(null); return }
+        getLeagueInstance(p.leagueInstanceId).then(lg => {
+          if (cancelled || !lg) { setLeaguePos(null); return }
+          getLeaguePlayers(lg.players || []).then(fullPlayers => {
+            if (cancelled) return
+            const sorted = [...fullPlayers].sort((a, b) => (b.xp || 0) - (a.xp || 0))
+            const pos = sorted.findIndex(pl => pl.id === userId) + 1
+            const pd = RANK_PROMO_DEMO[lg.rank] || { promote: 0, demote: 0 }
+            const isPromo = pos > 0 && pos <= pd.promote
+            const isDemo = pd.demote > 0 && pos > sorted.length - pd.demote && pos > pd.promote
+            setLeaguePos({ position: pos, total: sorted.length, isPromo, isDemo, rank: lg.rank })
+          }).catch(() => { setLeaguePos(null) })
+        }).catch(() => { setLeaguePos(null) })
+      }).catch(() => { setLeaguePos(null) })
+    }).catch(() => { setLeaguePos(null) })
+    return () => { cancelled = true }
+  }, [userId])
+
+  useEffect(() => {
     let buf = []
     let lastTime = 0
     const TIMEOUT = 2000
@@ -731,6 +762,8 @@ function App() {
     onSignIn: () => setCurrentPage('signin'),
     onSignOut: () => signOut().catch(() => {}),
     coins,
+    xp,
+    leaguePos,
   }
 
   const handleUpdatePlayerName = useCallback((newName) => {
