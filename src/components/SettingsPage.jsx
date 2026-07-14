@@ -204,12 +204,10 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           <span className="settings-card-icon">🎭</span>
           <span className="settings-card-label">Tab Cloaking</span>
         </button>
-        <div className="settings-row">
-          <button className="settings-card-btn" onClick={() => setShowAdminModal(true)} aria-label="Admin panel">
+        <button className="settings-card-btn full-width compact-admin-btn" onClick={() => setShowAdminModal(true)} aria-label="Admin panel">
             <span className="settings-card-icon">🔒</span>
             <span className="settings-card-label">Admin</span>
           </button>
-        </div>
       </div>
 
       {showAdminModal && (

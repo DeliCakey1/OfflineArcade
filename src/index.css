@@ -3837,22 +3837,21 @@ body::after {
 }
 
 /* ===== ADMIN LOCK BUTTON ===== */
-.admin-lock-btn {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: none;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
+.compact-admin-btn {
   opacity: 0.45;
-  transition: opacity 0.3s ease;
-  z-index: 5;
-  padding: 4px;
-  line-height: 1;
+  font-size: 0.75em;
+  padding: 4px 8px !important;
+  gap: 4px !important;
+  min-height: 0 !important;
 }
-.admin-lock-btn:hover {
-  opacity: 1;
+.compact-admin-btn .settings-card-icon {
+  font-size: 0.85em;
+}
+.compact-admin-btn .settings-card-label {
+  font-size: 0.85em;
+}
+.compact-admin-btn:hover {
+  opacity: 0.8;
 }
 .settings-page {
   position: relative;
