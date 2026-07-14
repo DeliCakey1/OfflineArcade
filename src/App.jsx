@@ -450,7 +450,8 @@ function App() {
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentPage, setCurrentPage] = useState(() => {
-    if (window.location.pathname === '/admin-panel') return 'admin'
+    const path = window.location.pathname.replace(/\/+$/, '')
+    if (path === '/admin-panel') return 'admin'
     return 'home'
   })
   const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
@@ -685,6 +686,7 @@ function App() {
     onNavigateGame: handleNavigateGame,
     onCloak: () => setCurrentPage('cloak'),
     onSettings: () => setCurrentPage('settings'),
+    onAdminPanel: () => setCurrentPage('admin'),
     onLeagues: () => setCurrentPage('leagues'),
     onStats: () => setCurrentPage('stats'),
     onAchievements: () => setCurrentPage('achievements'),
@@ -709,7 +711,7 @@ function App() {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} />
+        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} onAdminPanel={() => setCurrentPage('admin')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} />
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )
