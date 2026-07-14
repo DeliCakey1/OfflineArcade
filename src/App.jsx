@@ -539,7 +539,7 @@ function App() {
                 }
                 if (changed) localStorage.setItem('arcade-stats', JSON.stringify(local))
               } catch {}
-              if (p.isAdmin) {
+              if (p.isAdmin && u.email === 'admin@offlinearcade.app') {
                 try {
                   const raw = localStorage.getItem('arcade-admin-session')
                   const session = raw ? JSON.parse(raw) : {}
@@ -547,6 +547,11 @@ function App() {
                     localStorage.setItem('arcade-admin-session', JSON.stringify({ authenticated: true, timestamp: Date.now() }))
                   }
                 } catch {}
+              } else if (p.isAdmin && u.email !== 'admin@offlinearcade.app') {
+                import('./leagueService').then(({ updatePlayer }) => {
+                  updatePlayer(u.uid, { isAdmin: false }).catch(() => {})
+                }).catch(() => {})
+                try { localStorage.removeItem('arcade-admin-session') } catch {}
               }
             }
           })
