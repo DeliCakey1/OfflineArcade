@@ -129,6 +129,21 @@ export async function getLeaguePlayers(playerIds) {
   return players
 }
 
+export async function searchPlayers(searchTerm) {
+  if (!searchTerm || searchTerm.trim().length === 0) return []
+  const term = searchTerm.trim().toLowerCase()
+  const col = collection(db, PLAYERS)
+  const q = query(
+    col,
+    orderBy('name'),
+    where('name', '>=', term),
+    where('name', '<=', term + '\uf8ff'),
+    firestoreLimit(20)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
 export async function findMatch(leagueId, excludeUserId) {
   const league = await getLeagueInstance(leagueId)
   if (!league) return null

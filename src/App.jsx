@@ -33,7 +33,7 @@ import SignInPage from './components/SignInPage'
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
-import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO } from './leagues'
+import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
 import './index.css'
@@ -406,7 +406,120 @@ function CloakScreen({ onBack }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, user, playerName, onSignIn, onSignOut, coins, xp, leaguePos }) {
+function UserSearchModal({ onClose }) {
+  const [term, setTerm] = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [selected, setSelected] = useState(null)
+  const timerRef = useRef(null)
+
+  const doSearch = useCallback((val) => {
+    if (!val || val.trim().length < 2) { setResults([]); return }
+    setLoading(true)
+    import('./leagueService').then(({ searchPlayers }) => {
+      searchPlayers(val).then(r => { setResults(r); setLoading(false) }).catch(() => setLoading(false))
+    })
+  }, [])
+
+  const handleChange = useCallback((e) => {
+    const val = e.target.value
+    setTerm(val)
+    setSelected(null)
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => doSearch(val), 300)
+  }, [doSearch])
+
+  useEffect(() => {
+    function handleKey(e) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
+  const rankInfo = selected ? LEAGUE_RANKS.find(r => r.rank === selected.league) : null
+
+  return (
+    <div className="stats-overlay" onClick={onClose}>
+      <div className="stats-modal user-search-modal" onClick={e => e.stopPropagation()}>
+        <div className="user-search-header">
+          <h2 className="stats-title">🔍 Search Players</h2>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <input
+          className="user-search-input"
+          type="text"
+          placeholder="Search by name..."
+          value={term}
+          onChange={handleChange}
+          autoFocus
+        />
+        {loading && <div className="user-search-loading">Searching...</div>}
+        {!loading && results.length === 0 && term.trim().length >= 2 && (
+          <div className="user-search-empty">No players found</div>
+        )}
+        {!selected ? (
+          <div className="user-search-results">
+            {results.map(p => {
+              const ri = LEAGUE_RANKS.find(r => r.rank === p.league)
+              return (
+                <button key={p.id} className="user-search-result" onClick={() => setSelected(p)}>
+                  <span className="user-search-avatar">{(p.name || 'U')[0].toUpperCase()}</span>
+                  <div className="user-search-info">
+                    <span className="user-search-name">{p.name || 'Unknown'}</span>
+                    <span className="user-search-meta">
+                      {ri?.emoji || '📄'} {ri?.name || 'Paper'} · ⭐ {(p.xp || 0).toLocaleString()} XP · 🏆 {(p.wins || 0).toLocaleString()} wins
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="user-profile-card">
+            <div className="user-profile-header">
+              <div className="user-profile-avatar">{(selected.name || 'U')[0].toUpperCase()}</div>
+              <div className="user-profile-name">{selected.name || 'Unknown'}</div>
+              {rankInfo && (
+                <div className="user-profile-rank" style={{ color: rankInfo.color }}>{rankInfo.emoji} {rankInfo.name}</div>
+              )}
+            </div>
+            <div className="user-profile-stats">
+              <div className="user-profile-stat">
+                <span className="user-profile-stat-value">{(selected.xp || 0).toLocaleString()}</span>
+                <span className="user-profile-stat-label">Total XP</span>
+              </div>
+              <div className="user-profile-stat">
+                <span className="user-profile-stat-value">{(selected.wins || 0).toLocaleString()}</span>
+                <span className="user-profile-stat-label">Wins</span>
+              </div>
+              <div className="user-profile-stat">
+                <span className="user-profile-stat-value">{(selected.losses || 0).toLocaleString()}</span>
+                <span className="user-profile-stat-label">Losses</span>
+              </div>
+              <div className="user-profile-stat">
+                <span className="user-profile-stat-value">{selected.streak || 0}</span>
+                <span className="user-profile-stat-label">Streak</span>
+              </div>
+              <div className="user-profile-stat">
+                <span className="user-profile-stat-value">{(selected.promotions || 0).toLocaleString()}</span>
+                <span className="user-profile-stat-label">Promotions</span>
+              </div>
+              <div className="user-profile-stat">
+                <span className="user-profile-stat-value">{(selected.tournamentWins || 0).toLocaleString()}</span>
+                <span className="user-profile-stat-label">Tournament Wins</span>
+              </div>
+            </div>
+            {selected.title && (
+              <div className="user-profile-title">🏷️ {selected.title}</div>
+            )}
+            <button className="user-profile-back" onClick={() => setSelected(null)}>← Back to results</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, onSignIn, onSignOut, coins, xp, leaguePos }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -418,6 +531,7 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
           <button className="settings-btn nav-btn" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
           <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
+          <button className="settings-btn" onClick={onSearch} title="Search Players" aria-label="Search Players">🔍</button>
         </div>
         <div className="settings-bar-right">
           {leaguePos && (
@@ -471,6 +585,7 @@ function App() {
   const adminSwitchingRef = useRef(false)
   const [playerName, setPlayerName] = useState(null)
   const [leaguePos, setLeaguePos] = useState(null)
+  const [showUserSearch, setShowUserSearch] = useState(false)
 
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
@@ -757,6 +872,7 @@ function App() {
     onStats: () => setCurrentPage('stats'),
     onAchievements: () => setCurrentPage('achievements'),
     onShop: () => setCurrentPage('shop'),
+    onSearch: () => setShowUserSearch(true),
     user,
     playerName,
     onSignIn: () => setCurrentPage('signin'),
@@ -1030,6 +1146,7 @@ function App() {
       </main>
       <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+      {showUserSearch && <UserSearchModal onClose={() => setShowUserSearch(false)} />}
     </div>
   )
 }
