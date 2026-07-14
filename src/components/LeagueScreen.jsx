@@ -453,7 +453,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
           <input
             className="player-search-input"
             type="text"
-            placeholder="Search by username..."
+            placeholder="Search by username or name..."
             value={playerSearch}
             onChange={e => setPlayerSearch(e.target.value)}
             aria-label="Search players"

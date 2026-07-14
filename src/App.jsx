@@ -533,7 +533,7 @@ function UserSearchModal({ onClose }) {
         <input
           className="user-search-input"
           type="text"
-          placeholder="Search by username..."
+          placeholder="Search by username or name..."
           value={term}
           onChange={handleChange}
           autoFocus
