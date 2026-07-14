@@ -11,7 +11,6 @@ import {
   subscribeToLeague, subscribeToPlayer, subscribeToTournament,
   processSeasonReset, processTournamentReset, processSemiFinalsReset,
   processFinalsReset, updatePlayer, ensurePlayerInLeague,
-  searchPlayersByName,
 } from '../leagueService'
 import { MAX_PER_LEAGUE } from '../leagues'
 import { TITLES, ALL_NAMEPLATES } from '../shopItems'
@@ -94,7 +93,6 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   const [seasonTime, setSeasonTime] = useState(0)
   const [playerSearch, setPlayerSearch] = useState('')
   const [playerSearchResults, setPlayerSearchResults] = useState([])
-  const [playerSearchLoading, setPlayerSearchLoading] = useState(false)
   const sound = useSound()
   const unsubLeagueRef = useRef(null)
   const unsubPlayerRef = useRef(null)
@@ -196,15 +194,10 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
   useEffect(() => {
     const term = playerSearch.trim()
     if (!term) { setPlayerSearchResults([]); return }
-    let cancelled = false
-    setPlayerSearchLoading(true)
-    const timer = setTimeout(() => {
-      searchPlayersByName(term).then(results => {
-        if (!cancelled) { setPlayerSearchResults(results); setPlayerSearchLoading(false) }
-      }).catch(err => { console.error('Player search failed:', err); if (!cancelled) { setPlayerSearchResults([]); setPlayerSearchLoading(false) } })
-    }, 300)
-    return () => { cancelled = true; clearTimeout(timer) }
-  }, [playerSearch])
+    const lower = term.toLowerCase()
+    const matches = players.filter(p => p.name && p.name.toLowerCase().includes(lower))
+    setPlayerSearchResults(matches)
+  }, [playerSearch, players])
 
   const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp)
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
@@ -464,9 +457,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
         </div>
         {playerSearch.trim() && (
           <div className="player-search-results">
-            {playerSearchLoading ? (
-              <p className="player-search-empty">Searching...</p>
-            ) : playerSearchResults.length === 0 ? (
+            {playerSearchResults.length === 0 ? (
               <p className="player-search-empty">No players found</p>
             ) : (
               playerSearchResults.map(p => {
