@@ -763,19 +763,26 @@ function App() {
     }
   }, [userId, purchaseItem])
 
-  const handleAdminLogin = useCallback(() => {
-    if (userId) {
-      import('./leagueService').then(({ updatePlayer }) => {
-        updatePlayer(userId, { isAdmin: true })
-      }).catch(() => {})
-    }
-  }, [userId])
+  const handleAdminLogin = useCallback(async () => {
+    try {
+      const { signInAsAdmin } = await import('./auth')
+      const adminUser = await signInAsAdmin()
+      if (adminUser) {
+        const { setAdminStatus } = await import('./leagueService')
+        await setAdminStatus(adminUser.uid, true)
+      }
+    } catch {}
+  }, [])
+
+  const handleAdminLogout = useCallback(() => {
+    import('./auth').then(({ signOut }) => signOut()).catch(() => {})
+  }, [])
 
   if (currentPage === 'settings') {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} onAdminLogin={handleAdminLogin} />
+        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')} onSignOut={() => signOut().catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} />
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )

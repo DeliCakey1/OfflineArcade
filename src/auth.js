@@ -3,6 +3,7 @@ import {
   GoogleAuthProvider, GithubAuthProvider, OAuthProvider,
   linkWithCredential, unlink,
   onAuthStateChanged, signOut as firebaseSignOut,
+  signInAnonymously,
 } from 'firebase/auth'
 import { auth } from './firebase'
 
@@ -63,4 +64,11 @@ export async function handleRedirectResult() {
 export async function signOut() {
   if (!auth) return
   await firebaseSignOut(auth)
+}
+
+export async function signInAsAdmin() {
+  if (!auth) return null
+  await firebaseSignOut(auth)
+  const cred = await signInAnonymously(auth)
+  return cred.user
 }

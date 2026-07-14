@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut, onAdminLogin }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [showAdminModal, setShowAdminModal] = useState(false)
@@ -66,8 +66,8 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
 
     const valid = await verifyPassword(adminPassword)
     if (valid) {
+      if (onAdminLogin) await onAdminLogin()
       loginAdmin()
-      if (onAdminLogin) onAdminLogin()
       setAdminActive(true)
       setShowAdminModal(false)
       setAdminPassword('')
@@ -83,6 +83,7 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
   function handleAdminLogout() {
     logoutAdmin()
     setAdminActive(false)
+    if (onAdminLogout) onAdminLogout()
   }
 
   const displayName = playerName || user?.displayName || user?.email || 'Signed In'
