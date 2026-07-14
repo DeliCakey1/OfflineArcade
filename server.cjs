@@ -38,32 +38,29 @@ function serveFile(res, filePath) {
 
 const ABOUT_BLANK_HTML = `<!DOCTYPE html>
 <html>
-<head><title>Offline Arcade</title></head>
-<body style="margin:0;background:#0a0a0f;color:#fff;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center">
-<div>
-<h1 style="font-size:14px;opacity:0.5;margin-bottom:20px">Offline Arcade</h1>
-<button id="openBtn" style="padding:12px 24px;font-size:16px;cursor:pointer;border:1px solid #444;background:#1a1a2e;color:#fff;border-radius:8px">Open Arcade</button>
-<p id="msg" style="font-size:11px;opacity:0.4;margin-top:12px;display:none"></p>
+<head><title>New Tab</title></head>
+<body style="margin:0;background:#fff">
 <script>
-var siteHtml = null;
-fetch('/').then(function(r){ return r.text() }).then(function(html){
-  siteHtml = html.replace(/<head>/i, '<head><base href="' + location.origin + '/">');
-});
-document.getElementById('openBtn').onclick = function() {
-  if (!siteHtml) { return; }
-  var w = window.open('', '_blank');
-  if (w) {
-    w.document.open();
-    w.document.write(siteHtml);
-    w.document.close();
-  } else {
-    var msg = document.getElementById('msg');
-    msg.style.display = 'block';
-    msg.textContent = 'Popup blocked. Allow popups and click again.';
-  }
-};
+(function() {
+  try { history.replaceState(null, '', '/'); } catch(e) {}
+  var siteHtml = null;
+  fetch('/').then(function(r){ return r.text() }).then(function(html){
+    siteHtml = html.replace(/<head>/i, '<head><base href="' + location.origin + '/">');
+  });
+  document.addEventListener('click', function openArcade() {
+    document.removeEventListener('click', openArcade);
+    if (!siteHtml) return;
+    var w = window.open('', '_blank');
+    if (w) {
+      try { w.history.replaceState(null, '', 'about:blank'); } catch(e) {}
+      w.document.open();
+      w.document.write(siteHtml);
+      w.document.close();
+      try { for (var i = 1; i < 100; i++) w.history.go(-i); } catch(e) {}
+    }
+  }, { once: true });
+})();
 </script>
-</div>
 </body>
 </html>`
 
@@ -73,7 +70,12 @@ const server = http.createServer((req, res) => {
     const pathname = decodeURIComponent(parsed.pathname).replace(/\/+$/, '') || '/'
 
     if (pathname === '/god-commands/about-blank') {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'X-Content-Type-Options': 'nosniff',
+      })
       res.end(ABOUT_BLANK_HTML)
       return
     }
