@@ -416,8 +416,8 @@ function UserSearchModal({ onClose }) {
   const doSearch = useCallback((val) => {
     if (!val || val.trim().length < 2) { setResults([]); return }
     setLoading(true)
-    import('./leagueService').then(({ searchPlayers }) => {
-      searchPlayers(val).then(r => { setResults(r); setLoading(false) }).catch(() => setLoading(false))
+    import('./leagueService').then(({ searchPlayersByName }) => {
+      searchPlayersByName(val).then(r => { setResults(r); setLoading(false) }).catch(() => setLoading(false))
     })
   }, [])
 
