@@ -112,5 +112,5 @@ export function calculateWinXP(gameId, streak = 0) {
 }
 
 export function calculateWinCoins(gameId, streak = 0) {
-  return calculateWinXP(gameId, streak)
+  return Math.round(calculateWinXP(gameId, streak) / 4)
 }
