@@ -586,6 +586,8 @@ function App() {
   const [playerName, setPlayerName] = useState(null)
   const [leaguePos, setLeaguePos] = useState(null)
   const [showUserSearch, setShowUserSearch] = useState(false)
+  const [achievementToast, setAchievementToast] = useState(null)
+  const [pendingAchievementRedirect, setPendingAchievementRedirect] = useState(false)
 
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
@@ -747,10 +749,29 @@ function App() {
       if (reward > 0) {
         addCoins(reward)
       }
-      setCurrentPage('achievements')
+      if (isPlaying) {
+        const names = newAchievements.map(a => a.name || 'Achievement').join(', ')
+        setAchievementToast({ text: `Achievement unlocked: ${names}`, time: Date.now() })
+        setPendingAchievementRedirect(true)
+      } else {
+        setCurrentPage('achievements')
+      }
       markAchievementsSeen()
     }
   }, [newAchievements, markAchievementsSeen, checkAchievementCoins, addCoins, allStats._seenAchievements])
+
+  useEffect(() => {
+    if (!isPlaying && pendingAchievementRedirect) {
+      setPendingAchievementRedirect(false)
+      setCurrentPage('achievements')
+    }
+  }, [isPlaying, pendingAchievementRedirect])
+
+  useEffect(() => {
+    if (!achievementToast) return
+    const id = setTimeout(() => setAchievementToast(null), 4000)
+    return () => clearTimeout(id)
+  }, [achievementToast])
 
   useEffect(() => {
     if (!userId) { setLeaguePos(null); return }
@@ -876,7 +897,7 @@ function App() {
     user,
     playerName,
     onSignIn: () => setCurrentPage('signin'),
-    onSignOut: () => signOut().catch(() => {}),
+    onSignOut: () => signOut().then(() => window.location.reload()).catch(() => {}),
     coins,
     xp,
     leaguePos,
@@ -1147,6 +1168,12 @@ function App() {
       <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       {showUserSearch && <UserSearchModal onClose={() => setShowUserSearch(false)} />}
+      {achievementToast && (
+        <div className="achievement-toast" key={achievementToast.time}>
+          <span className="achievement-toast-icon">🏅</span>
+          <span className="achievement-toast-text">{achievementToast.text}</span>
+        </div>
+      )}
     </div>
   )
 }
