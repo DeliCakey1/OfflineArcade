@@ -4458,3 +4458,146 @@ body::after {
   from { opacity: 1; transform: translateX(-50%) translateY(0); }
   to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
 }
+
+/* ===== USERNAME MODAL ===== */
+.username-modal {
+  max-width: 420px;
+  width: 90%;
+}
+.username-modal-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.username-modal-icon {
+  font-size: 36px;
+  display: block;
+  margin-bottom: 8px;
+}
+.username-modal-desc {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.username-input-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 0 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.username-input-wrap:focus-within {
+  border-color: var(--neon-blue);
+}
+.username-at {
+  color: var(--neon-blue);
+  font-size: 18px;
+  font-weight: 700;
+  margin-right: 4px;
+  opacity: 0.8;
+}
+.username-input {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 0;
+  width: 100%;
+  outline: none;
+}
+.username-input::placeholder {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.username-error {
+  color: var(--neon-red);
+  font-size: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.username-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.username-skip-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.username-skip-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+}
+.username-create-btn {
+  flex: 1;
+  background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.username-create-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.username-create-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== GUEST BADGE ===== */
+.guest-badge .user-name {
+  opacity: 0.7;
+}
+.guest-badge .user-avatar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ===== USERNAME IN SETTINGS ===== */
+.username-cooldown {
+  color: var(--neon-yellow);
+  font-size: 11px;
+  font-weight: 400;
+  margin-left: 4px;
+}
+.username-settings-error {
+  color: var(--neon-red);
+  font-size: 12px;
+  padding: 0 4px;
+  margin-bottom: 8px;
+}
+.guest-username {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ===== USERNAME IN PROFILE ===== */
+.user-profile-display-name {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ===== USERNAME IN LEAGUE STANDINGS ===== */
+.league-row-username {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-left: 6px;
+  opacity: 0.7;
+}

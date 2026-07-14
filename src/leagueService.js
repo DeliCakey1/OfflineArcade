@@ -14,12 +14,14 @@ const LEAGUES = 'leagues'
 const MATCHES = 'matches'
 const TOURNAMENTS = 'tournaments'
 
-export async function getOrCreatePlayer(userId, name) {
+export async function getOrCreatePlayer(userId, name, username) {
   const ref = doc(db, PLAYERS, userId)
   const snap = await getDoc(ref)
   if (snap.exists()) return { id: userId, ...snap.data() }
   const player = {
     name: name || `Player${Math.floor(Math.random() * 9999)}`,
+    username: username || null,
+    usernameChangedAt: null,
     xp: 0,
     league: 11,
     leagueInstanceId: null,
@@ -56,6 +58,45 @@ export async function getPlayer(userId) {
   const snap = await getDoc(ref)
   if (!snap.exists()) return null
   return { id: userId, ...snap.data() }
+}
+
+export async function isUsernameAvailable(username, excludeUserId) {
+  if (!username || username.trim().length === 0) return false
+  const term = username.trim().toLowerCase()
+  const col = collection(db, PLAYERS)
+  const q = query(
+    col,
+    orderBy('username'),
+    where('username', '>=', term),
+    where('username', '<=', term + '\uf8ff'),
+    firestoreLimit(20)
+  )
+  const snap = await getDocs(q)
+  for (const d of snap.docs) {
+    if (excludeUserId && d.id === excludeUserId) continue
+    if (d.data().username && d.data().username.toLowerCase() === term) return false
+  }
+  return true
+}
+
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
+
+export async function updateUsername(userId, newUsername) {
+  const player = await getPlayer(userId)
+  if (!player) throw new Error('Player not found')
+  const trimmed = newUsername.trim()
+  if (trimmed.length < 3 || trimmed.length > 20) throw new Error('Username must be 3-20 characters')
+  if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) throw new Error('Username can only contain letters, numbers, and underscores')
+  if (player.usernameChangedAt && (Date.now() - player.usernameChangedAt) < TWELVE_HOURS_MS) {
+    const remaining = TWELVE_HOURS_MS - (Date.now() - player.usernameChangedAt)
+    const hours = Math.floor(remaining / 3600000)
+    const mins = Math.floor((remaining % 3600000) / 60000)
+    throw new Error(`You can change your username again in ${hours}h ${mins}m`)
+  }
+  const available = await isUsernameAvailable(trimmed, userId)
+  if (!available) throw new Error('Username is already taken')
+  await updatePlayer(userId, { username: trimmed, usernameChangedAt: Date.now() })
+  return trimmed
 }
 
 export function subscribeToPlayer(userId, callback) {
@@ -135,9 +176,9 @@ export async function searchPlayers(searchTerm) {
   const col = collection(db, PLAYERS)
   const q = query(
     col,
-    orderBy('name'),
-    where('name', '>=', term),
-    where('name', '<=', term + '\uf8ff'),
+    orderBy('username'),
+    where('username', '>=', term),
+    where('username', '<=', term + '\uf8ff'),
     firestoreLimit(20)
   )
   const snap = await getDocs(q)
@@ -474,7 +515,7 @@ export async function searchPlayersByName(searchTerm) {
     const batch = ids.slice(i, i + batchSize)
     const fetched = await Promise.all(batch.map(id => getPlayer(id).catch(() => null)))
     for (const p of fetched) {
-      if (p && p.name && p.name.toLowerCase().includes(lower)) results.push(p)
+      if (p && p.username && p.username.toLowerCase().includes(lower)) results.push(p)
     }
   }
   return results

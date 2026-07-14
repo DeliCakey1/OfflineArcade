@@ -75,6 +75,23 @@ function getSaved(key, fallback) {
   try { return localStorage.getItem(key) ?? fallback } catch { return fallback }
 }
 
+function getGuestUsername() {
+  try {
+    let guestName = localStorage.getItem('arcade-guest-username')
+    if (guestName) return guestName
+    const adjectives = ['Swift', 'Lucky', 'Sly', 'Bold', 'Wily', 'Keen', 'Brave', 'Calm', 'Wild', 'Cool']
+    const nouns = ['Fox', 'Wolf', 'Bear', 'Hawk', 'Lynx', 'Deer', 'Owl', 'Crane', 'Lion', 'Tiger']
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
+    const noun = nouns[Math.floor(Math.random() * nouns.length)]
+    const num = Math.floor(Math.random() * 999) + 1
+    guestName = `${adj}${noun}${num}`
+    localStorage.setItem('arcade-guest-username', guestName)
+    return guestName
+  } catch {
+    return 'Guest' + Math.floor(Math.random() * 9999)
+  }
+}
+
 function formatCountdown(ms) {
   const h = Math.floor(ms / 3600000)
   const m = Math.floor((ms % 3600000) / 60000)
@@ -406,6 +423,75 @@ function CloakScreen({ onBack }) {
   )
 }
 
+function UsernameCreationModal({ onClose, userId, onUsernameSet }) {
+  const [username, setUsername] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus()
+  }, [])
+
+  async function handleCreate() {
+    const trimmed = username.trim()
+    if (trimmed.length < 3) { setError('Username must be at least 3 characters'); return }
+    if (trimmed.length > 20) { setError('Username must be at most 20 characters'); return }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) { setError('Only letters, numbers, and underscores allowed'); return }
+    setLoading(true)
+    setError('')
+    try {
+      const { isUsernameAvailable, updatePlayer } = await import('./leagueService')
+      const available = await isUsernameAvailable(trimmed, userId)
+      if (!available) { setError('Username is already taken'); setLoading(false); return }
+      await updatePlayer(userId, { username: trimmed, usernameChangedAt: Date.now() })
+      onUsernameSet(trimmed)
+      onClose()
+    } catch (e) {
+      setError(e.message || 'Failed to create username')
+    }
+    setLoading(false)
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') handleCreate()
+    if (e.key === 'Escape') onClose()
+  }
+
+  return (
+    <div className="stats-overlay">
+      <div className="stats-modal username-modal" onClick={e => e.stopPropagation()}>
+        <div className="username-modal-header">
+          <span className="username-modal-icon">🏷️</span>
+          <h2 className="stats-title">Create Your Username</h2>
+          <p className="username-modal-desc">This is how other players will find you. You can change it once every 12 hours.</p>
+        </div>
+        <div className="username-input-wrap">
+          <span className="username-at">@</span>
+          <input
+            ref={inputRef}
+            className="username-input"
+            type="text"
+            value={username}
+            onChange={e => { setUsername(e.target.value); setError('') }}
+            onKeyDown={handleKeyDown}
+            maxLength={20}
+            placeholder="Choose a username"
+            autoComplete="off"
+          />
+        </div>
+        {error && <div className="username-error">{error}</div>}
+        <div className="username-modal-actions">
+          <button className="username-skip-btn" onClick={onClose}>Skip for now</button>
+          <button className="username-create-btn" onClick={handleCreate} disabled={loading || !username.trim()}>
+            {loading ? 'Creating...' : 'Create Username'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function UserSearchModal({ onClose }) {
   const [term, setTerm] = useState('')
   const [results, setResults] = useState([])
@@ -447,7 +533,7 @@ function UserSearchModal({ onClose }) {
         <input
           className="user-search-input"
           type="text"
-          placeholder="Search by name..."
+          placeholder="Search by username..."
           value={term}
           onChange={handleChange}
           autoFocus
@@ -462,9 +548,9 @@ function UserSearchModal({ onClose }) {
               const ri = LEAGUE_RANKS.find(r => r.rank === p.league)
               return (
                 <button key={p.id} className="user-search-result" onClick={() => setSelected(p)}>
-                  <span className="user-search-avatar">{(p.name || 'U')[0].toUpperCase()}</span>
+                  <span className="user-search-avatar">{(p.username || p.name || 'U')[0].toUpperCase()}</span>
                   <div className="user-search-info">
-                    <span className="user-search-name">{p.name || 'Unknown'}</span>
+                    <span className="user-search-name">@{p.username || 'unknown'}</span>
                     <span className="user-search-meta">
                       {ri?.emoji || '📄'} {ri?.name || 'Paper'} · ⭐ {(p.xp || 0).toLocaleString()} XP · 🏆 {(p.wins || 0).toLocaleString()} wins
                     </span>
@@ -476,8 +562,11 @@ function UserSearchModal({ onClose }) {
         ) : (
           <div className="user-profile-card">
             <div className="user-profile-header">
-              <div className="user-profile-avatar">{(selected.name || 'U')[0].toUpperCase()}</div>
-              <div className="user-profile-name">{selected.name || 'Unknown'}</div>
+              <div className="user-profile-avatar">{(selected.username || selected.name || 'U')[0].toUpperCase()}</div>
+              <div className="user-profile-name">@{selected.username || 'unknown'}</div>
+              {selected.name && selected.username && selected.name !== selected.username && (
+                <div className="user-profile-display-name">{selected.name}</div>
+              )}
               {rankInfo && (
                 <div className="user-profile-rank" style={{ color: rankInfo.color }}>{rankInfo.emoji} {rankInfo.name}</div>
               )}
@@ -519,7 +608,7 @@ function UserSearchModal({ onClose }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, onSignIn, onSignOut, coins, xp, leaguePos }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, userUsername, onSignIn, onSignOut, coins, xp, leaguePos }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -542,10 +631,16 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <div className="stat-badge xp-badge" title="Total XP">⭐ {xp?.toLocaleString() || '0'}</div>
           <div className="stat-badge coins-badge" title="Coins">🪙 {coins?.toLocaleString() || '0'}</div>
           <div className="settings-divider" />
-          {user && !user.isAnonymous && (
+          {user && !user.isAnonymous && userUsername && (
             <div className="user-badge">
-              <span className="user-avatar">{((playerName || user.displayName || user.email || 'U')[0]).toUpperCase()}</span>
-              <span className="user-name">{playerName || user.displayName || user.email?.split('@')[0] || 'User'}</span>
+              <span className="user-avatar">{(userUsername[0] || 'U').toUpperCase()}</span>
+              <span className="user-name">@{userUsername}</span>
+            </div>
+          )}
+          {user && user.isAnonymous && (
+            <div className="user-badge guest-badge">
+              <span className="user-avatar">{((userUsername || playerName || 'G')[0]).toUpperCase()}</span>
+              <span className="user-name guest-name">{userUsername || playerName || 'Guest'}</span>
             </div>
           )}
           {user && !user.isAnonymous ? (
@@ -584,8 +679,10 @@ function App() {
   const [userId, setUserId] = useState(null)
   const adminSwitchingRef = useRef(false)
   const [playerName, setPlayerName] = useState(null)
+  const [userUsername, setUserUsername] = useState(null)
   const [leaguePos, setLeaguePos] = useState(null)
   const [showUserSearch, setShowUserSearch] = useState(false)
+  const [showUsernameModal, setShowUsernameModal] = useState(false)
   const [achievementToast, setAchievementToast] = useState(null)
   const [pendingAchievementRedirect, setPendingAchievementRedirect] = useState(false)
 
@@ -636,7 +733,8 @@ function App() {
         setUserId(u.uid)
         if (wasAnonymous && !u.isAnonymous) {
           import('./leagueService').then(({ getOrCreatePlayer, getPlayer, updatePlayer }) => {
-            getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player')
+            const guestName = getGuestUsername()
+            getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', guestName)
             const localXp = (() => { try { return JSON.parse(localStorage.getItem('arcade-stats') || '{}')._xp?.total || 0 } catch { return 0 } })()
             if (localXp > 0) {
               getPlayer(u.uid).then(p => {
@@ -651,6 +749,10 @@ function App() {
           getPlayer(u.uid).then(p => {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
+              setUserUsername(p.username || null)
+              if (!p.username && !u.isAnonymous) {
+                setShowUsernameModal(true)
+              }
               try {
                 const raw = localStorage.getItem('arcade-stats')
                 const local = raw ? JSON.parse(raw) : {}
@@ -673,6 +775,10 @@ function App() {
                 }).catch(() => {})
                 try { localStorage.removeItem('arcade-admin-session') } catch {}
               }
+            } else if (u.isAnonymous) {
+              const guestName = getGuestUsername()
+              setPlayerName(guestName)
+              setUserUsername(guestName)
             }
           })
         }).catch(() => {})
@@ -680,6 +786,7 @@ function App() {
         setUser(null)
         setUserId(null)
         setPlayerName(null)
+        setUserUsername(null)
         try {
           const raw = localStorage.getItem('arcade-stats')
           const local = raw ? JSON.parse(raw) : {}
@@ -896,6 +1003,7 @@ function App() {
     onSearch: () => setShowUserSearch(true),
     user,
     playerName,
+    userUsername,
     onSignIn: () => setCurrentPage('signin'),
     onSignOut: () => signOut().then(() => window.location.reload()).catch(() => {}),
     coins,
@@ -911,6 +1019,10 @@ function App() {
       }).catch(() => {})
     }
   }, [userId])
+
+  const handleUpdateUsername = useCallback((newUsername) => {
+    setUserUsername(newUsername)
+  }, [])
 
   const handleEquipTitle = useCallback((titleId) => {
     equipTitle(titleId)
@@ -966,7 +1078,7 @@ function App() {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} onNameChange={handleUpdatePlayerName} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} />
+        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} />
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )
@@ -1072,6 +1184,13 @@ function App() {
         <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+        {showUsernameModal && user && !user.isAnonymous && (
+          <UsernameCreationModal
+            userId={user.uid}
+            onUsernameSet={(u) => { setUserUsername(u) }}
+            onClose={() => setShowUsernameModal(false)}
+          />
+        )}
       </div>
     )
   }
@@ -1168,6 +1287,13 @@ function App() {
       <Confetti active={showConfetti} onDone={() => setShowConfetti(false)} />
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       {showUserSearch && <UserSearchModal onClose={() => setShowUserSearch(false)} />}
+      {showUsernameModal && user && !user.isAnonymous && (
+        <UsernameCreationModal
+          userId={user.uid}
+          onUsernameSet={(u) => { setUserUsername(u) }}
+          onClose={() => setShowUsernameModal(false)}
+        />
+      )}
       {achievementToast && (
         <div className="achievement-toast" key={achievementToast.time}>
           <span className="achievement-toast-icon">🏅</span>

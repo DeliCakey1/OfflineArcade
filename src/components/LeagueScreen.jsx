@@ -453,7 +453,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
           <input
             className="player-search-input"
             type="text"
-            placeholder="Search players..."
+            placeholder="Search by username..."
             value={playerSearch}
             onChange={e => setPlayerSearch(e.target.value)}
             aria-label="Search players"
@@ -473,7 +473,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
                   <div key={p.id} className={`player-search-row ${p.id === userId ? 'you' : ''}`}>
                     <div className="player-search-row-name">
                       <span className={`player-search-name ${getNameplateEffectClass(p.nameplate)}`} style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplate), '--np-neon-color': getNameplateNeonColor(p.nameplate) || undefined }}>
-                        {p.name}{p.id === userId ? ' (you)' : ''}
+                        @{p.username || 'unknown'}{p.id === userId ? ' (you)' : ''}
                       </span>
                       {getTitleName(p.title) && <span className="player-search-title">{getTitleName(p.title)}</span>}
                     </div>
@@ -506,6 +506,9 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
                   </span>
                   {getTitleName(p.title) && (
                     <span className="league-row-title">{getTitleName(p.title)}</span>
+                  )}
+                  {p.username && (
+                    <span className="league-row-username">@{p.username}</span>
                   )}
                 </div>
                 <span className="league-row-xp">⭐{p.xp}</span>

@@ -11,9 +11,14 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, onNameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
+  const [editingUsername, setEditingUsername] = useState(false)
+  const [usernameInput, setUsernameInput] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+  const [usernameLoading, setUsernameLoading] = useState(false)
+  const [usernameCooldown, setUsernameCooldown] = useState(0)
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [adminPassword, setAdminPassword] = useState('')
   const [adminError, setAdminError] = useState('')
@@ -34,6 +39,12 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
     return () => clearTimeout(timer)
   }, [adminCooldown])
 
+  useEffect(() => {
+    if (usernameCooldown <= 0) return
+    const timer = setTimeout(() => setUsernameCooldown(c => Math.max(0, c - 1000)), 1000)
+    return () => clearTimeout(timer)
+  }, [usernameCooldown])
+
   function startEditName() {
     setNameInput(playerName || '')
     setEditingName(true)
@@ -50,6 +61,47 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
   function handleNameKeyDown(e) {
     if (e.key === 'Enter') saveName()
     if (e.key === 'Escape') setEditingName(false)
+  }
+
+  function startEditUsername() {
+    setUsernameInput(userUsername || '')
+    setUsernameError('')
+    setEditingUsername(true)
+  }
+
+  async function saveUsername() {
+    const trimmed = usernameInput.trim()
+    if (!trimmed || trimmed === userUsername) { setEditingUsername(false); return }
+    setUsernameLoading(true)
+    setUsernameError('')
+    try {
+      const { updateUsername } = await import('../leagueService')
+      await updateUsername(user.uid, trimmed)
+      if (onUsernameChange) onUsernameChange(trimmed)
+      setEditingUsername(false)
+    } catch (e) {
+      setUsernameError(e.message || 'Failed to update username')
+      const remaining = e.message?.match(/(\d+)h (\d+)m/)
+      if (remaining) {
+        const ms = (parseInt(remaining[1]) * 3600 + parseInt(remaining[2]) * 60) * 1000
+        setUsernameCooldown(ms)
+      }
+    }
+    setUsernameLoading(false)
+  }
+
+  function handleUsernameKeyDown(e) {
+    if (e.key === 'Enter') saveUsername()
+    if (e.key === 'Escape') setEditingUsername(false)
+  }
+
+  function formatCooldown(ms) {
+    const h = Math.floor(ms / 3600000)
+    const m = Math.floor((ms % 3600000) / 60000)
+    const s = Math.floor((ms % 60000) / 1000)
+    if (h > 0) return `${h}h ${m}m ${s}s`
+    if (m > 0) return `${m}m ${s}s`
+    return `${s}s`
   }
 
   async function handleAdminLogin(e) {
@@ -87,6 +139,7 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
   }
 
   const displayName = playerName || user?.displayName || user?.email || 'Signed In'
+  const isGuest = user?.isAnonymous
 
   return (
     <div className="settings-page">
@@ -101,7 +154,7 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           <>
             <div className="settings-row">
               <div className="settings-card-btn active" style={{ cursor: 'default' }}>
-                <span className="user-avatar" style={{ width: 28, height: 28, fontSize: 13 }}>{(displayName[0] || 'U').toUpperCase()}</span>
+                <span className="user-avatar" style={{ width: 28, height: 28, fontSize: 13 }}>{((userUsername || displayName)[0] || 'U').toUpperCase()}</span>
                 <span className="settings-card-label">{displayName}</span>
               </div>
               <button className="settings-card-btn" onClick={onSignOut}>
@@ -109,6 +162,33 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
                 <span className="settings-card-label">Sign Out</span>
               </button>
             </div>
+            <div className="settings-row">
+              {editingUsername ? (
+                <div className="settings-card-btn active" style={{ cursor: 'default', flex: 1 }}>
+                  <span className="settings-card-icon">@</span>
+                  <input
+                    type="text"
+                    value={usernameInput}
+                    onChange={(e) => { setUsernameInput(e.target.value); setUsernameError('') }}
+                    onKeyDown={handleUsernameKeyDown}
+                    onBlur={saveUsername}
+                    maxLength={20}
+                    autoFocus
+                    style={{ background: 'transparent', border: 'none', color: 'var(--text-light)', fontFamily: 'inherit', fontSize: 14, width: '100%', outline: 'none' }}
+                    placeholder="Enter a username..."
+                  />
+                </div>
+              ) : (
+                <button className="settings-card-btn" onClick={startEditUsername} style={{ flex: 1 }} disabled={usernameCooldown > 0}>
+                  <span className="settings-card-icon">🏷️</span>
+                  <span className="settings-card-label">
+                    {userUsername ? `@${userUsername}` : 'Set Username'}
+                    {usernameCooldown > 0 && <span className="username-cooldown"> ({formatCooldown(usernameCooldown)})</span>}
+                  </span>
+                </button>
+              )}
+            </div>
+            {usernameError && <div className="username-settings-error">{usernameError}</div>}
             <div className="settings-row">
               {editingName ? (
                 <div className="settings-card-btn active" style={{ cursor: 'default', flex: 1 }}>
@@ -127,16 +207,26 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
               ) : (
                 <button className="settings-card-btn" onClick={startEditName} style={{ flex: 1 }}>
                   <span className="settings-card-icon">✏️</span>
-                  <span className="settings-card-label">Edit Name</span>
+                  <span className="settings-card-label">Edit Display Name</span>
                 </button>
               )}
             </div>
           </>
         ) : (
-          <button className="settings-card-btn full-width" onClick={onSignIn}>
-            <span className="settings-card-icon">☁️</span>
-            <span className="settings-card-label">Sign In to Save Data Across Devices</span>
-          </button>
+          <>
+            {isGuest && userUsername && (
+              <div className="settings-row">
+                <div className="settings-card-btn active" style={{ cursor: 'default', flex: 1 }}>
+                  <span className="settings-card-icon">🏷️</span>
+                  <span className="settings-card-label guest-username">@{userUsername}</span>
+                </div>
+              </div>
+            )}
+            <button className="settings-card-btn full-width" onClick={onSignIn}>
+              <span className="settings-card-icon">☁️</span>
+              <span className="settings-card-label">Sign In to Save Data Across Devices</span>
+            </button>
+          </>
         )}
       </div>
 
