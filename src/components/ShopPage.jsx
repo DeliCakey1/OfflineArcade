@@ -12,6 +12,7 @@ const NAMEPLATE_TABS = [
 function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
   const canAfford = isAdmin || coins >= item.price
   const rarityColor = RARITY_COLORS[item.rarity] || '#a3a3a3'
+  const isLocked = item.adminOnly && !isAdmin
 
   return (
     <div className={`shop-card ${owned ? 'owned' : ''} ${equipped ? 'equipped' : ''}`}>
@@ -20,10 +21,13 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
         <span className="shop-card-rarity" style={{ color: rarityColor }}>{item.rarity}</span>
       </div>
       <div className="shop-card-name">{item.name}</div>
+      {item.adminOnly && <div className="shop-card-admin-badge">🔑 Admin Only</div>}
       {item.championOnly && !isAdmin && <div className="shop-card-champion-badge">Champion Only</div>}
-      {isAdmin && <div className="shop-card-admin-badge">👑 Admin</div>}
+      {isAdmin && !item.adminOnly && <div className="shop-card-admin-badge">👑 Admin</div>}
       <div className="shop-card-bottom">
-        {equipped ? (
+        {isLocked ? (
+          <button className="shop-card-btn disabled" disabled>🔒 Admin Only</button>
+        ) : equipped ? (
           <button className="shop-card-btn equipped-btn" onClick={() => onEquip(null)}>Equipped ✓</button>
         ) : owned ? (
           <button className="shop-card-btn equip-btn" onClick={() => onEquip(item.id)}>Equip</button>

@@ -28,6 +28,7 @@ export const TITLES = [
   { id: 'title-the-legend', name: 'The Legend', emoji: '⚡', price: 20000, rarity: 'legendary' },
   { id: 'title-true-champion', name: 'True Champion', emoji: '🏆', price: 25000, rarity: 'champion', championOnly: true },
   { id: 'title-reigning-king', name: 'Reigning King', emoji: '👑', price: 30000, rarity: 'champion', championOnly: true },
+  { id: 'title-owner-dev', name: 'Owner/Dev', emoji: '⚙️', price: 0, rarity: 'legendary', adminOnly: true },
 ]
 
 export const NAMEPLATE_COLORS = [
@@ -158,5 +159,6 @@ export function isOwned(ownedIds, itemId) {
 export function canBuy(coins, ownedIds, item) {
   if (isOwned(ownedIds, item.id)) return false
   if (item.championOnly) return false
+  if (item.adminOnly) return false
   return coins >= item.price
 }
