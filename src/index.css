@@ -3845,14 +3845,14 @@ body::after {
   border: none;
   font-size: 14px;
   cursor: pointer;
-  opacity: 0.12;
+  opacity: 0.45;
   transition: opacity 0.3s ease;
   z-index: 5;
   padding: 4px;
   line-height: 1;
 }
 .admin-lock-btn:hover {
-  opacity: 0.5;
+  opacity: 1;
 }
 .settings-page {
   position: relative;
