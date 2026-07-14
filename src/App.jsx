@@ -461,6 +461,7 @@ function App() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
   const [userId, setUserId] = useState(null)
+  const adminSwitchingRef = useRef(false)
   const [playerName, setPlayerName] = useState(null)
 
   const {
@@ -554,9 +555,11 @@ function App() {
         setUser(null)
         setUserId(null)
         setPlayerName(null)
-        import('./firebase').then(({ ensureAuth }) => {
-          ensureAuth().then(u => { if (u) { setUser(u); setUserId(u.uid) } })
-        }).catch(() => {})
+        if (!adminSwitchingRef.current) {
+          import('./firebase').then(({ ensureAuth }) => {
+            ensureAuth().then(u => { if (u) { setUser(u); setUserId(u.uid) } })
+          }).catch(() => {})
+        }
       }
     })
     return () => unsub()
@@ -764,6 +767,7 @@ function App() {
   }, [userId, purchaseItem])
 
   const handleAdminLogin = useCallback(async () => {
+    adminSwitchingRef.current = true
     try {
       const { signInAsAdmin } = await import('./auth')
       const adminUser = await signInAsAdmin()
@@ -772,6 +776,7 @@ function App() {
         await setAdminStatus(adminUser.uid, true)
       }
     } catch {}
+    adminSwitchingRef.current = false
   }, [])
 
   const handleAdminLogout = useCallback(() => {
