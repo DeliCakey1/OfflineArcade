@@ -4593,6 +4593,12 @@ body::after {
   color: var(--text-dim);
   margin-top: 2px;
 }
+.user-search-display-name {
+  font-size: 11px;
+  color: var(--text-dim);
+  display: block;
+  margin-top: 1px;
+}
 
 /* ===== USERNAME IN LEAGUE STANDINGS ===== */
 .league-row-username {

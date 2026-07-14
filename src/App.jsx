@@ -550,7 +550,10 @@ function UserSearchModal({ onClose }) {
                 <button key={p.id} className="user-search-result" onClick={() => setSelected(p)}>
                   <span className="user-search-avatar">{(p.username || p.name || 'U')[0].toUpperCase()}</span>
                   <div className="user-search-info">
-                    <span className="user-search-name">@{p.username || 'unknown'}</span>
+                    <span className="user-search-name">{p.username ? `@${p.username}` : p.name || 'Unknown'}</span>
+                    {p.username && p.name && p.name !== p.username && (
+                      <span className="user-search-display-name">{p.name}</span>
+                    )}
                     <span className="user-search-meta">
                       {ri?.emoji || '📄'} {ri?.name || 'Paper'} · ⭐ {(p.xp || 0).toLocaleString()} XP · 🏆 {(p.wins || 0).toLocaleString()} wins
                     </span>

@@ -507,15 +507,59 @@ export async function searchPlayersByName(searchTerm) {
     }
   } catch (e) { console.warn('Tournament query failed:', e.message) }
 
+  let firestoreResults = []
+  try {
+    const col = collection(db, PLAYERS)
+    const q = query(
+      col,
+      orderBy('username'),
+      where('username', '>=', lower),
+      where('username', '<=', lower + '\uf8ff'),
+      firestoreLimit(20)
+    )
+    const snap = await getDocs(q)
+    firestoreResults = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (e) { console.warn('Username query failed:', e.message) }
+
+  try {
+    const col = collection(db, PLAYERS)
+    const q = query(
+      col,
+      orderBy('name'),
+      where('name', '>=', lower),
+      where('name', '<=', lower + '\uf8ff'),
+      firestoreLimit(20)
+    )
+    const snap = await getDocs(q)
+    for (const d of snap.docs) {
+      if (!firestoreResults.some(r => r.id === d.id)) {
+        firestoreResults.push({ id: d.id, ...d.data() })
+      }
+    }
+  } catch (e) { console.warn('Name query failed:', e.message) }
+
+  for (const p of firestoreResults) {
+    playerIds.add(p.id)
+  }
+
   if (playerIds.size === 0) return []
   const ids = [...playerIds]
   const results = []
+  const seen = new Set(firestoreResults.map(r => r.id))
+  for (const p of firestoreResults) {
+    if (results.length >= 20) break
+    results.push(p)
+  }
   const batchSize = 10
   for (let i = 0; i < ids.length && results.length < 20; i += batchSize) {
     const batch = ids.slice(i, i + batchSize)
     const fetched = await Promise.all(batch.map(id => getPlayer(id).catch(() => null)))
     for (const p of fetched) {
-      if (p && p.username && p.username.toLowerCase().includes(lower)) results.push(p)
+      if (results.length >= 20) break
+      if (!p || seen.has(p.id)) continue
+      if ((p.username && p.username.toLowerCase().includes(lower)) || (p.name && p.name.toLowerCase().includes(lower))) {
+        results.push(p)
+      }
     }
   }
   return results
