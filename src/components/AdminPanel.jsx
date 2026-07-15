@@ -18,6 +18,7 @@ export default function AdminPanel({ onBack, userId }) {
   const [cooldown, setCooldown] = useState(0)
   const [loading, setLoading] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [resetConfirming, setResetConfirming] = useState(false)
   const [resetDone, setResetDone] = useState(false)
   const [resetError, setResetError] = useState('')
   const inputRef = useRef(null)
@@ -78,6 +79,7 @@ export default function AdminPanel({ onBack, userId }) {
     try {
       await resetAllScores(userId)
       setResetDone(true)
+      setResetConfirming(false)
       sound('cash')
     } catch (e) {
       setResetError(e.message || 'Reset failed')
@@ -163,13 +165,32 @@ export default function AdminPanel({ onBack, userId }) {
             <p>Wipe all player stats, XP, coins, leagues, and tournaments. Your admin account is preserved.</p>
             {resetDone && <p className="admin-reset-success">All scores have been reset.</p>}
             {resetError && <p className="admin-reset-error">{resetError}</p>}
-            <button
-              className="admin-reset-btn"
-              onClick={handleResetAllScores}
-              disabled={resetting}
-            >
-              {resetting ? 'Resetting...' : '💥 Nuclear Reset'}
-            </button>
+            {resetConfirming ? (
+              <div className="admin-reset-confirm">
+                <p className="admin-reset-confirm-text">Are you sure? This cannot be undone.</p>
+                <button
+                  className="admin-reset-btn admin-reset-confirm-yes"
+                  onClick={handleResetAllScores}
+                  disabled={resetting}
+                >
+                  {resetting ? 'Resetting...' : 'Yes, reset everything'}
+                </button>
+                <button
+                  className="admin-reset-btn admin-reset-confirm-no"
+                  onClick={() => setResetConfirming(false)}
+                  disabled={resetting}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                className="admin-reset-btn"
+                onClick={() => setResetConfirming(true)}
+              >
+                💥 Nuclear Reset
+              </button>
+            )}
           </div>
         </div>
         <button className="admin-logout-btn" onClick={handleLogout}>

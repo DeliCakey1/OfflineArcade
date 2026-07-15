@@ -4221,6 +4221,35 @@ body::after {
   color: #ff3b30;
   margin-top: 8px;
 }
+.admin-reset-confirm {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.admin-reset-confirm-text {
+  color: #ff3b30;
+  font-weight: 600;
+  font-size: 13px;
+  margin: 0;
+}
+.admin-reset-confirm-yes {
+  background: rgba(255, 59, 48, 0.3);
+  color: #ff3b30;
+  border-color: #ff3b30;
+}
+.admin-reset-confirm-yes:hover:not(:disabled) {
+  background: rgba(255, 59, 48, 0.5);
+}
+.admin-reset-confirm-no {
+  background: var(--bg-glass);
+  color: var(--text-dim);
+  border-color: var(--border-glass);
+}
+.admin-reset-confirm-no:hover:not(:disabled) {
+  border-color: var(--text-dim);
+}
 .admin-logout-btn {
   width: 100%;
   padding: 14px;
