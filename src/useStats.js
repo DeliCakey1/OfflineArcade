@@ -36,9 +36,10 @@ async function loadFromFirestore(uid) {
     try {
       const { loadPlayerStats, getPlayer, savePlayerStats } = await import('./leagueService')
       let blob = await loadPlayerStats(uid)
+      let player = null
 
       if (!blob) {
-        const player = await getPlayer(uid)
+        player = await getPlayer(uid)
         if (player) {
           blob = {}
           if (player.xp) blob._xp = { total: player.xp }
@@ -95,7 +96,7 @@ async function loadFromFirestore(uid) {
       }
 
       if (blob && uid === currentUserId) {
-        const player = await import('./leagueService').then(m => m.getPlayer(uid)).catch(() => null)
+        if (!player) player = await getPlayer(uid).catch(() => null)
         if (player) {
           if ((player.xp || 0) > (blob._xp?.total || 0)) blob._xp = { total: player.xp }
           if ((player.coins || 0) !== (blob._coins || 0)) blob._coins = player.coins || 0

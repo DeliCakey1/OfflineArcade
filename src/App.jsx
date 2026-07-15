@@ -715,14 +715,14 @@ function App() {
         setUserId(u.uid)
         if (!u.isAnonymous) {
           setCurrentUserId(u.uid)
-          import('./leagueService').then(({ getOrCreatePlayer, getPlayer }) => {
-            getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
-          }).catch(() => {})
         } else {
           setCurrentUserId(null)
         }
-        import('./leagueService').then(({ getPlayer }) => {
-          getPlayer(u.uid).then(p => {
+        import('./leagueService').then(({ getOrCreatePlayer, getPlayer }) => {
+          const loadPlayer = !u.isAnonymous
+            ? getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
+            : getPlayer(u.uid)
+          loadPlayer.then(p => {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
               setUserUsername(p.username || null)
@@ -746,7 +746,7 @@ function App() {
                 }
               }
             }
-          })
+          }).catch(() => {})
         }).catch(() => {})
       } else {
         setUser(null)

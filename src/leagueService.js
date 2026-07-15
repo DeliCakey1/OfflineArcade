@@ -176,12 +176,8 @@ export function subscribeToLeague(leagueId, callback) {
 
 export async function getLeaguePlayers(playerIds) {
   if (playerIds.length === 0) return []
-  const players = []
-  for (const id of playerIds) {
-    const p = await getPlayer(id)
-    if (p) players.push(p)
-  }
-  return players
+  const fetched = await Promise.all(playerIds.map(id => getPlayer(id).catch(() => null)))
+  return fetched.filter(Boolean)
 }
 
 export async function searchPlayers(searchTerm) {
@@ -505,52 +501,41 @@ export async function searchPlayersByName(searchTerm) {
   const lower = term.toLowerCase()
   const playerIds = new Set()
 
-  try {
-    const leagueSnap = await getDocs(query(collection(db, LEAGUES), where('status', '==', 'active')))
-    for (const d of leagueSnap.docs) {
-      const data = d.data()
-      if (Array.isArray(data.players)) data.players.forEach(id => playerIds.add(id))
-    }
-  } catch (e) { console.warn('League query failed:', e.message) }
+  const [leagueResults, tournamentResults] = await Promise.all([
+    getDocs(query(collection(db, LEAGUES), where('status', '==', 'active'))).catch(e => { console.warn('League query failed:', e.message); return null }),
+    getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active'))).catch(e => { console.warn('Tournament query failed:', e.message); return null }),
+  ])
 
-  try {
-    const tSnap = await getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active')))
-    for (const d of tSnap.docs) {
+  if (leagueResults) {
+    for (const d of leagueResults.docs) {
       const data = d.data()
       if (Array.isArray(data.players)) data.players.forEach(id => playerIds.add(id))
     }
-  } catch (e) { console.warn('Tournament query failed:', e.message) }
+  }
+  if (tournamentResults) {
+    for (const d of tournamentResults.docs) {
+      const data = d.data()
+      if (Array.isArray(data.players)) data.players.forEach(id => playerIds.add(id))
+    }
+  }
+
+  const col = collection(db, PLAYERS)
+  const [usernameSnap, nameSnap] = await Promise.all([
+    getDocs(query(col, orderBy('username'), where('username', '>=', lower), where('username', '<=', lower + '\uf8ff'), firestoreLimit(20))).catch(e => { console.warn('Username query failed:', e.message); return null }),
+    getDocs(query(col, orderBy('name'), where('name', '>=', lower), where('name', '<=', lower + '\uf8ff'), firestoreLimit(20))).catch(e => { console.warn('Name query failed:', e.message); return null }),
+  ])
 
   let firestoreResults = []
-  try {
-    const col = collection(db, PLAYERS)
-    const q = query(
-      col,
-      orderBy('username'),
-      where('username', '>=', lower),
-      where('username', '<=', lower + '\uf8ff'),
-      firestoreLimit(20)
-    )
-    const snap = await getDocs(q)
-    firestoreResults = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-  } catch (e) { console.warn('Username query failed:', e.message) }
-
-  try {
-    const col = collection(db, PLAYERS)
-    const q = query(
-      col,
-      orderBy('name'),
-      where('name', '>=', lower),
-      where('name', '<=', lower + '\uf8ff'),
-      firestoreLimit(20)
-    )
-    const snap = await getDocs(q)
-    for (const d of snap.docs) {
+  if (usernameSnap) {
+    firestoreResults = usernameSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+  }
+  if (nameSnap) {
+    for (const d of nameSnap.docs) {
       if (!firestoreResults.some(r => r.id === d.id)) {
         firestoreResults.push({ id: d.id, ...d.data() })
       }
     }
-  } catch (e) { console.warn('Name query failed:', e.message) }
+  }
 
   for (const p of firestoreResults) {
     playerIds.add(p.id)
