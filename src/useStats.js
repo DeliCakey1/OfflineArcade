@@ -46,6 +46,7 @@ async function loadFromFirestore(uid) {
           if (player.coins) blob._coins = player.coins
           if (player.title) blob._activeTitle = player.title
           if (player.nameplate) blob._activeNameplate = player.nameplate
+          if (player.nameplateEffect) blob._activeNameplateEffect = player.nameplateEffect
           if (player.ownedItems?.length) blob._ownedItems = player.ownedItems
           if (player.promotions) blob._league = { joined: true, promotions: player.promotions, bestRank: player.league || 11, tournamentEntries: 0, tournamentWins: player.tournamentWins || 0, firstPlaceFinishes: player.firstPlaceFinishes || 0, totalWins: player.wins || 0, wasInTournament: false }
         }
