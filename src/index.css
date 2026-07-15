@@ -4186,6 +4186,41 @@ body::after {
   box-shadow: none;
   cursor: default;
 }
+.admin-danger {
+  border-color: rgba(255, 59, 48, 0.4);
+}
+.admin-danger:hover {
+  border-color: #ff3b30;
+  box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+}
+.admin-reset-btn {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: rgba(255, 59, 48, 0.15);
+  color: #ff3b30;
+  border: 1px solid rgba(255, 59, 48, 0.4);
+  border-radius: 8px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.admin-reset-btn:hover:not(:disabled) {
+  background: rgba(255, 59, 48, 0.25);
+  border-color: #ff3b30;
+}
+.admin-reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.admin-reset-success {
+  color: #34c759;
+  margin-top: 8px;
+}
+.admin-reset-error {
+  color: #ff3b30;
+  margin-top: 8px;
+}
 .admin-logout-btn {
   width: 100%;
   padding: 14px;

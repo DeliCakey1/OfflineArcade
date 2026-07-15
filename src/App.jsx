@@ -1089,7 +1089,7 @@ function App() {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <AdminPanel onBack={() => setCurrentPage('home')} />
+        <AdminPanel onBack={() => setCurrentPage('home')} userId={user?.uid} />
       </div>
     )
   }

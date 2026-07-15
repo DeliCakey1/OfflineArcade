@@ -9,13 +9,17 @@ import {
   setLoginCooldown,
   getRemainingCooldown,
 } from '../adminAuth'
+import { resetAllScores } from '../leagueService'
 
-export default function AdminPanel({ onBack }) {
+export default function AdminPanel({ onBack, userId }) {
   const [authenticated, setAuthenticated] = useState(isAdminLoggedIn())
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [cooldown, setCooldown] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [resetDone, setResetDone] = useState(false)
+  const [resetError, setResetError] = useState('')
   const inputRef = useRef(null)
   const sound = useSound()
 
@@ -64,6 +68,22 @@ export default function AdminPanel({ onBack }) {
     setAuthenticated(false)
     setPassword('')
     sound('click')
+  }
+
+  async function handleResetAllScores() {
+    if (resetting) return
+    setResetting(true)
+    setResetError('')
+    setResetDone(false)
+    try {
+      await resetAllScores(userId)
+      setResetDone(true)
+      sound('cash')
+    } catch (e) {
+      setResetError(e.message || 'Reset failed')
+      sound('lose')
+    }
+    setResetting(false)
   }
 
   if (!authenticated) {
@@ -136,6 +156,20 @@ export default function AdminPanel({ onBack }) {
             <span className="admin-section-emoji">📈</span>
             <h4>Analytics</h4>
             <p>Coming soon...</p>
+          </div>
+          <div className="admin-section-card admin-danger">
+            <span className="admin-section-emoji">💥</span>
+            <h4>Reset All Scores</h4>
+            <p>Wipe all player stats, XP, coins, leagues, and tournaments. Your admin account is preserved.</p>
+            {resetDone && <p className="admin-reset-success">All scores have been reset.</p>}
+            {resetError && <p className="admin-reset-error">{resetError}</p>}
+            <button
+              className="admin-reset-btn"
+              onClick={handleResetAllScores}
+              disabled={resetting}
+            >
+              {resetting ? 'Resetting...' : '💥 Nuclear Reset'}
+            </button>
           </div>
         </div>
         <button className="admin-logout-btn" onClick={handleLogout}>

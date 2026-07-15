@@ -579,6 +579,40 @@ export async function searchPlayersByName(searchTerm) {
   return results
 }
 
+export async function resetAllScores(adminUserId) {
+  const playersSnap = await getDocs(collection(db, PLAYERS))
+  const leaguesSnap = await getDocs(query(collection(db, LEAGUES), where('status', '==', 'active')))
+  const tournamentsSnap = await getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active')))
+
+  for (const d of leaguesSnap.docs) {
+    await updateDoc(d.ref, { status: 'completed', completedAt: Date.now() })
+  }
+  for (const d of tournamentsSnap.docs) {
+    await updateDoc(d.ref, { status: 'completed', completedAt: Date.now() })
+  }
+
+  for (const d of playersSnap.docs) {
+    if (d.id === adminUserId) continue
+    await updateDoc(d.ref, {
+      xp: 0,
+      wins: 0,
+      losses: 0,
+      streak: 0,
+      promotions: 0,
+      tournamentWins: 0,
+      firstPlaceFinishes: 0,
+      coins: 0,
+      title: null,
+      nameplate: null,
+      ownedItems: [],
+      league: 11,
+      leagueInstanceId: null,
+      statsBlob: null,
+      lastActive: Date.now(),
+    })
+  }
+}
+
 export async function getAllLeaguesForPlayer(userId) {
   const q = query(collection(db, LEAGUES), where('players', 'array-contains', userId))
   const snap = await getDocs(q)
