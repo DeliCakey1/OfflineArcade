@@ -29,6 +29,8 @@ export async function getOrCreatePlayer(userId, name, username) {
   const player = {
     name: playerName,
     nameLower: playerName.toLowerCase(),
+    username: username || null,
+    usernameChangedAt: null,
     xp: 0,
     league: 11,
     leagueInstanceId: null,

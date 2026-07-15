@@ -780,12 +780,14 @@ function App() {
           setCurrentUserId(null)
         }
         import('./leagueService').then(({ getOrCreatePlayer, getPlayer }) => {
-          const loadPlayer = !u.isAnonymous
-            ? getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
-            : getPlayer(u.uid)
+          const loadPlayer = getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
           loadPlayer.then(p => {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
+              setUserUsername(p.username || null)
+              if (!p.username && !u.isAnonymous) {
+                setShowUsernameModal(true)
+              }
               try {
                 const raw = localStorage.getItem('arcade-stats')
                 const local = raw ? JSON.parse(raw) : {}
@@ -859,9 +861,7 @@ function App() {
           getPlayer(userId).then(p => {
             if (!p) return
             syncLeagueData(p)
-            if (!p.leagueInstanceId) {
-              ensurePlayerInLeague(userId).catch(() => {})
-            }
+            ensurePlayerInLeague(userId).catch(err => console.warn('League join failed:', err))
             if (!won) {
               updatePlayer(userId, { losses: increment(1), streak: 0 }).catch(() => {})
             }

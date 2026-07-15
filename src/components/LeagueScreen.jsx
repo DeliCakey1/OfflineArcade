@@ -140,6 +140,9 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
           } else {
             if (!cancelled) setLeague(lg)
           }
+        } else if (!isInLockoutPeriod()) {
+          const newLg = await ensurePlayerInLeague(userId)
+          if (!cancelled) setLeague(newLg)
         }
         if (!cancelled) setLoading(false)
       } catch (e) {

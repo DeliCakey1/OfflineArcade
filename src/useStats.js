@@ -296,11 +296,11 @@ export default function useStats(gameId) {
   const gameStats = currentUserId ? (stats[gameId] || getEmptyGameStats()) : getEmptyGameStats()
 
   const recordGame = useCallback((won, streak = 0) => {
-    if (!currentUserId) return
     if (won) {
       try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId: gameIdRef.current } })) } catch {}
     }
     try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId: gameIdRef.current, won } })) } catch {}
+    if (!currentUserId) return
     const gid = gameIdRef.current
     const current = sharedStats[gid] || getEmptyGameStats()
     const xpEarned = won ? 10 + Math.min(streak, 10) * 2 : 0
@@ -351,17 +351,17 @@ export default function useStats(gameId) {
     notifyListeners()
   }, [])
 
-  const allStats = stats
-  const xp = stats._xp?.total || 0
-  const recent = stats._recent || []
-  const favorites = stats._favorites || []
-  const coins = stats._coins || 0
-  const ownedItems = stats._ownedItems || []
-  const activeTitle = stats._activeTitle || null
-  const activeNameplate = stats._activeNameplate || null
-  const activeNameplateEffect = stats._activeNameplateEffect || null
-  const earnedAchievements = ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id)
-  const newAchievements = earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id))
+  const allStats = currentUserId ? stats : {}
+  const xp = currentUserId ? (stats._xp?.total || 0) : 0
+  const recent = currentUserId ? (stats._recent || []) : []
+  const favorites = currentUserId ? (stats._favorites || []) : []
+  const coins = currentUserId ? (stats._coins || 0) : 0
+  const ownedItems = currentUserId ? (stats._ownedItems || []) : []
+  const activeTitle = currentUserId ? (stats._activeTitle || null) : null
+  const activeNameplate = currentUserId ? (stats._activeNameplate || null) : null
+  const activeNameplateEffect = currentUserId ? (stats._activeNameplateEffect || null) : null
+  const earnedAchievements = currentUserId ? ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id) : []
+  const newAchievements = currentUserId ? earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id)) : []
 
   const syncLeagueData = useCallback((playerData) => {
     if (!currentUserId) return
