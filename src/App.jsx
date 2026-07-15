@@ -428,7 +428,7 @@ function UsernameCreationModal({ onClose, userId, onUsernameSet }) {
       const { isUsernameAvailable, updatePlayer } = await import('./leagueService')
       const available = await isUsernameAvailable(trimmed, userId)
       if (!available) { setError('Username is already taken'); setLoading(false); return }
-      await updatePlayer(userId, { username: trimmed, usernameChangedAt: Date.now() })
+      await updatePlayer(userId, { username: trimmed, usernameChangedAt: Date.now(), usernameSkipped: false })
       onUsernameSet(trimmed)
       onClose()
     } catch (e) {
@@ -437,9 +437,17 @@ function UsernameCreationModal({ onClose, userId, onUsernameSet }) {
     setLoading(false)
   }
 
+  async function handleSkip() {
+    try {
+      const { updatePlayer } = await import('./leagueService')
+      await updatePlayer(userId, { usernameSkipped: true })
+    } catch {}
+    onClose()
+  }
+
   function handleKeyDown(e) {
     if (e.key === 'Enter') handleCreate()
-    if (e.key === 'Escape') onClose()
+    if (e.key === 'Escape') handleSkip()
   }
 
   return (
@@ -466,7 +474,7 @@ function UsernameCreationModal({ onClose, userId, onUsernameSet }) {
         </div>
         {error && <div className="username-error">{error}</div>}
         <div className="username-modal-actions">
-          <button className="username-skip-btn" onClick={onClose}>Skip for now</button>
+          <button className="username-skip-btn" onClick={handleSkip}>Skip for now</button>
           <button className="username-create-btn" onClick={handleCreate} disabled={loading || !username.trim()}>
             {loading ? 'Creating...' : 'Create Username'}
           </button>
@@ -785,7 +793,7 @@ function App() {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
               setUserUsername(p.username || null)
-              if (!p.username && !u.isAnonymous) {
+              if (!p.username && !p.usernameSkipped && !u.isAnonymous) {
                 setShowUsernameModal(true)
               }
               try {
@@ -1053,17 +1061,13 @@ function App() {
   const handlePurchase = useCallback((itemId, price) => {
     purchaseItem(itemId, price)
     if (userId) {
-      import('./leagueService').then(({ getPlayer, updatePlayer }) => {
-        getPlayer(userId).then(p => {
-          if (p) {
-            const owned = new Set(p.ownedItems || [])
-            owned.add(itemId)
-            updatePlayer(userId, { ownedItems: [...owned] })
-          }
-        })
+      import('./leagueService').then(({ updatePlayer }) => {
+        const owned = new Set(ownedItems || [])
+        owned.add(itemId)
+        updatePlayer(userId, { ownedItems: [...owned] })
       }).catch(() => {})
     }
-  }, [userId, purchaseItem])
+  }, [userId, purchaseItem, ownedItems])
 
   const handleAdminLogin = useCallback(async () => {
     adminSwitchingRef.current = true

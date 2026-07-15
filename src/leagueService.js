@@ -43,6 +43,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     coins: 0,
     title: null,
     nameplate: null,
+    nameplateEffect: null,
     ownedItems: [],
     isAdmin: false,
     createdAt: Date.now(),
