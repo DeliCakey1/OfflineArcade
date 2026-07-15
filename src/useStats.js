@@ -351,16 +351,17 @@ export default function useStats(gameId) {
     notifyListeners()
   }, [])
 
-  const allStats = currentUserId ? stats : {}
-  const xp = currentUserId ? (stats._xp?.total || 0) : 0
-  const recent = currentUserId ? (stats._recent || []) : []
-  const favorites = currentUserId ? (stats._favorites || []) : []
-  const coins = currentUserId ? (stats._coins || 0) : 0
-  const ownedItems = currentUserId ? (stats._ownedItems || []) : []
-  const activeTitle = currentUserId ? (stats._activeTitle || null) : null
-  const activeNameplate = currentUserId ? (stats._activeNameplate || null) : null
-  const earnedAchievements = currentUserId ? ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id) : []
-  const newAchievements = currentUserId ? earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id)) : []
+  const allStats = stats
+  const xp = stats._xp?.total || 0
+  const recent = stats._recent || []
+  const favorites = stats._favorites || []
+  const coins = stats._coins || 0
+  const ownedItems = stats._ownedItems || []
+  const activeTitle = stats._activeTitle || null
+  const activeNameplate = stats._activeNameplate || null
+  const activeNameplateEffect = stats._activeNameplateEffect || null
+  const earnedAchievements = ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id)
+  const newAchievements = earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id))
 
   const syncLeagueData = useCallback((playerData) => {
     if (!currentUserId) return
@@ -437,6 +438,14 @@ export default function useStats(gameId) {
     notifyListeners()
   }, [])
 
+  const equipNameplateEffect = useCallback((nameplateId) => {
+    setStats(prev => {
+      const updated = { ...prev, _activeNameplateEffect: nameplateId }
+      saveStats(updated)
+      return updated
+    })
+  }, [])
+
   const checkAchievementCoins = useCallback((prevSeenIds, newSeenIds) => {
     let totalReward = 0
     for (const id of newSeenIds) {
@@ -471,8 +480,8 @@ export default function useStats(gameId) {
     xp, recent, favorites, setFavorite, isFavorite,
     earnedAchievements, newAchievements, markAchievementsSeen,
     markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
-    coins, ownedItems, activeTitle, activeNameplate,
-    addCoins, spendCoins, purchaseItem, equipTitle, equipNameplate,
+    coins, ownedItems, activeTitle, activeNameplate, activeNameplateEffect,
+    addCoins, spendCoins, purchaseItem, equipTitle, equipNameplate, equipNameplateEffect,
     checkAchievementCoins,
     getHighScore, setHighScore,
     isAdminLoggedIn,

@@ -17,11 +17,18 @@ const TOURNAMENTS = 'tournaments'
 export async function getOrCreatePlayer(userId, name, username) {
   const ref = doc(db, PLAYERS, userId)
   const snap = await getDoc(ref)
-  if (snap.exists()) return { id: userId, ...snap.data() }
+  if (snap.exists()) {
+    const data = snap.data()
+    if (!data.nameLower && data.name) {
+      updateDoc(ref, { nameLower: data.name.toLowerCase() }).catch(() => {})
+      return { id: userId, ...data, nameLower: data.name.toLowerCase() }
+    }
+    return { id: userId, ...data }
+  }
+  const playerName = name || `Player${Math.floor(Math.random() * 9999)}`
   const player = {
-    name: name || `Player${Math.floor(Math.random() * 9999)}`,
-    username: username || null,
-    usernameChangedAt: null,
+    name: playerName,
+    nameLower: playerName.toLowerCase(),
     xp: 0,
     league: 11,
     leagueInstanceId: null,
@@ -186,9 +193,9 @@ export async function searchPlayers(searchTerm) {
   const col = collection(db, PLAYERS)
   const q = query(
     col,
-    orderBy('username'),
-    where('username', '>=', term),
-    where('username', '<=', term + '\uf8ff'),
+    orderBy('nameLower'),
+    where('nameLower', '>=', term),
+    where('nameLower', '<=', term + '\uf8ff'),
     firestoreLimit(20)
   )
   const snap = await getDocs(q)

@@ -66,6 +66,12 @@ export const NAMEPLATE_COLORS = [
   { id: 'np-fx-gold-shimmer', name: 'Gold Shimmer', price: 6000, type: 'effect' },
   { id: 'np-fx-champion-glow', name: 'Champion Glow', championOnly: true, price: 8000, type: 'effect' },
   { id: 'np-fx-diamond-dust', name: 'Diamond Dust', championOnly: true, price: 10000, type: 'effect' },
+  { id: 'np-fx-smash', name: 'Smash', price: 3000, type: 'effect' },
+  { id: 'np-fx-spin-in', name: 'Spin In', price: 3000, type: 'effect' },
+  { id: 'np-fx-pop-out', name: 'Pop Out', price: 3000, type: 'effect' },
+  { id: 'np-fx-glitch', name: 'Glitch', price: 4000, type: 'effect' },
+  { id: 'np-fx-float', name: 'Float', price: 2500, type: 'effect' },
+  { id: 'np-fx-pulse', name: 'Pulse', price: 2500, type: 'effect' },
 ]
 
 export const ALL_NAMEPLATES = NAMEPLATE_COLORS

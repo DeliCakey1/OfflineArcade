@@ -546,7 +546,10 @@ function UserSearchModal({ onClose }) {
   useEffect(() => {
     function handleKey(e) { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      clearTimeout(timerRef.current)
+    }
   }, [onClose])
 
   const rankInfo = selected ? LEAGUE_RANKS.find(r => r.rank === selected.league) : null
@@ -730,8 +733,8 @@ function App() {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
     newAchievements, markAchievementsSeen, earnedAchievements,
     markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
-    coins, ownedItems, activeTitle, activeNameplate,
-    purchaseItem, equipTitle, equipNameplate, addCoins, checkAchievementCoins,
+    coins, ownedItems, activeTitle, activeNameplate, activeNameplateEffect,
+    purchaseItem, equipTitle, equipNameplate, equipNameplateEffect, addCoins, checkAchievementCoins,
   } = useStats('_global')
 
   const dailyGame = useMemo(() => {
@@ -783,10 +786,15 @@ function App() {
           loadPlayer.then(p => {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
-              setUserUsername(p.username || null)
-              if (!p.username && !u.isAnonymous) {
-                setShowUsernameModal(true)
-              }
+              try {
+                const raw = localStorage.getItem('arcade-stats')
+                const local = raw ? JSON.parse(raw) : {}
+                local._activeTitle = p.title || null
+                local._activeNameplate = p.nameplate || null
+                local._activeNameplateEffect = p.nameplateEffect || null
+                local._ownedItems = p.ownedItems || []
+                localStorage.setItem('arcade-stats', JSON.stringify(local))
+              } catch {}
               if (p.isAdmin && u.email === 'admin@offlinearcade.app') {
                 try {
                   const raw = localStorage.getItem('arcade-admin-session')
@@ -939,29 +947,6 @@ function App() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  useEffect(() => {
-    if (activeGame || currentPage !== 'home') return
-    function handleKey(e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-      const idx = GAMES.findIndex(g => g.id === activeGame)
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault()
-        const next = idx < GAMES.length - 1 ? idx + 1 : 0
-        setActiveGame(GAMES[next].id)
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault()
-        const prev = idx > 0 ? idx - 1 : GAMES.length - 1
-        setActiveGame(GAMES[prev].id)
-      } else if (e.key === 'Escape' && activeGame) {
-        e.preventDefault()
-        if (isPlaying) setConfirmNav({ type: 'home' })
-        else setActiveGame(null)
-      }
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [activeGame, isPlaying, currentPage])
-
   function handleMuteToggle() { toggleMute(); setMuted(isMuted()) }
 
   function handleVolumeChange(val) {
@@ -1029,7 +1014,7 @@ function App() {
     setPlayerName(newName)
     if (userId) {
       import('./leagueService').then(({ updatePlayer }) => {
-        updatePlayer(userId, { name: newName })
+        updatePlayer(userId, { name: newName, nameLower: newName.toLowerCase() })
       }).catch(() => {})
     }
   }, [userId])
@@ -1055,6 +1040,15 @@ function App() {
       }).catch(() => {})
     }
   }, [userId, equipNameplate])
+
+  const handleEquipNameplateEffect = useCallback((nameplateId) => {
+    equipNameplateEffect(nameplateId)
+    if (userId) {
+      import('./leagueService').then(({ updatePlayer }) => {
+        updatePlayer(userId, { nameplateEffect: nameplateId })
+      }).catch(() => {})
+    }
+  }, [userId, equipNameplateEffect])
 
   const handlePurchase = useCallback((itemId, price) => {
     purchaseItem(itemId, price)
@@ -1164,9 +1158,11 @@ function App() {
           ownedItems={ownedItems}
           activeTitle={activeTitle}
           activeNameplate={activeNameplate}
+          activeNameplateEffect={activeNameplateEffect}
           onPurchase={handlePurchase}
           onEquipTitle={handleEquipTitle}
           onEquipNameplate={handleEquipNameplate}
+          onEquipNameplateEffect={handleEquipNameplateEffect}
           isChampion={earnedAchievements.includes('reach-champion')}
           isAdmin={isAdminLoggedIn()}
         />
@@ -1176,6 +1172,7 @@ function App() {
 
   if (activeGame) {
     const game = GAMES.find(g => g.id === activeGame)
+    if (!game) { setActiveGame(null); return null }
     const ActiveComponent = game.component
     return (
       <div>

@@ -145,7 +145,7 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 6px 14px;
   background: var(--bg-glass);
   border-bottom: 1px solid var(--border-glass);
   backdrop-filter: blur(16px);
@@ -153,11 +153,11 @@ body::after {
 }
 .settings-bar-left {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
 }
 .home-btn {
-  font-size: 18px;
+  font-size: 16px;
 }
 .settings-scroll-row {
   display: flex;
@@ -319,30 +319,30 @@ body::after {
 .user-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-glass);
-  border-radius: 20px;
-  font-size: 12px;
+  gap: 5px;
+  padding: 2px 8px 2px 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-light);
   cursor: default;
 }
 .user-avatar {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   color: #fff;
 }
 .user-name {
-  max-width: 80px;
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -791,13 +791,13 @@ body::after {
   animation: fadeSlideUp 0.3s ease-out 0.25s backwards;
 }
 .settings-btn {
-  font-size: 18px;
-  padding: 10px 12px;
-  min-height: 44px;
-  min-width: 44px;
-  border: 1px solid var(--border-glass);
-  border-radius: 10px;
-  background: var(--bg-glass);
+  font-size: 15px;
+  padding: 5px 8px;
+  min-height: 32px;
+  min-width: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(8px);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -813,21 +813,21 @@ body::after {
 .settings-scroll-row > :nth-child(7) { animation-delay: 0.4s; }
 .settings-btn:hover {
   border-color: var(--neon-purple);
-  transform: translateY(-2px) scale(1.1);
+  transform: translateY(-1px) scale(1.08);
   background: var(--bg-card-hover);
-  box-shadow: 0 4px 16px rgba(185, 70, 255, 0.25);
+  box-shadow: 0 2px 10px rgba(185, 70, 255, 0.2);
 }
 
 .settings-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.93);
 }
 
 .nav-btn .nav-label {
   display: none;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   font-family: 'Fredoka', sans-serif;
-  margin-left: 2px;
+  margin-left: 1px;
 }
 @media (min-width: 768px) {
   .nav-btn .nav-label {
@@ -3599,12 +3599,12 @@ body::after {
 .coins-badge {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background: linear-gradient(135deg, rgba(255, 230, 0, 0.15), rgba(255, 107, 43, 0.15));
-  border: 1px solid rgba(255, 230, 0, 0.3);
-  border-radius: 20px;
-  font-size: 13px;
+  gap: 2px;
+  padding: 3px 8px;
+  background: linear-gradient(135deg, rgba(255, 230, 0, 0.12), rgba(255, 107, 43, 0.12));
+  border: 1px solid rgba(255, 230, 0, 0.25);
+  border-radius: 16px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--neon-yellow);
   white-space: nowrap;
@@ -3612,46 +3612,46 @@ body::after {
 .settings-bar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .stat-badge {
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 13px;
+  gap: 2px;
+  padding: 3px 8px;
+  border-radius: 16px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
 .xp-badge {
-  background: linear-gradient(135deg, rgba(255, 200, 0, 0.15), rgba(255, 160, 0, 0.15));
-  border: 1px solid rgba(255, 200, 0, 0.3);
+  background: linear-gradient(135deg, rgba(255, 200, 0, 0.12), rgba(255, 160, 0, 0.12));
+  border: 1px solid rgba(255, 200, 0, 0.25);
   color: #ffd700;
 }
 .league-pos-badge {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
 }
 .league-pos-badge.promo {
-  background: rgba(0, 200, 80, 0.15);
-  border-color: rgba(0, 200, 80, 0.35);
+  background: rgba(0, 200, 80, 0.12);
+  border-color: rgba(0, 200, 80, 0.3);
   color: #34d399;
 }
 .league-pos-badge.demo {
-  background: rgba(220, 38, 38, 0.15);
-  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.3);
   color: #f87171;
 }
 .league-pos-hash {
   opacity: 0.5;
-  font-size: 11px;
+  font-size: 10px;
 }
 .settings-divider {
   width: 1px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.2);
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
 }
 .coins-home-badge {
@@ -3952,6 +3952,60 @@ body::after {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+.np-fx-smash {
+  animation: npSmash 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+.np-fx-spin-in {
+  animation: npSpinIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.np-fx-pop-out {
+  animation: npPopOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.np-fx-glitch {
+  animation: npGlitch 2s infinite;
+}
+.np-fx-float {
+  animation: npFloat 3s ease-in-out infinite;
+}
+.np-fx-pulse {
+  animation: npPulse 1.5s ease-in-out infinite;
+}
+.np-fx-border {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+@keyframes npSmash {
+  0% { transform: scale(3) rotate(-10deg); opacity: 0; }
+  50% { transform: scale(0.9) rotate(2deg); opacity: 1; }
+  70% { transform: scale(1.05) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes npSpinIn {
+  0% { transform: rotate(-360deg) scale(0); opacity: 0; }
+  100% { transform: rotate(0) scale(1); opacity: 1; }
+}
+@keyframes npPopOut {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes npGlitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, -2px); }
+  80% { transform: translate(1px, 2px); }
+}
+@keyframes npFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes npPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
 }
 
 /* ===== ADMIN LOCK BUTTON ===== */

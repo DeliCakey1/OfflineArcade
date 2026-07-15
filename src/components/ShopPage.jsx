@@ -47,6 +47,7 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
 
 function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
   const canAfford = isAdmin || coins >= item.price
+  const isLocked = item.adminOnly && !isAdmin
 
   function renderPreview() {
     if (item.type === 'solid') {
@@ -77,6 +78,24 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
       if (item.id === 'np-fx-diamond-dust') {
         return <span className="np-preview-text np-diamond-text">{item.name}</span>
       }
+      if (item.id === 'np-fx-smash') {
+        return <span className="np-preview-text np-fx-smash">{item.name}</span>
+      }
+      if (item.id === 'np-fx-spin-in') {
+        return <span className="np-preview-text np-fx-spin-in">{item.name}</span>
+      }
+      if (item.id === 'np-fx-pop-out') {
+        return <span className="np-preview-text np-fx-pop-out">{item.name}</span>
+      }
+      if (item.id === 'np-fx-glitch') {
+        return <span className="np-preview-text np-fx-glitch">{item.name}</span>
+      }
+      if (item.id === 'np-fx-float') {
+       return <span className="np-preview-text np-fx-float">{item.name}</span>
+      }
+      if (item.id === 'np-fx-pulse') {
+        return <span className="np-preview-text np-fx-pulse">{item.name}</span>
+      }
       return <span className="np-preview-text">{item.name}</span>
     }
     return <span className="np-preview-text">{item.name}</span>
@@ -88,10 +107,13 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
         {renderPreview()}
       </div>
       <div className="shop-card-name">{item.name}</div>
+      {item.adminOnly && !isAdmin && <div className="shop-card-admin-badge">🔑 Admin Only</div>}
       {item.championOnly && !isAdmin && <div className="shop-card-champion-badge">Champion Only</div>}
-      {isAdmin && <div className="shop-card-admin-badge">👑 Admin</div>}
+      {isAdmin && !item.adminOnly && <div className="shop-card-admin-badge">👑 Admin</div>}
       <div className="shop-card-bottom">
-        {equipped ? (
+        {isLocked ? (
+          <button className="shop-card-btn disabled" disabled>🔒 Admin Only</button>
+        ) : equipped ? (
           <button className="shop-card-btn equipped-btn" onClick={() => onEquip(null)}>Equipped ✓</button>
         ) : owned ? (
           <button className="shop-card-btn equip-btn" onClick={() => onEquip(item.id)}>Equip</button>
@@ -109,7 +131,7 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
   )
 }
 
-export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activeNameplate, onPurchase, onEquipTitle, onEquipNameplate, isChampion, isAdmin }) {
+export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activeNameplate, activeNameplateEffect, onPurchase, onEquipTitle, onEquipNameplate, onEquipNameplateEffect, isChampion, isAdmin }) {
   const [tab, setTab] = useState('titles')
   const [npTab, setNpTab] = useState('colors')
   const sound = useSound()
@@ -126,12 +148,17 @@ export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activ
 
   const filteredNameplates = ALL_NAMEPLATES.filter(np => {
     if (!isAdmin && np.championOnly && !isChampion) return false
+    if (!isAdmin && np.adminOnly) return false
     if (npTab === 'colors') return np.type === 'solid'
     if (npTab === 'gradients') return np.type === 'gradient'
     if (npTab === 'borders') return np.type === 'border'
     if (npTab === 'effects') return np.type === 'effect'
     return false
   })
+
+  const isColorType = npTab === 'colors' || npTab === 'gradients'
+  const equipHandler = isColorType ? onEquipNameplate : onEquipNameplateEffect
+  const activeSlot = isColorType ? activeNameplate : activeNameplateEffect
 
   return (
     <div className="full-page">
@@ -170,7 +197,7 @@ export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activ
               <TitleCard
                 key={item.id}
                 item={item}
-                owned={ownedItems.includes(item.id)}
+                owned={(ownedItems || []).includes(item.id)}
                 equipped={activeTitle === item.id}
                 coins={coins}
                 onBuy={handleBuy}
@@ -191,16 +218,22 @@ export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activ
               </button>
             ))}
           </div>
+          {(npTab === 'colors' || npTab === 'gradients') && (
+            <p className="shop-section-desc">Color nameplates set your text color. Equipped in the color slot.</p>
+          )}
+          {(npTab === 'borders' || npTab === 'effects') && (
+            <p className="shop-section-desc">Effects and borders can be equipped alongside a color. Equipped in the effect slot.</p>
+          )}
           <div className="shop-grid">
             {filteredNameplates.map(item => (
               <NameplateCard
                 key={item.id}
                 item={item}
-                owned={ownedItems.includes(item.id)}
-                equipped={activeNameplate === item.id}
+                owned={(ownedItems || []).includes(item.id)}
+                equipped={activeSlot === item.id}
                 coins={coins}
                 onBuy={handleBuy}
-                onEquip={onEquipNameplate}
+                onEquip={equipHandler}
                 isAdmin={isAdmin}
               />
             ))}

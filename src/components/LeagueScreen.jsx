@@ -67,7 +67,14 @@ function getNameplateEffectClass(nameplateId) {
     if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
     if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
     if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
+    if (np.id === 'np-fx-smash') return 'np-fx-smash'
+    if (np.id === 'np-fx-spin-in') return 'np-fx-spin-in'
+    if (np.id === 'np-fx-pop-out') return 'np-fx-pop-out'
+    if (np.id === 'np-fx-glitch') return 'np-fx-glitch'
+    if (np.id === 'np-fx-float') return 'np-fx-float'
+    if (np.id === 'np-fx-pulse') return 'np-fx-pulse'
   }
+  if (np.type === 'border') return 'np-fx-border'
   return ''
 }
 
@@ -353,7 +360,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
     )
   }
 
-  const tournamentInfo = isTournament ? TOURNAMENT_LABELS[tournament.stage] : null
+  const tournamentInfo = isTournament ? TOURNAMENT_LABELS[tournament.stage] || { emoji: '🏆', name: 'Tournament', size: 20 } : null
 
   return (
     <div className="league-page">
@@ -499,8 +506,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
                 <span className="league-row-pos">#{pos}</span>
                 <div className="league-row-name-col">
                   <span
-                    className={`league-row-name ${getNameplateEffectClass(p.nameplate)} ${getNameplateNeonColor(p.nameplate) ? 'np-fx-neon' : ''}`}
-                    style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplate), '--np-neon-color': getNameplateNeonColor(p.nameplate) || undefined }}
+                    className={`league-row-name ${getNameplateEffectClass(p.nameplateEffect)}`}
+                    style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplateEffect), '--np-neon-color': getNameplateNeonColor(p.nameplateEffect) || undefined }}
                   >
                     {p.name}{isYou ? ' (you)' : ''}
                   </span>
