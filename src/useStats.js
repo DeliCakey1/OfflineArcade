@@ -439,11 +439,10 @@ export default function useStats(gameId) {
   }, [])
 
   const equipNameplateEffect = useCallback((nameplateId) => {
-    setStats(prev => {
-      const updated = { ...prev, _activeNameplateEffect: nameplateId }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    sharedStats = { ...sharedStats, _activeNameplateEffect: nameplateId }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const checkAchievementCoins = useCallback((prevSeenIds, newSeenIds) => {
