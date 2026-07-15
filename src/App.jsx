@@ -737,11 +737,13 @@ function App() {
                     localStorage.setItem('arcade-admin-session', JSON.stringify({ authenticated: true, timestamp: Date.now() }))
                   }
                 } catch {}
-              } else if (p.isAdmin && u.email !== 'admin@offlinearcade.app') {
-                import('./leagueService').then(({ updatePlayer }) => {
-                  updatePlayer(u.uid, { isAdmin: false }).catch(() => {})
-                }).catch(() => {})
+              } else {
                 try { localStorage.removeItem('arcade-admin-session') } catch {}
+                if (p.isAdmin && u.email !== 'admin@offlinearcade.app') {
+                  import('./leagueService').then(({ updatePlayer }) => {
+                    updatePlayer(u.uid, { isAdmin: false }).catch(() => {})
+                  }).catch(() => {})
+                }
               }
             }
           })
