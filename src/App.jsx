@@ -36,6 +36,7 @@ import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorro
 import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
+import { TITLES, ALL_NAMEPLATES } from './shopItems'
 import './index.css'
 
 const CATEGORIES = [
@@ -482,6 +483,50 @@ function UserSearchModal({ onClose }) {
   const [selected, setSelected] = useState(null)
   const timerRef = useRef(null)
 
+  function getNameplateStyle(npId) {
+    if (!npId) return {}
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    if (!np) return {}
+    if (np.type === 'solid' && np.color) return { color: np.color }
+    if (np.type === 'gradient' && np.gradient) return { background: np.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }
+    return {}
+  }
+
+  function getNameplateBorderStyle(npId) {
+    if (!npId) return {}
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    if (!np) return {}
+    if (np.type === 'border' && np.borderColor) return { border: `2px solid ${np.borderColor}`, borderRadius: 4, padding: '1px 4px' }
+    if (np.type === 'border' && np.gradientBorder) return { border: '2px solid transparent', borderImage: `${np.gradientBorder} 1`, borderRadius: 4, padding: '1px 4px' }
+    return {}
+  }
+
+  function getNameplateEffectClass(npId) {
+    if (!npId) return ''
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    if (!np) return ''
+    if (np.type === 'effect') {
+      if (np.neonColor) return 'np-fx-neon'
+      if (np.id === 'np-fx-rainbow-wave') return 'np-fx-rainbow'
+      if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
+      if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
+      if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
+    }
+    return ''
+  }
+
+  function getNameplateNeonColor(npId) {
+    if (!npId) return null
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    return np?.neonColor || null
+  }
+
+  function getTitleName(titleId) {
+    if (!titleId) return null
+    const t = TITLES.find(ti => ti.id === titleId)
+    return t?.name || null
+  }
+
   const doSearch = useCallback((val) => {
     if (!val || val.trim().length < 2) { setResults([]); return }
     setLoading(true)
@@ -533,7 +578,15 @@ function UserSearchModal({ onClose }) {
                 <button key={p.id} className="user-search-result" onClick={() => setSelected(p)}>
                   <span className="user-search-avatar">{(p.username || p.name || 'U')[0].toUpperCase()}</span>
                   <div className="user-search-info">
-                    <span className="user-search-name">{p.username ? `@${p.username}` : p.name || 'Unknown'}</span>
+                    <span
+                      className={`user-search-name ${getNameplateEffectClass(p.nameplate)} ${getNameplateNeonColor(p.nameplate) ? 'np-fx-neon' : ''}`}
+                      style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplate), '--np-neon-color': getNameplateNeonColor(p.nameplate) || undefined }}
+                    >
+                      {p.username ? `@${p.username}` : p.name || 'Unknown'}
+                    </span>
+                    {getTitleName(p.title) && (
+                      <span className="user-search-title">{getTitleName(p.title)}</span>
+                    )}
                     {p.username && p.name && p.name !== p.username && (
                       <span className="user-search-display-name">{p.name}</span>
                     )}
@@ -549,9 +602,17 @@ function UserSearchModal({ onClose }) {
           <div className="user-profile-card">
             <div className="user-profile-header">
               <div className="user-profile-avatar">{(selected.username || selected.name || 'U')[0].toUpperCase()}</div>
-              <div className="user-profile-name">@{selected.username || 'unknown'}</div>
+              <div
+                className={`user-profile-name ${getNameplateEffectClass(selected.nameplate)} ${getNameplateNeonColor(selected.nameplate) ? 'np-fx-neon' : ''}`}
+                style={{ ...getNameplateStyle(selected.nameplate), ...getNameplateBorderStyle(selected.nameplate), '--np-neon-color': getNameplateNeonColor(selected.nameplate) || undefined }}
+              >
+                @{selected.username || 'unknown'}
+              </div>
               {selected.name && selected.username && selected.name !== selected.username && (
                 <div className="user-profile-display-name">{selected.name}</div>
+              )}
+              {getTitleName(selected.title) && (
+                <div className="user-profile-title">{getTitleName(selected.title)}</div>
               )}
               {rankInfo && (
                 <div className="user-profile-rank" style={{ color: rankInfo.color }}>{rankInfo.emoji} {rankInfo.name}</div>
@@ -583,9 +644,6 @@ function UserSearchModal({ onClose }) {
                 <span className="user-profile-stat-label">Tournament Wins</span>
               </div>
             </div>
-            {selected.title && (
-              <div className="user-profile-title">🏷️ {selected.title}</div>
-            )}
             <button className="user-profile-back" onClick={() => setSelected(null)}>← Back to results</button>
           </div>
         )}
