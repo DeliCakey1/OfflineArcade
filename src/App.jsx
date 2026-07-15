@@ -799,10 +799,10 @@ function App() {
               try {
                 const raw = localStorage.getItem('arcade-stats')
                 const local = raw ? JSON.parse(raw) : {}
-                local._activeTitle = p.title || null
-                local._activeNameplate = p.nameplate || null
-                local._activeNameplateEffect = p.nameplateEffect || null
-                local._ownedItems = p.ownedItems || []
+                if (p.title != null) local._activeTitle = p.title
+                if (p.nameplate != null) local._activeNameplate = p.nameplate
+                if (p.nameplateEffect != null) local._activeNameplateEffect = p.nameplateEffect
+                if (p.ownedItems) local._ownedItems = p.ownedItems
                 localStorage.setItem('arcade-stats', JSON.stringify(local))
               } catch {}
               if (p.isAdmin && u.email === 'admin@offlinearcade.app') {
