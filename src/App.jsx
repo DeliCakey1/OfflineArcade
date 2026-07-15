@@ -843,19 +843,25 @@ function App() {
 
   useEffect(() => {
     function handleWin(e) {
-      setShowConfetti(true)
-      if (userId && e.detail?.gameId) {
-        import('./leagueService').then(({ updatePlayer, getPlayer, increment }) => {
-          getPlayer(userId).then(p => {
-            if (p) {
-              const xp = calculateWinXP(e.detail.gameId, p.streak || 0)
-              const coinReward = calculateWinCoins(e.detail.gameId, p.streak || 0)
-              updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) })
-              syncLeagueData({ ...p, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
-            }
-          })
-        }).catch(() => {})
-      }
+      const { gameId, won } = e.detail || {}
+      if (!userId || !gameId) return
+      if (won) setShowConfetti(true)
+      import('./leagueService').then(({ updatePlayer, getPlayer, increment }) => {
+        getPlayer(userId).then(p => {
+          if (!p) return
+          const xp = calculateWinXP(gameId, p.streak || 0)
+          const coinReward = calculateWinCoins(gameId, p.streak || 0)
+          if (won) {
+            updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) })
+            syncLeagueData({ ...p, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
+          } else {
+            const lossXp = Math.round(xp / 4)
+            const lossCoins = Math.round(coinReward / 4)
+            updatePlayer(userId, { xp: increment(lossXp), coins: increment(lossCoins) })
+            syncLeagueData({ ...p, coins: (p.coins || 0) + lossCoins })
+          }
+        })
+      }).catch(() => {})
     }
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
