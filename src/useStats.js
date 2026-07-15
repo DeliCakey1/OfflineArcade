@@ -1,20 +1,128 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { ACHIEVEMENT_COIN_REWARDS } from './shopItems'
 import { isAdminLoggedIn } from './adminAuth'
 
-const STORAGE_KEY = 'arcade-stats'
+let currentUserId = null
+let statsListeners = new Set()
+let sharedStats = {}
+let loadPromise = null
+let saveTimer = null
 
-function loadStats() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
+export function setCurrentUserId(uid) {
+  currentUserId = uid
+  if (uid) {
+    loadFromFirestore(uid)
+  } else {
+    sharedStats = {}
+    notifyListeners()
   }
 }
 
-function saveStats(stats) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stats))
+export function clearCurrentUserId() {
+  currentUserId = null
+  sharedStats = {}
+  notifyListeners()
+}
+
+function notifyListeners() {
+  for (const fn of statsListeners) {
+    try { fn({ ...sharedStats }) } catch {}
+  }
+}
+
+async function loadFromFirestore(uid) {
+  if (loadPromise) return loadPromise
+  loadPromise = (async () => {
+    try {
+      const { loadPlayerStats, getPlayer, savePlayerStats } = await import('./leagueService')
+      let blob = await loadPlayerStats(uid)
+
+      if (!blob) {
+        const player = await getPlayer(uid)
+        if (player) {
+          blob = {}
+          if (player.xp) blob._xp = { total: player.xp }
+          if (player.coins) blob._coins = player.coins
+          if (player.title) blob._activeTitle = player.title
+          if (player.nameplate) blob._activeNameplate = player.nameplate
+          if (player.ownedItems?.length) blob._ownedItems = player.ownedItems
+          if (player.promotions) blob._league = { joined: true, promotions: player.promotions, bestRank: player.league || 11, tournamentEntries: 0, tournamentWins: player.tournamentWins || 0, firstPlaceFinishes: player.firstPlaceFinishes || 0, totalWins: player.wins || 0, wasInTournament: false }
+        }
+
+        try {
+          const raw = localStorage.getItem('arcade-stats')
+          const local = raw ? JSON.parse(raw) : {}
+          if (local._xp?.total && (!blob._xp || blob._xp.total < local._xp.total)) blob._xp = local._xp
+          if (local._coins && (!blob._coins || blob._coins < local._coins)) blob._coins = local._coins
+          if (local._activeTitle) blob._activeTitle = local._activeTitle
+          if (local._activeNameplate) blob._activeNameplate = local._activeNameplate
+          if (local._ownedItems?.length) {
+            const merged = new Set([...(blob._ownedItems || []), ...local._ownedItems])
+            blob._ownedItems = [...merged]
+          }
+          for (const key of Object.keys(local)) {
+            if (!key.startsWith('_') && local[key] && typeof local[key] === 'object') {
+              if (!blob[key] || (local[key].played || 0) > (blob[key].played || 0)) {
+                blob[key] = local[key]
+              }
+            }
+          }
+          if (local._recent) blob._recent = local._recent
+          if (local._favorites) blob._favorites = local._favorites
+          if (local._dailyCompleted) blob._dailyCompleted = local._dailyCompleted
+          if (local._dailyStreak) blob._dailyStreak = local._dailyStreak
+          if (local._seenAchievements) blob._seenAchievements = local._seenAchievements
+          if (local._highScores) blob._highScores = local._highScores
+        } catch {}
+
+        const hsKeys = { 'snake-high': 'snake', 'tetris-high': 'tetris', 'breakout-high': 'breakout', 'flappy-high': 'flappy', 'memory-best': 'memory', 'minesweeper-best': 'minesweeper', 'whack-best': 'whack' }
+        const hs = blob._highScores || {}
+        for (const [lsKey, blobKey] of Object.entries(hsKeys)) {
+          if (!hs[blobKey]) {
+            try {
+              const val = localStorage.getItem(lsKey)
+              if (val) {
+                hs[blobKey] = blobKey === 'minesweeper' || blobKey === 'whack' ? JSON.parse(val) : parseInt(val) || 0
+              }
+            } catch {}
+          }
+        }
+        if (Object.keys(hs).length > 0) blob._highScores = hs
+
+        if (Object.keys(blob).length > 0 && uid === currentUserId) {
+          await savePlayerStats(uid, blob)
+        }
+      }
+
+      if (blob && uid === currentUserId) {
+        const player = await import('./leagueService').then(m => m.getPlayer(uid)).catch(() => null)
+        if (player) {
+          if ((player.xp || 0) > (blob._xp?.total || 0)) blob._xp = { total: player.xp }
+          if ((player.coins || 0) !== (blob._coins || 0)) blob._coins = player.coins || 0
+        }
+        sharedStats = blob
+        notifyListeners()
+      }
+    } catch (e) {
+      console.warn('Failed to load stats from Firestore:', e)
+    } finally {
+      loadPromise = null
+    }
+  })()
+  return loadPromise
+}
+
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    if (!currentUserId) return
+    const statsToSave = { ...sharedStats }
+    import('./leagueService').then(({ savePlayerStats }) => {
+      savePlayerStats(currentUserId, statsToSave).catch(e => {
+        console.warn('Failed to save stats to Firestore:', e)
+      })
+    }).catch(() => {})
+  }, 300)
 }
 
 function getEmptyGameStats() {
@@ -167,54 +275,68 @@ export function getTimeUntilTomorrow() {
 }
 
 export default function useStats(gameId) {
-  const [stats, setStats] = useState(() => loadStats())
+  const [stats, setStats] = useState(() => ({ ...sharedStats }))
+  const gameIdRef = useRef(gameId)
+  gameIdRef.current = gameId
 
-  const gameStats = stats[gameId] || getEmptyGameStats()
+  useEffect(() => {
+    function listener(newStats) {
+      setStats({ ...newStats })
+    }
+    statsListeners.add(listener)
+    if (currentUserId) {
+      setStats({ ...sharedStats })
+    } else {
+      setStats({})
+    }
+    return () => { statsListeners.delete(listener) }
+  }, [])
+
+  const gameStats = currentUserId ? (stats[gameId] || getEmptyGameStats()) : getEmptyGameStats()
 
   const recordGame = useCallback((won, streak = 0) => {
+    if (!currentUserId) return
     if (won) {
-      try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId } })) } catch {}
+      try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId: gameIdRef.current } })) } catch {}
     }
-    try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId, won } })) } catch {}
-    setStats(prev => {
-      const current = prev[gameId] || getEmptyGameStats()
-      const xpEarned = won ? 10 + Math.min(streak, 10) * 2 : 0
-      const prevXp = prev._xp?.total || 0
-      const recent = prev._recent || []
-      const newRecent = [gameId, ...recent.filter(id => id !== gameId)].slice(0, 8)
-      const updated = {
-        ...prev,
-        [gameId]: {
-          played: current.played + 1,
-          won: current.won + (won ? 1 : 0),
-          bestStreak: Math.max(current.bestStreak, streak),
-        },
-        _xp: { total: prevXp + xpEarned },
-        _recent: newRecent,
-      }
-      saveStats(updated)
-      return updated
-    })
-  }, [gameId])
+    try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId: gameIdRef.current, won } })) } catch {}
+    const gid = gameIdRef.current
+    const current = sharedStats[gid] || getEmptyGameStats()
+    const xpEarned = won ? 10 + Math.min(streak, 10) * 2 : 0
+    const prevXp = sharedStats._xp?.total || 0
+    const recent = sharedStats._recent || []
+    const newRecent = [gid, ...recent.filter(id => id !== gid)].slice(0, 8)
+    sharedStats = {
+      ...sharedStats,
+      [gid]: {
+        played: current.played + 1,
+        won: current.won + (won ? 1 : 0),
+        bestStreak: Math.max(current.bestStreak, streak),
+      },
+      _xp: { total: prevXp + xpEarned },
+      _recent: newRecent,
+    }
+    scheduleSave()
+    notifyListeners()
+  }, [])
 
   const clearStats = useCallback(() => {
-    const empty = {}
-    saveStats(empty)
-    setStats(empty)
+    sharedStats = {}
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const setFavorite = useCallback((id, val) => {
-    setStats(prev => {
-      const favs = prev._favorites || []
-      const isFav = favs.includes(id)
-      const shouldAdd = val !== undefined ? val : !isFav
-      const updated = {
-        ...prev,
-        _favorites: shouldAdd ? [...new Set([...favs, id])] : favs.filter(f => f !== id),
-      }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    const favs = sharedStats._favorites || []
+    const isFav = favs.includes(id)
+    const shouldAdd = val !== undefined ? val : !isFav
+    sharedStats = {
+      ...sharedStats,
+      _favorites: shouldAdd ? [...new Set([...favs, id])] : favs.filter(f => f !== id),
+    }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const isFavorite = useCallback((id) => {
@@ -222,102 +344,96 @@ export default function useStats(gameId) {
   }, [stats._favorites])
 
   const markDailyCompleted = useCallback(() => {
-    setStats(prev => {
-      const updated = { ...prev, _dailyCompleted: getDailySeed() }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    sharedStats = { ...sharedStats, _dailyCompleted: getDailySeed() }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
-  const allStats = stats
-  const xp = stats._xp?.total || 0
-  const recent = stats._recent || []
-  const favorites = stats._favorites || []
-  const coins = stats._coins || 0
-  const ownedItems = stats._ownedItems || []
-  const activeTitle = stats._activeTitle || null
-  const activeNameplate = stats._activeNameplate || null
-  const earnedAchievements = ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id)
-  const newAchievements = earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id))
+  const allStats = currentUserId ? stats : {}
+  const xp = currentUserId ? (stats._xp?.total || 0) : 0
+  const recent = currentUserId ? (stats._recent || []) : []
+  const favorites = currentUserId ? (stats._favorites || []) : []
+  const coins = currentUserId ? (stats._coins || 0) : 0
+  const ownedItems = currentUserId ? (stats._ownedItems || []) : []
+  const activeTitle = currentUserId ? (stats._activeTitle || null) : null
+  const activeNameplate = currentUserId ? (stats._activeNameplate || null) : null
+  const earnedAchievements = currentUserId ? ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id) : []
+  const newAchievements = currentUserId ? earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id)) : []
 
   const syncLeagueData = useCallback((playerData) => {
-    setStats(prev => {
-      const league = {
-        joined: true,
-        promotions: playerData.promotions || 0,
-        bestRank: Math.min(prev._league?.bestRank || 11, playerData.league || 11),
-        tournamentEntries: (prev._league?.tournamentEntries || 0) + (playerData.league === 2 && !prev._league?.wasInTournament ? 1 : 0),
-        tournamentWins: playerData.tournamentWins || 0,
-        firstPlaceFinishes: playerData.firstPlaceFinishes || 0,
-        totalWins: playerData.wins || 0,
-        wasInTournament: playerData.league === 2,
-      }
-      const updated = { ...prev, _league: league }
-      if (playerData.coins != null) {
-        updated._coins = playerData.coins
-      }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    const league = {
+      joined: true,
+      promotions: playerData.promotions || 0,
+      bestRank: Math.min(sharedStats._league?.bestRank || 11, playerData.league || 11),
+      tournamentEntries: (sharedStats._league?.tournamentEntries || 0) + (playerData.league === 2 && !sharedStats._league?.wasInTournament ? 1 : 0),
+      tournamentWins: playerData.tournamentWins || 0,
+      firstPlaceFinishes: playerData.firstPlaceFinishes || 0,
+      totalWins: playerData.wins || 0,
+      wasInTournament: playerData.league === 2,
+    }
+    sharedStats = { ...sharedStats, _league: league }
+    if (playerData.coins != null) {
+      sharedStats._coins = playerData.coins
+    }
+    if (playerData.xp != null) {
+      sharedStats._xp = { total: playerData.xp }
+    }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const markAchievementsSeen = useCallback(() => {
-    setStats(prev => {
-      const updated = { ...prev, _seenAchievements: earnedAchievements }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    sharedStats = { ...sharedStats, _seenAchievements: earnedAchievements }
+    scheduleSave()
+    notifyListeners()
   }, [earnedAchievements])
 
   const addCoins = useCallback((amount) => {
-    if (amount <= 0) return
-    setStats(prev => {
-      const updated = { ...prev, _coins: (prev._coins || 0) + amount }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId || amount <= 0) return
+    sharedStats = { ...sharedStats, _coins: (sharedStats._coins || 0) + amount }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const spendCoins = useCallback((amount) => {
-    setStats(prev => {
-      const current = prev._coins || 0
-      if (current < amount) return prev
-      const updated = { ...prev, _coins: current - amount }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    const current = sharedStats._coins || 0
+    if (current < amount) return
+    sharedStats = { ...sharedStats, _coins: current - amount }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const purchaseItem = useCallback((itemId, price) => {
-    setStats(prev => {
-      const admin = isAdminLoggedIn()
-      const current = prev._coins || 0
-      if (!admin && current < price) return prev
-      if ((prev._ownedItems || []).includes(itemId)) return prev
-      const updated = {
-        ...prev,
-        _coins: admin ? current : current - price,
-        _ownedItems: [...(prev._ownedItems || []), itemId],
-      }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    const admin = isAdminLoggedIn()
+    const current = sharedStats._coins || 0
+    if (!admin && current < price) return
+    if ((sharedStats._ownedItems || []).includes(itemId)) return
+    sharedStats = {
+      ...sharedStats,
+      _coins: admin ? current : current - price,
+      _ownedItems: [...(sharedStats._ownedItems || []), itemId],
+    }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const equipTitle = useCallback((titleId) => {
-    setStats(prev => {
-      const updated = { ...prev, _activeTitle: titleId }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    sharedStats = { ...sharedStats, _activeTitle: titleId }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const equipNameplate = useCallback((nameplateId) => {
-    setStats(prev => {
-      const updated = { ...prev, _activeNameplate: nameplateId }
-      saveStats(updated)
-      return updated
-    })
+    if (!currentUserId) return
+    sharedStats = { ...sharedStats, _activeNameplate: nameplateId }
+    scheduleSave()
+    notifyListeners()
   }, [])
 
   const checkAchievementCoins = useCallback((prevSeenIds, newSeenIds) => {
@@ -330,8 +446,24 @@ export default function useStats(gameId) {
     return totalReward
   }, [])
 
-  const totalPlayedCount = totalPlayed(stats)
-  const totalWonCount = totalWon(stats)
+  const getHighScore = useCallback((key) => {
+    if (!currentUserId) return 0
+    return sharedStats._highScores?.[key] || 0
+  }, [])
+
+  const setHighScore = useCallback((key, value) => {
+    if (!currentUserId) return
+    const hs = sharedStats._highScores || {}
+    sharedStats = {
+      ...sharedStats,
+      _highScores: { ...hs, [key]: value },
+    }
+    scheduleSave()
+    notifyListeners()
+  }, [])
+
+  const totalPlayedCount = currentUserId ? totalPlayed(stats) : 0
+  const totalWonCount = currentUserId ? totalWon(stats) : 0
 
   return {
     gameStats, recordGame, clearStats, allStats,
@@ -341,6 +473,7 @@ export default function useStats(gameId) {
     coins, ownedItems, activeTitle, activeNameplate,
     addCoins, spendCoins, purchaseItem, equipTitle, equipNameplate,
     checkAchievementCoins,
+    getHighScore, setHighScore,
     isAdminLoggedIn,
   }
 }

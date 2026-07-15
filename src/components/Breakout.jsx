@@ -32,7 +32,7 @@ export default function Breakout({ onPlayingChange }) {
   const [score, setScore] = useState(0)
   const [lives, setLives] = useState(3)
   const [copied, setCopied] = useState(false)
-  const [highScore, setHighScore] = useState(() => { try { return parseInt(localStorage.getItem('breakout-high') || '0') } catch { return 0 } })
+  const [highScore, setHighScore] = useState(() => 0)
   const canvasRef = useRef(null)
   const gameRef = useRef({ paddleX: W / 2, ballX: W / 2, ballY: PADDLE_Y - 15, ballDX: 0, ballDY: 0, bricks: [], paused: false })
   const animRef = useRef(null)
@@ -41,7 +41,7 @@ export default function Breakout({ onPlayingChange }) {
   const gameOverRef = useRef(false)
   const diffRef = useRef(null)
   const sound = useSound()
-  const { recordGame } = useStats('breakout')
+  const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('breakout')
   const isPlaying = difficulty && !gameOver
 
   useEffect(() => { onPlayingChange?.(isPlaying); return () => onPlayingChange?.(false) }, [isPlaying, onPlayingChange])
@@ -98,7 +98,7 @@ export default function Breakout({ onPlayingChange }) {
         setGameOver(true)
         sound('lose')
         const finalScore = scoreRef.current
-        if (finalScore > highScore) { setHighScore(finalScore); try { localStorage.setItem('breakout-high', String(finalScore)) } catch {} }
+        if (finalScore > highScore) { setHighScore(finalScore); saveHighScore('breakout', finalScore) }
         recordGame(finalScore, 0)
         return
       }
@@ -125,7 +125,7 @@ export default function Breakout({ onPlayingChange }) {
       const finalScore = scoreRef.current + 500
       scoreRef.current = finalScore
       setScore(finalScore)
-      if (finalScore > highScore) { setHighScore(finalScore); try { localStorage.setItem('breakout-high', String(finalScore)) } catch {} }
+      if (finalScore > highScore) { setHighScore(finalScore); saveHighScore('breakout', finalScore) }
       recordGame(finalScore, 1)
       return
     }

@@ -32,7 +32,7 @@ import ThemePicker from './components/ThemePicker'
 import SignInPage from './components/SignInPage'
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
-import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow } from './useStats'
+import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow, setCurrentUserId, clearCurrentUserId } from './useStats'
 import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
@@ -73,23 +73,6 @@ const GAMES = [
 
 function getSaved(key, fallback) {
   try { return localStorage.getItem(key) ?? fallback } catch { return fallback }
-}
-
-function getGuestUsername() {
-  try {
-    let guestName = localStorage.getItem('arcade-guest-username')
-    if (guestName) return guestName
-    const adjectives = ['Swift', 'Lucky', 'Sly', 'Bold', 'Wily', 'Keen', 'Brave', 'Calm', 'Wild', 'Cool']
-    const nouns = ['Fox', 'Wolf', 'Bear', 'Hawk', 'Lynx', 'Deer', 'Owl', 'Crane', 'Lion', 'Tiger']
-    const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
-    const noun = nouns[Math.floor(Math.random() * nouns.length)]
-    const num = Math.floor(Math.random() * 999) + 1
-    guestName = `${adj}${noun}${num}`
-    localStorage.setItem('arcade-guest-username', guestName)
-    return guestName
-  } catch {
-    return 'Guest' + Math.floor(Math.random() * 9999)
-  }
 }
 
 function formatCountdown(ms) {
@@ -640,16 +623,11 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
               <span className="user-name">@{userUsername}</span>
             </div>
           )}
-          {user && user.isAnonymous && (
-            <div className="user-badge guest-badge">
-              <span className="user-avatar">{((userUsername || playerName || 'G')[0]).toUpperCase()}</span>
-              <span className="user-name guest-name">{userUsername || playerName || 'Guest'}</span>
-            </div>
-          )}
-          {user && !user.isAnonymous ? (
-            <button className="settings-btn" onClick={onSignOut} title="Sign Out" aria-label="Sign out">🚪</button>
-          ) : (
+          {(!user || user.isAnonymous) && (
             <button className="settings-btn" onClick={onSignIn} title="Sign In to Save Data" aria-label="Sign in">👤</button>
+          )}
+          {user && !user.isAnonymous && (
+            <button className="settings-btn" onClick={onSignOut} title="Sign Out" aria-label="Sign out">🚪</button>
           )}
           <button className="settings-btn" onClick={onSettings} title="Settings" aria-label="Settings">⚙️</button>
         </div>
@@ -735,19 +713,13 @@ function App() {
         const wasAnonymous = !user && u.metadata.creationTime === u.metadata.lastSignInTime
         setUser(u)
         setUserId(u.uid)
-        if (wasAnonymous && !u.isAnonymous) {
-          import('./leagueService').then(({ getOrCreatePlayer, getPlayer, updatePlayer }) => {
-            const guestName = getGuestUsername()
-            getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', guestName)
-            const localXp = (() => { try { return JSON.parse(localStorage.getItem('arcade-stats') || '{}')._xp?.total || 0 } catch { return 0 } })()
-            if (localXp > 0) {
-              getPlayer(u.uid).then(p => {
-                if (p && (p.xp || 0) < localXp) {
-                  updatePlayer(u.uid, { xp: localXp })
-                }
-              })
-            }
+        if (!u.isAnonymous) {
+          setCurrentUserId(u.uid)
+          import('./leagueService').then(({ getOrCreatePlayer, getPlayer }) => {
+            getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
           }).catch(() => {})
+        } else {
+          setCurrentUserId(null)
         }
         import('./leagueService').then(({ getPlayer }) => {
           getPlayer(u.uid).then(p => {
@@ -757,14 +729,6 @@ function App() {
               if (!p.username && !u.isAnonymous) {
                 setShowUsernameModal(true)
               }
-              try {
-                const raw = localStorage.getItem('arcade-stats')
-                const local = raw ? JSON.parse(raw) : {}
-                local._activeTitle = p.title || null
-                local._activeNameplate = p.nameplate || null
-                local._ownedItems = p.ownedItems || []
-                localStorage.setItem('arcade-stats', JSON.stringify(local))
-              } catch {}
               if (p.isAdmin && u.email === 'admin@offlinearcade.app') {
                 try {
                   const raw = localStorage.getItem('arcade-admin-session')
@@ -779,10 +743,6 @@ function App() {
                 }).catch(() => {})
                 try { localStorage.removeItem('arcade-admin-session') } catch {}
               }
-            } else if (u.isAnonymous) {
-              const guestName = getGuestUsername()
-              setPlayerName(guestName)
-              setUserUsername(guestName)
             }
           })
         }).catch(() => {})
@@ -791,14 +751,7 @@ function App() {
         setUserId(null)
         setPlayerName(null)
         setUserUsername(null)
-        try {
-          const raw = localStorage.getItem('arcade-stats')
-          const local = raw ? JSON.parse(raw) : {}
-          local._activeTitle = null
-          local._activeNameplate = null
-          local._ownedItems = []
-          localStorage.setItem('arcade-stats', JSON.stringify(local))
-        } catch {}
+        clearCurrentUserId()
         try { localStorage.removeItem('arcade-admin-session') } catch {}
         if (!adminSwitchingRef.current) {
           import('./firebase').then(({ ensureAuth }) => {
@@ -820,18 +773,15 @@ function App() {
               const xp = calculateWinXP(e.detail.gameId, p.streak || 0)
               const coinReward = calculateWinCoins(e.detail.gameId, p.streak || 0)
               updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) })
-              syncLeagueData({ ...p, wins: (p.wins || 0) + 1 })
+              syncLeagueData({ ...p, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
             }
           })
         }).catch(() => {})
-      } else if (e.detail?.gameId) {
-        const localCoins = calculateWinCoins(e.detail.gameId, 0)
-        addCoins(localCoins)
       }
     }
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
-  }, [userId, syncLeagueData, addCoins])
+  }, [userId, syncLeagueData])
 
   useEffect(() => {
     function handleGameComplete(e) {

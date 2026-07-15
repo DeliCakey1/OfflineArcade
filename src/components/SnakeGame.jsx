@@ -40,15 +40,13 @@ function getSnakeColor(index, length) {
 
 export default function SnakeGame({ onPlayingChange }) {
   const [score, setScore] = useState(0)
-  const [highScore, setHighScore] = useState(() => {
-    return parseInt(localStorage.getItem('snake-high') || '0')
-  })
+  const [highScore, setHighScoreState] = useState(() => 0)
   const [gameState, setGameState] = useState('idle')
   const [copied, setCopied] = useState(false)
   const [renderTick, setRenderTick] = useState(0)
 
   const sound = useSound()
-  const { recordGame } = useStats('snake')
+  const { recordGame, getHighScore, setHighScore } = useStats('snake')
 
   const gameRef = useRef({
     snake: getInitialSnake(),
@@ -100,10 +98,10 @@ export default function SnakeGame({ onPlayingChange }) {
       setGameState('gameover')
       recordGame(false, g.score)
       sound('lose')
-      const prev = parseInt(localStorage.getItem('snake-high') || '0')
+      const prev = getHighScore('snake')
       if (g.score > prev) {
-        localStorage.setItem('snake-high', g.score)
-        setHighScore(g.score)
+        setHighScore('snake', g.score)
+        setHighScoreState(g.score)
       }
       return
     }
@@ -115,10 +113,10 @@ export default function SnakeGame({ onPlayingChange }) {
         setGameState('gameover')
         recordGame(false, g.score)
         sound('lose')
-        const prev = parseInt(localStorage.getItem('snake-high') || '0')
+        const prev = getHighScore('snake')
         if (g.score > prev) {
-          localStorage.setItem('snake-high', g.score)
-          setHighScore(g.score)
+          setHighScore('snake', g.score)
+          setHighScoreState(g.score)
         }
         return
       }

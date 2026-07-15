@@ -38,9 +38,23 @@ export async function getOrCreatePlayer(userId, name, username) {
     isAdmin: false,
     createdAt: Date.now(),
     lastActive: Date.now(),
+    statsBlob: null,
   }
   await setDoc(ref, player)
   return { id: userId, ...player }
+}
+
+export async function loadPlayerStats(userId) {
+  const ref = doc(db, PLAYERS, userId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  const data = snap.data()
+  return data.statsBlob || null
+}
+
+export async function savePlayerStats(userId, stats) {
+  const ref = doc(db, PLAYERS, userId)
+  await updateDoc(ref, { statsBlob: stats, lastActive: Date.now() })
 }
 
 export async function updatePlayer(userId, data) {

@@ -19,9 +19,7 @@ export default function WhackAMole({ onPlayingChange }) {
   const [timeLeft, setTimeLeft] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [bestScores, setBestScores] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('whack-best') || '{}') } catch { return {} }
-  })
+  const [bestScores, setBestScores] = useState(() => ({}))
   const [streak, setStreak] = useState(0)
   const [maxStreak, setMaxStreak] = useState(0)
   const [hitEffects, setHitEffects] = useState({})
@@ -33,7 +31,7 @@ export default function WhackAMole({ onPlayingChange }) {
   const gameOverRef = useRef(false)
   const difficultyRef = useRef(null)
   const sound = useSound()
-  const { recordGame, gameStats } = useStats('whack')
+  const { recordGame, gameStats, getHighScore, setHighScore: saveHighScore } = useStats('whack')
   const isPlaying = difficulty && !gameOver
 
   useEffect(() => {
@@ -139,7 +137,7 @@ export default function WhackAMole({ onPlayingChange }) {
       if (isNewBest && score > 0) {
         const updated = { ...bestScores, [difficulty.name]: score }
         setBestScores(updated)
-        try { localStorage.setItem('whack-best', JSON.stringify(updated)) } catch {}
+        saveHighScore('whack', updated)
       }
       recordGame(score > 10, maxStreak)
       sound(score > 15 ? 'victory' : score > 8 ? 'win' : 'lose')

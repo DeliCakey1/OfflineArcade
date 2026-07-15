@@ -66,11 +66,11 @@ export default function Minesweeper({ onPlayingChange }) {
   const [timer, setTimer] = useState(0)
   const [started, setStarted] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [bestTime, setBestTime] = useState(() => { try { return JSON.parse(localStorage.getItem('minesweeper-best') || '{}') } catch { return {} } })
+  const [bestTime, setBestTime] = useState(() => ({}))
   const timerRef = useRef(null)
   const startTimeRef = useRef(0)
   const sound = useSound()
-  const { recordGame } = useStats('minesweeper')
+  const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('minesweeper')
   const isPlaying = difficulty && !gameOver
 
   useEffect(() => { onPlayingChange?.(isPlaying); return () => onPlayingChange?.(false) }, [isPlaying, onPlayingChange])
@@ -124,8 +124,9 @@ export default function Minesweeper({ onPlayingChange }) {
       sound('win')
       const best = bestTime[difficulty] || Infinity
       if (finalTime < best) {
-        setBestTime(prev => ({ ...prev, [difficulty]: finalTime }))
-        try { localStorage.setItem('minesweeper-best', JSON.stringify({ ...bestTime, [difficulty]: finalTime })) } catch {}
+        const updated = { ...bestTime, [difficulty]: finalTime }
+        setBestTime(updated)
+        saveHighScore('minesweeper', updated)
       }
       recordGame(finalTime, 1)
     }

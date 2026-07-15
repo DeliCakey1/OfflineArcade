@@ -33,7 +33,7 @@ export default function MemoryMatch({ onPlayingChange }) {
   const [copied, setCopied] = useState(false)
   const [animating, setAnimating] = useState(false)
   const sound = useSound()
-  const { recordGame } = useStats('memory')
+  const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('memory')
   const isPlaying = mode && !gameOver
 
   useEffect(() => {
@@ -68,9 +68,9 @@ export default function MemoryMatch({ onPlayingChange }) {
       const isWin = true
       recordGame(isWin, moves)
       sound('victory')
-      const prev = parseInt(localStorage.getItem('memory-best') || '9999')
+      const prev = getHighScore('memory') || 9999
       if (moves < prev) {
-        localStorage.setItem('memory-best', moves)
+        saveHighScore('memory', moves)
         setBestScore(moves)
       }
     }

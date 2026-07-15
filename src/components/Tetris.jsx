@@ -86,9 +86,7 @@ export default function Tetris({ onPlayingChange }) {
   const [lines, setLines] = useState(0)
   const [level, setLevel] = useState(0)
   const [gameOver, setGameOver] = useState(false)
-  const [highScore, setHighScore] = useState(() => {
-    try { return parseInt(localStorage.getItem('tetris-high') || '0') } catch { return 0 }
-  })
+  const [highScore, setHighScore] = useState(() => 0)
   const [copied, setCopied] = useState(false)
   const dropTimer = useRef(null)
   const gridRef = useRef(createGrid())
@@ -99,7 +97,7 @@ export default function Tetris({ onPlayingChange }) {
   const gameOverRef = useRef(false)
   const levelRef = useRef(0)
   const sound = useSound()
-  const { recordGame, gameStats } = useStats('tetris')
+  const { recordGame, gameStats, getHighScore, setHighScore: saveHighScore } = useStats('tetris')
   const isPlaying = difficulty && !gameOver
 
   useEffect(() => {
@@ -125,14 +123,14 @@ export default function Tetris({ onPlayingChange }) {
       const finalScore = scoreRef.current
       if (finalScore > highScore) {
         setHighScore(finalScore)
-        try { localStorage.setItem('tetris-high', String(finalScore)) } catch {}
+        saveHighScore('tetris', finalScore)
       }
       recordGame(finalScore, 0)
       return
     }
     currentRef.current = p
     setCurrent(p)
-  }, [highScore, recordGame, sound])
+  }, [highScore, recordGame, sound, saveHighScore])
 
   const tick = useCallback(() => {
     if (gameOverRef.current) return

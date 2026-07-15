@@ -22,7 +22,7 @@ export default function FlappyBird({ onPlayingChange }) {
   const [difficulty, setDifficulty] = useState(null)
   const [gameOver, setGameOver] = useState(false)
   const [score, setScore] = useState(0)
-  const [bestScore, setBestScore] = useState(() => { try { return parseInt(localStorage.getItem('flappy-high') || '0') } catch { return 0 } })
+  const [bestScore, setBestScore] = useState(() => 0)
   const [copied, setCopied] = useState(false)
   const [started, setStarted] = useState(false)
   const canvasRef = useRef(null)
@@ -33,7 +33,7 @@ export default function FlappyBird({ onPlayingChange }) {
   const startedRef = useRef(false)
   const diffRef = useRef(null)
   const sound = useSound()
-  const { recordGame } = useStats('flappy')
+  const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('flappy')
   const isPlaying = difficulty && !gameOver
 
   useEffect(() => { onPlayingChange?.(isPlaying); return () => onPlayingChange?.(false) }, [isPlaying, onPlayingChange])
@@ -89,7 +89,7 @@ export default function FlappyBird({ onPlayingChange }) {
       setGameOver(true)
       sound('lose')
       const finalScore = scoreRef.current
-      if (finalScore > bestScore) { setBestScore(finalScore); try { localStorage.setItem('flappy-high', String(finalScore)) } catch {} }
+      if (finalScore > bestScore) { setBestScore(finalScore); saveHighScore('flappy', finalScore) }
       recordGame(finalScore, 0)
       return
     }
@@ -100,7 +100,7 @@ export default function FlappyBird({ onPlayingChange }) {
           setGameOver(true)
           sound('lose')
           const finalScore = scoreRef.current
-          if (finalScore > bestScore) { setBestScore(finalScore); try { localStorage.setItem('flappy-high', String(finalScore)) } catch {} }
+          if (finalScore > bestScore) { setBestScore(finalScore); saveHighScore('flappy', finalScore) }
           recordGame(finalScore, 0)
           return
         }
