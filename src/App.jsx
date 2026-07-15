@@ -582,8 +582,8 @@ function UserSearchModal({ onClose }) {
                   <span className="user-search-avatar">{(p.username || p.name || 'U')[0].toUpperCase()}</span>
                   <div className="user-search-info">
                     <span
-                      className={`user-search-name ${getNameplateEffectClass(p.nameplate)} ${getNameplateNeonColor(p.nameplate) ? 'np-fx-neon' : ''}`}
-                      style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplate), '--np-neon-color': getNameplateNeonColor(p.nameplate) || undefined }}
+                      className={`user-search-name ${getNameplateEffectClass(p.nameplateEffect)}`}
+                      style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplateEffect), '--np-neon-color': getNameplateNeonColor(p.nameplateEffect) || undefined }}
                     >
                       {p.username ? `@${p.username}` : p.name || 'Unknown'}
                     </span>
@@ -606,8 +606,8 @@ function UserSearchModal({ onClose }) {
             <div className="user-profile-header">
               <div className="user-profile-avatar">{(selected.username || selected.name || 'U')[0].toUpperCase()}</div>
               <div
-                className={`user-profile-name ${getNameplateEffectClass(selected.nameplate)} ${getNameplateNeonColor(selected.nameplate) ? 'np-fx-neon' : ''}`}
-                style={{ ...getNameplateStyle(selected.nameplate), ...getNameplateBorderStyle(selected.nameplate), '--np-neon-color': getNameplateNeonColor(selected.nameplate) || undefined }}
+                className={`user-profile-name ${getNameplateEffectClass(selected.nameplateEffect)}`}
+                style={{ ...getNameplateStyle(selected.nameplate), ...getNameplateBorderStyle(selected.nameplateEffect), '--np-neon-color': getNameplateNeonColor(selected.nameplateEffect) || undefined }}
               >
                 @{selected.username || 'unknown'}
               </div>

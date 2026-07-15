@@ -482,7 +482,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
                 return (
                   <div key={p.id} className={`player-search-row ${p.id === userId ? 'you' : ''}`}>
                     <div className="player-search-row-name">
-                      <span className={`player-search-name ${getNameplateEffectClass(p.nameplate)}`} style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplate), '--np-neon-color': getNameplateNeonColor(p.nameplate) || undefined }}>
+                      <span className={`player-search-name ${getNameplateEffectClass(p.nameplateEffect)}`} style={{ ...getNameplateStyle(p.nameplate), ...getNameplateBorderStyle(p.nameplateEffect), '--np-neon-color': getNameplateNeonColor(p.nameplateEffect) || undefined }}>
                         @{p.username || 'unknown'}{p.id === userId ? ' (you)' : ''}
                       </span>
                       {getTitleName(p.title) && <span className="player-search-title">{getTitleName(p.title)}</span>}
