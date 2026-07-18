@@ -19,9 +19,29 @@ export async function getOrCreatePlayer(userId, name, username) {
   const snap = await getDoc(ref)
   if (snap.exists()) {
     const data = snap.data()
-    if (!data.nameLower && data.name) {
-      updateDoc(ref, { nameLower: data.name.toLowerCase() }).catch(() => {})
-      return { id: userId, ...data, nameLower: data.name.toLowerCase() }
+    const updates = {}
+    if (!data.nameLower && data.name) updates.nameLower = data.name.toLowerCase()
+    if (data.league == null) updates.league = 11
+    if (data.leagueInstanceId === undefined) updates.leagueInstanceId = null
+    if (data.wins == null) updates.wins = 0
+    if (data.losses == null) updates.losses = 0
+    if (data.streak == null) updates.streak = 0
+    if (data.promotions == null) updates.promotions = 0
+    if (data.xp == null) updates.xp = 0
+    if (data.coins == null) updates.coins = 0
+    if (data.title === undefined) updates.title = null
+    if (data.nameplate === undefined) updates.nameplate = null
+    if (data.nameplateEffect === undefined) updates.nameplateEffect = null
+    if (data.ownedItems === undefined) updates.ownedItems = []
+    if (data.tournamentWins == null) updates.tournamentWins = 0
+    if (data.firstPlaceFinishes == null) updates.firstPlaceFinishes = 0
+    if (data.usernameSkipped === undefined) updates.usernameSkipped = false
+    if (Object.keys(updates).length > 0) {
+      updateDoc(ref, updates).catch(() => {})
+      Object.assign(data, updates)
+    }
+    if (updates.nameLower) {
+      return { id: userId, ...data, nameLower: updates.nameLower }
     }
     return { id: userId, ...data }
   }
@@ -46,6 +66,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     nameplateEffect: null,
     ownedItems: [],
     isAdmin: false,
+    usernameSkipped: false,
     createdAt: Date.now(),
     lastActive: Date.now(),
     statsBlob: null,
