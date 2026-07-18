@@ -4556,6 +4556,30 @@ body::after {
 }
 .admin-coin-remove:hover:not(:disabled) { background: rgba(255, 59, 48, 0.25); }
 .admin-coin-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.admin-coin-selectable {
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.admin-coin-selectable:hover {
+  border-color: var(--neon-blue);
+  background: rgba(0, 122, 255, 0.08);
+}
+.admin-coin-select-hint {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-left: 8px;
+}
+.admin-coin-back {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+  border-color: var(--border-glass);
+  padding: 4px 10px;
+  font-size: 14px;
+}
+.admin-coin-back:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
 .admin-my-coins {
   display: flex;
   align-items: center;

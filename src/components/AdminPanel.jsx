@@ -27,6 +27,7 @@ export default function AdminPanel({ userId }) {
   const [myCoinDone, setMyCoinDone] = useState('')
   const [myCoinError, setMyCoinError] = useState('')
   const [targetUsername, setTargetUsername] = useState('')
+  const [targetResults, setTargetResults] = useState([])
   const [targetPlayer, setTargetPlayer] = useState(null)
   const [targetLoading, setTargetLoading] = useState(false)
   const [targetError, setTargetError] = useState('')
@@ -137,20 +138,27 @@ export default function AdminPanel({ userId }) {
     if (!name) return
     setTargetLoading(true)
     setTargetError('')
+    setTargetResults([])
     setTargetPlayer(null)
     setTargetDone('')
     try {
       const results = await searchPlayersByName(name)
-      const match = results.find(r => (r.username || '').toLowerCase() === name)
-      if (!match) {
-        setTargetError('Player not found.')
+      if (results.length === 0) {
+        setTargetError('No players found.')
       } else {
-        setTargetPlayer(match)
+        setTargetResults(results)
       }
     } catch (err) {
       setTargetError(err.message || 'Lookup failed.')
     }
     setTargetLoading(false)
+  }
+
+  function handleSelectTarget(player) {
+    setTargetPlayer(player)
+    setTargetResults([])
+    setTargetUsername('')
+    setTargetDone('')
   }
 
   async function handleTargetCoinAction(action) {
@@ -265,14 +273,14 @@ export default function AdminPanel({ userId }) {
           <div className="admin-section-card">
             <span className="admin-section-emoji">🪙</span>
             <h4>Give / Remove Coins</h4>
-            <p>Look up a player by username, then give or remove coins.</p>
+            <p>Search for a player, select them, then give or remove coins.</p>
             <form onSubmit={handleTargetLookup} className="admin-coin-search">
               <input
                 type="text"
                 className="admin-coin-input"
                 value={targetUsername}
                 onChange={e => setTargetUsername(e.target.value)}
-                placeholder="Enter username..."
+                placeholder="Search by username..."
               />
               <button type="submit" className="admin-coin-search-btn" disabled={targetLoading || !targetUsername.trim()}>
                 {targetLoading ? '...' : '🔍'}
@@ -280,13 +288,29 @@ export default function AdminPanel({ userId }) {
             </form>
             {targetError && <p className="admin-reset-error">{targetError}</p>}
             {targetDone && <p className="admin-reset-success">{targetDone}</p>}
+            {targetResults.length > 0 && !targetPlayer && (
+              <div className="admin-coin-results">
+                {targetResults.map(r => (
+                  <div key={r.id} className="admin-coin-result admin-coin-selectable" onClick={() => handleSelectTarget(r)}>
+                    <div className="admin-coin-result-info">
+                      <span className="admin-coin-result-name">@{r.username || 'unknown'}</span>
+                      <span className="admin-coin-result-coins">🪙 {(r.coins || 0).toLocaleString()}</span>
+                    </div>
+                    <span className="admin-coin-select-hint">→</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {targetPlayer && (
               <div className="admin-coin-results">
                 <div className="admin-coin-result">
                   <div className="admin-coin-result-info">
-                    <span className="admin-coin-result-name">@{targetPlayer.username}</span>
+                    <span className="admin-coin-result-name">@{targetPlayer.username || 'unknown'}</span>
                     <span className="admin-coin-result-coins">🪙 {(targetPlayer.coins || 0).toLocaleString()}</span>
                   </div>
+                  <button className="admin-coin-action-btn admin-coin-back" onClick={() => { setTargetPlayer(null); setTargetResults([]); setTargetDone('') }}>
+                    ✕
+                  </button>
                 </div>
                 <div className="admin-coin-amount-row">
                   <input
