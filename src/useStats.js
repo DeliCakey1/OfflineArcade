@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { ACHIEVEMENT_COIN_REWARDS } from './shopItems'
-import { isAdminLoggedIn } from './adminAuth'
 
 let currentUserId = null
 let statsListeners = new Set()
@@ -410,13 +409,12 @@ export default function useStats(gameId) {
 
   const purchaseItem = useCallback((itemId, price) => {
     if (!currentUserId) return
-    const admin = isAdminLoggedIn()
     const current = sharedStats._coins || 0
-    if (!admin && current < price) return
+    if (current < price) return
     if ((sharedStats._ownedItems || []).includes(itemId)) return
     sharedStats = {
       ...sharedStats,
-      _coins: admin ? current : current - price,
+      _coins: current - price,
       _ownedItems: [...(sharedStats._ownedItems || []), itemId],
     }
     scheduleSave()
@@ -482,6 +480,5 @@ export default function useStats(gameId) {
     addCoins, spendCoins, purchaseItem, equipTitle, equipNameplate, equipNameplateEffect,
     checkAchievementCoins,
     getHighScore, setHighScore,
-    isAdminLoggedIn,
   }
 }

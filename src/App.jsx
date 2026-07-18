@@ -519,6 +519,24 @@ function UserSearchModal({ onClose }) {
       if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
       if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
       if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
+      if (np.id === 'np-fx-smash') return 'np-fx-smash'
+      if (np.id === 'np-fx-spin-in') return 'np-fx-spin-in'
+      if (np.id === 'np-fx-pop-out') return 'np-fx-pop-out'
+      if (np.id === 'np-fx-glitch') return 'np-fx-glitch'
+      if (np.id === 'np-fx-float') return 'np-fx-float'
+      if (np.id === 'np-fx-pulse') return 'np-fx-pulse'
+      if (np.id === 'np-fx-fire') return 'np-fx-fire'
+      if (np.id === 'np-fx-electric') return 'np-fx-electric'
+      if (np.id === 'np-fx-frost') return 'np-fx-frost'
+      if (np.id === 'np-fx-toxic') return 'np-fx-toxic'
+      if (np.id === 'np-fx-hologram') return 'np-fx-hologram'
+      if (np.id === 'np-fx-ghost') return 'np-fx-ghost'
+      if (np.id === 'np-fx-scanner') return 'np-fx-scanner'
+      if (np.id === 'np-fx-wobble') return 'np-fx-wobble'
+      if (np.id === 'np-fx-stroke') return 'np-fx-stroke'
+      if (np.id === 'np-fx-matrix') return 'np-fx-matrix'
+      if (np.id === 'np-fx-comet') return 'np-fx-comet'
+      if (np.id === 'np-fx-breathe') return 'np-fx-breathe'
     }
     return ''
   }
@@ -779,11 +797,23 @@ function App() {
       if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
       if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
       if (np.id === 'np-fx-smash') return 'np-fx-smash'
-      if (np.id === 'np-fx-spin-in') return 'np-fx-spin'
-      if (np.id === 'np-fx-pop-out') return 'np-fx-pop'
+      if (np.id === 'np-fx-spin-in') return 'np-fx-spin-in'
+      if (np.id === 'np-fx-pop-out') return 'np-fx-pop-out'
       if (np.id === 'np-fx-glitch') return 'np-fx-glitch'
       if (np.id === 'np-fx-float') return 'np-fx-float'
       if (np.id === 'np-fx-pulse') return 'np-fx-pulse'
+      if (np.id === 'np-fx-fire') return 'np-fx-fire'
+      if (np.id === 'np-fx-electric') return 'np-fx-electric'
+      if (np.id === 'np-fx-frost') return 'np-fx-frost'
+      if (np.id === 'np-fx-toxic') return 'np-fx-toxic'
+      if (np.id === 'np-fx-hologram') return 'np-fx-hologram'
+      if (np.id === 'np-fx-ghost') return 'np-fx-ghost'
+      if (np.id === 'np-fx-scanner') return 'np-fx-scanner'
+      if (np.id === 'np-fx-wobble') return 'np-fx-wobble'
+      if (np.id === 'np-fx-stroke') return 'np-fx-stroke'
+      if (np.id === 'np-fx-matrix') return 'np-fx-matrix'
+      if (np.id === 'np-fx-comet') return 'np-fx-comet'
+      if (np.id === 'np-fx-breathe') return 'np-fx-breathe'
     }
     return ''
   }
@@ -1206,7 +1236,7 @@ function App() {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <AdminPanel onBack={() => setCurrentPage('home')} userId={user?.uid} />
+        <AdminPanel userId={user?.uid} />
       </div>
     )
   }

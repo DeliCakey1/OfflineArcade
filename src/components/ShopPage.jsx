@@ -10,7 +10,7 @@ const NAMEPLATE_TABS = [
 ]
 
 function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
-  const canAfford = isAdmin || coins >= item.price
+  const canAfford = coins >= item.price
   const rarityColor = RARITY_COLORS[item.rarity] || '#a3a3a3'
   const isLocked = item.adminOnly && !isAdmin
 
@@ -23,7 +23,6 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
       <div className="shop-card-name">{item.name}</div>
       {item.adminOnly && <div className="shop-card-admin-badge">🔑 Admin Only</div>}
       {item.championOnly && !isAdmin && <div className="shop-card-champion-badge">Champion Only</div>}
-      {isAdmin && !item.adminOnly && <div className="shop-card-admin-badge">👑 Admin</div>}
       <div className="shop-card-bottom">
         {isLocked ? (
           <button className="shop-card-btn disabled" disabled>🔒 Admin Only</button>
@@ -34,10 +33,10 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
         ) : (
           <button
             className={`shop-card-btn buy-btn ${!canAfford ? 'disabled' : ''}`}
-            onClick={() => canAfford && onBuy(item.id, isAdmin ? 0 : item.price)}
+            onClick={() => canAfford && onBuy(item.id, item.price)}
             disabled={!canAfford}
           >
-            {isAdmin ? '✨ Free' : `🪙 ${item.price}`}
+            🪙 {item.price}
           </button>
         )}
       </div>
@@ -46,7 +45,7 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
 }
 
 function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
-  const canAfford = isAdmin || coins >= item.price
+  const canAfford = coins >= item.price
   const isLocked = item.adminOnly && !isAdmin
   const [hoverKey, setHoverKey] = useState(0)
 
@@ -92,10 +91,46 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
         return <span key={hoverKey} className="np-preview-text np-fx-glitch">{item.name}</span>
       }
       if (item.id === 'np-fx-float') {
-       return <span key={hoverKey} className="np-preview-text np-fx-float">{item.name}</span>
+        return <span key={hoverKey} className="np-preview-text np-fx-float">{item.name}</span>
       }
       if (item.id === 'np-fx-pulse') {
         return <span key={hoverKey} className="np-preview-text np-fx-pulse">{item.name}</span>
+      }
+      if (item.id === 'np-fx-fire') {
+        return <span key={hoverKey} className="np-preview-text np-fx-fire">{item.name}</span>
+      }
+      if (item.id === 'np-fx-electric') {
+        return <span key={hoverKey} className="np-preview-text np-fx-electric">{item.name}</span>
+      }
+      if (item.id === 'np-fx-frost') {
+        return <span key={hoverKey} className="np-preview-text np-fx-frost">{item.name}</span>
+      }
+      if (item.id === 'np-fx-toxic') {
+        return <span key={hoverKey} className="np-preview-text np-fx-toxic">{item.name}</span>
+      }
+      if (item.id === 'np-fx-hologram') {
+        return <span key={hoverKey} className="np-preview-text np-fx-hologram">{item.name}</span>
+      }
+      if (item.id === 'np-fx-ghost') {
+        return <span key={hoverKey} className="np-preview-text np-fx-ghost">{item.name}</span>
+      }
+      if (item.id === 'np-fx-scanner') {
+        return <span key={hoverKey} className="np-preview-text np-fx-scanner">{item.name}</span>
+      }
+      if (item.id === 'np-fx-wobble') {
+        return <span key={hoverKey} className="np-preview-text np-fx-wobble">{item.name}</span>
+      }
+      if (item.id === 'np-fx-stroke') {
+        return <span key={hoverKey} className="np-preview-text np-fx-stroke">{item.name}</span>
+      }
+      if (item.id === 'np-fx-matrix') {
+        return <span key={hoverKey} className="np-preview-text np-fx-matrix">{item.name}</span>
+      }
+      if (item.id === 'np-fx-comet') {
+        return <span key={hoverKey} className="np-preview-text np-fx-comet">{item.name}</span>
+      }
+      if (item.id === 'np-fx-breathe') {
+        return <span key={hoverKey} className="np-preview-text np-fx-breathe">{item.name}</span>
       }
       return <span className="np-preview-text">{item.name}</span>
     }
@@ -108,9 +143,8 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
         {renderPreview()}
       </div>
       <div className="shop-card-name">{item.name}</div>
-      {item.adminOnly && !isAdmin && <div className="shop-card-admin-badge">🔑 Admin Only</div>}
+      {item.adminOnly && <div className="shop-card-admin-badge">🔑 Admin Only</div>}
       {item.championOnly && !isAdmin && <div className="shop-card-champion-badge">Champion Only</div>}
-      {isAdmin && !item.adminOnly && <div className="shop-card-admin-badge">👑 Admin</div>}
       <div className="shop-card-bottom">
         {isLocked ? (
           <button className="shop-card-btn disabled" disabled>🔒 Admin Only</button>
@@ -121,10 +155,10 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
         ) : (
           <button
             className={`shop-card-btn buy-btn ${!canAfford ? 'disabled' : ''}`}
-            onClick={() => canAfford && onBuy(item.id, isAdmin ? 0 : item.price)}
+            onClick={() => canAfford && onBuy(item.id, item.price)}
             disabled={!canAfford}
           >
-            {isAdmin ? '✨ Free' : `🪙 ${item.price}`}
+            🪙 {item.price}
           </button>
         )}
       </div>
@@ -165,11 +199,7 @@ export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activ
       <div className="full-page-header">
         <button className="quit-btn" onClick={onBack}>← Back</button>
         <h2 className="full-page-title">🛒 Shop</h2>
-        {isAdmin ? (
-          <div className="shop-admin-badge">👑 Admin</div>
-        ) : (
-          <div className="shop-coins-badge">🪙 {coins.toLocaleString()}</div>
-        )}
+        <div className="shop-coins-badge">🪙 {coins.toLocaleString()}</div>
       </div>
 
       <div className="shop-tabs">
@@ -182,11 +212,7 @@ export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activ
       </div>
 
       {showBought && (
-        <div className="shop-bought-toast">{isAdmin ? 'Admin Unlocked!' : 'Purchased!'}</div>
-      )}
-
-      {isAdmin && (
-        <div className="shop-admin-banner">👑 Admin Mode — All items free, all items unlocked</div>
+        <div className="shop-bought-toast">Purchased!</div>
       )}
 
       {tab === 'titles' && (

@@ -3971,6 +3971,83 @@ body::after {
 .np-fx-pulse {
   animation: npPulse 1.5s ease-in-out infinite;
 }
+.np-fx-fire {
+  background: linear-gradient(0deg, #ff3333, #ff6b2b, #ffe600);
+  background-size: 100% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: npFire 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px #ff6b2b);
+}
+.np-fx-electric {
+  color: #7df9ff;
+  animation: npElectric 0.8s steps(2) infinite;
+}
+.np-fx-frost {
+  background: linear-gradient(180deg, #ffffff, #a8d8ea, #7df9ff);
+  background-size: 100% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: npFrost 3s ease-in-out infinite;
+}
+.np-fx-toxic {
+  color: #39ff14;
+  text-shadow: 0 0 6px #39ff14, 0 0 12px #39ff14, 0 0 24px rgba(57, 255, 20, 0.4);
+  animation: npToxic 2s ease-in-out infinite;
+}
+.np-fx-hologram {
+  background: linear-gradient(135deg, #ff2d7b, #b946ff, #00d4ff, #39ff14, #ff2d7b);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: npHologram 3s ease infinite;
+}
+.np-fx-ghost {
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  animation: npGhost 3s ease-in-out infinite;
+}
+.np-fx-scanner {
+  position: relative;
+  overflow: hidden;
+}
+.np-fx-scanner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent);
+  animation: npScan 2.5s linear infinite;
+}
+.np-fx-wobble {
+  animation: npWobble 1s ease-in-out infinite;
+}
+.np-fx-stroke {
+  -webkit-text-stroke: 1.5px #ffffff;
+  color: transparent;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+.np-fx-matrix {
+  color: #39ff14;
+  text-shadow: 0 0 4px #39ff14, 0 8px 4px rgba(57, 255, 20, 0.4);
+  animation: npMatrix 2s steps(3) infinite;
+}
+.np-fx-comet {
+  background: linear-gradient(90deg, transparent, #7df9ff, #ffffff, #7df9ff, transparent);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: npComet 2s ease-in-out infinite;
+}
+.np-fx-breathe {
+  animation: npBreathe 3s ease-in-out infinite;
+}
 .np-fx-border {
   border: 2px solid rgba(255, 255, 255, 0.3);
   padding: 1px 6px;
@@ -4006,6 +4083,62 @@ body::after {
 @keyframes npPulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.7; transform: scale(1.05); }
+}
+@keyframes npFire {
+  0%, 100% { background-position: 0% 100%; filter: drop-shadow(0 0 6px #ff6b2b); }
+  50% { background-position: 0% 0%; filter: drop-shadow(0 0 12px #ff3333); }
+}
+@keyframes npElectric {
+  0% { text-shadow: 0 0 8px #7df9ff, 0 0 16px #7df9ff; opacity: 1; }
+  25% { text-shadow: 0 0 2px #7df9ff; opacity: 0.6; }
+  50% { text-shadow: 0 0 16px #7df9ff, 0 0 32px #7df9ff, 0 0 48px #3b82f6; opacity: 1; }
+  75% { text-shadow: 0 0 2px #7df9ff; opacity: 0.7; }
+  100% { text-shadow: 0 0 8px #7df9ff, 0 0 16px #7df9ff; opacity: 1; }
+}
+@keyframes npFrost {
+  0%, 100% { background-position: 0% 0%; filter: drop-shadow(0 0 4px rgba(168, 216, 234, 0.5)); }
+  50% { background-position: 0% 100%; filter: drop-shadow(0 0 10px rgba(125, 249, 255, 0.8)); }
+}
+@keyframes npToxic {
+  0%, 100% { text-shadow: 0 0 6px #39ff14, 0 0 12px #39ff14, 0 0 24px rgba(57, 255, 20, 0.4); }
+  50% { text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 40px rgba(57, 255, 20, 0.6), 0 0 60px rgba(57, 255, 20, 0.2); }
+}
+@keyframes npHologram {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes npGhost {
+  0%, 100% { opacity: 0.5; transform: translateY(0); }
+  25% { opacity: 0.3; transform: translateY(-2px); }
+  50% { opacity: 0.6; transform: translateY(0); }
+  75% { opacity: 0.25; transform: translateY(1px); }
+}
+@keyframes npScan {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+@keyframes npWobble {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(5deg); }
+  30% { transform: rotate(-5deg); }
+  45% { transform: rotate(3deg); }
+  60% { transform: rotate(-3deg); }
+  75% { transform: rotate(1deg); }
+}
+@keyframes npMatrix {
+  0% { text-shadow: 0 0 4px #39ff14, 0 0 8px #39ff14; transform: translateY(0); }
+  33% { text-shadow: 0 0 8px #39ff14, 0 16px 4px rgba(57, 255, 20, 0.5); transform: translateY(-1px); }
+  66% { text-shadow: 0 0 2px #39ff14, 0 -8px 4px rgba(57, 255, 20, 0.3); transform: translateY(1px); }
+  100% { text-shadow: 0 0 4px #39ff14, 0 0 8px #39ff14; transform: translateY(0); }
+}
+@keyframes npComet {
+  0% { background-position: 200% 0%; }
+  100% { background-position: -200% 0%; }
+}
+@keyframes npBreathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.8; }
 }
 
 /* ===== ADMIN LOCK BUTTON ===== */
@@ -4319,6 +4452,125 @@ body::after {
   background: rgba(255, 45, 123, 0.2);
   transform: translateY(-1px);
 }
+.admin-coin-search {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.admin-coin-input {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+.admin-coin-input::placeholder { color: var(--text-dim); }
+.admin-coin-input:focus { border-color: var(--neon-blue); }
+.admin-coin-search-btn {
+  padding: 8px 12px;
+  background: rgba(0, 122, 255, 0.15);
+  border: 1px solid rgba(0, 122, 255, 0.4);
+  border-radius: 8px;
+  color: var(--neon-blue);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.admin-coin-search-btn:hover:not(:disabled) { background: rgba(0, 122, 255, 0.25); }
+.admin-coin-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.admin-coin-results {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-coin-amount-row {
+  display: flex;
+  gap: 6px;
+}
+.admin-coin-amount-input {
+  flex: 1;
+  padding: 6px 8px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  outline: none;
+  width: 100px;
+}
+.admin-coin-amount-input::placeholder { color: var(--text-dim); }
+.admin-coin-amount-input:focus { border-color: #ffd700; }
+.admin-coin-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+}
+.admin-coin-result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.admin-coin-result-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+.admin-coin-result-coins {
+  font-size: 12px;
+  color: var(--neon-green);
+}
+.admin-coin-result-actions {
+  display: flex;
+  gap: 6px;
+}
+.admin-coin-action-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.admin-coin-give {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34c759;
+  border-color: rgba(52, 199, 89, 0.4);
+}
+.admin-coin-give:hover:not(:disabled) { background: rgba(52, 199, 89, 0.25); }
+.admin-coin-remove {
+  background: rgba(255, 59, 48, 0.15);
+  color: #ff3b30;
+  border-color: rgba(255, 59, 48, 0.4);
+}
+.admin-coin-remove:hover:not(:disabled) { background: rgba(255, 59, 48, 0.25); }
+.admin-coin-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.admin-my-coins {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+}
+.admin-my-coins-amount {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--neon-green);
+}
+.admin-my-coins-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
 
 /* ===== SHOP ADMIN BADGES ===== */
 .shop-admin-badge {
@@ -4342,18 +4594,6 @@ body::after {
   margin-bottom: 6px;
   display: inline-block;
 }
-.shop-admin-banner {
-  text-align: center;
-  padding: 10px 16px;
-  background: rgba(255, 215, 0, 0.08);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  border-radius: 10px;
-  color: var(--neon-yellow);
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
 /* ===== USER SEARCH ===== */
 .user-search-header {
   display: flex;
