@@ -35,6 +35,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     if (data.ownedItems === undefined) updates.ownedItems = []
     if (data.tournamentWins == null) updates.tournamentWins = 0
     if (data.firstPlaceFinishes == null) updates.firstPlaceFinishes = 0
+    if (data.tournamentTickets == null) updates.tournamentTickets = 0
     if (data.usernameSkipped === undefined) updates.usernameSkipped = false
     if (Object.keys(updates).length > 0) {
       updateDoc(ref, updates).catch(() => {})
@@ -60,6 +61,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     promotions: 0,
     tournamentWins: 0,
     firstPlaceFinishes: 0,
+    tournamentTickets: 0,
     coins: 0,
     title: null,
     nameplate: null,
@@ -321,13 +323,22 @@ export async function processSeasonReset(leagueId) {
     const p = promoted[i]
     const coinReward = coinRewardPositions[i] || 0
     if (promoteRank === 2) {
-      await addToTournament(p.id)
-      await updatePlayer(p.id, {
-        league: promoteRank,
-        leagueInstanceId: null,
-        promotions: increment(1),
-        coins: increment(coinReward),
-      })
+      const hasTicket = (p.tournamentTickets || 0) > 0
+      if (hasTicket) {
+        await addToTournament(p.id)
+        await updatePlayer(p.id, {
+          league: promoteRank,
+          leagueInstanceId: null,
+          promotions: increment(1),
+          tournamentTickets: increment(-1),
+          coins: increment(coinReward),
+        })
+      } else {
+        await updatePlayer(p.id, {
+          promotions: increment(1),
+          coins: increment(coinReward),
+        })
+      }
     } else {
       const newLeague = await findOrCreateLeagueInstance(promoteRank)
       await leaveLeague(leagueId, p.id)

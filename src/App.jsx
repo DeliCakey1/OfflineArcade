@@ -681,7 +681,7 @@ function UserSearchModal({ onClose }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, userUsername, onSignIn, onSignOut, coins, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, userUsername, onSignIn, onSignOut, coins, tournamentTickets, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -702,6 +702,7 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
             </div>
           )}
           <div className="stat-badge xp-badge" title="Total XP">⭐ {xp?.toLocaleString() || '0'}</div>
+          <div className="stat-badge tickets-badge" title="Tournament Tickets">🎫 {tournamentTickets || 0}</div>
           <div className="stat-badge coins-badge" title="Coins">🪙 {coins?.toLocaleString() || '0'}</div>
           <div className="settings-divider" />
           {user && !user.isAnonymous && userUsername && (
@@ -764,7 +765,7 @@ function App() {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
     newAchievements, markAchievementsSeen, earnedAchievements,
     markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
-    coins, ownedItems, activeTitle, activeNameplate, activeNameplateEffect,
+    coins, ownedItems, tournamentTickets, activeTitle, activeNameplate, activeNameplateEffect,
     purchaseItem, equipTitle, equipNameplate, equipNameplateEffect, addCoins, checkAchievementCoins,
   } = useStats('_global')
 
@@ -922,14 +923,14 @@ function App() {
 
   useEffect(() => {
     function handleWin(e) {
-      const { gameId, won } = e.detail || {}
+      const { gameId, won, score } = e.detail || {}
       if (!userId || !gameId) return
       if (won) setShowConfetti(true)
       import('./leagueService').then(({ updatePlayer, getPlayer, increment }) => {
         getPlayer(userId).then(p => {
           if (!p) return
           const xp = calculateWinXP(gameId, p.streak || 0)
-          const coinReward = calculateWinCoins(gameId, p.streak || 0)
+          const coinReward = calculateWinCoins(gameId, p.streak || 0, score || 0)
           if (won) {
             updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) })
             syncLeagueData({ ...p, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
@@ -1099,6 +1100,7 @@ function App() {
     onSignIn: () => setCurrentPage('signin'),
     onSignOut: () => signOut().then(() => window.location.reload()).catch(() => {}),
     coins,
+    tournamentTickets,
     xp,
     leaguePos,
     nameplateEffectClass: getNameplateEffectClass(activeNameplateEffect),
@@ -1150,10 +1152,14 @@ function App() {
   const handlePurchase = useCallback((itemId, price) => {
     purchaseItem(itemId, price)
     if (userId) {
-      import('./leagueService').then(({ updatePlayer }) => {
-        const owned = new Set(ownedItems || [])
-        owned.add(itemId)
-        updatePlayer(userId, { ownedItems: [...owned] })
+      import('./leagueService').then(({ updatePlayer, increment }) => {
+        if (itemId === 'ticket-tournament') {
+          updatePlayer(userId, { tournamentTickets: increment(1) })
+        } else {
+          const owned = new Set(ownedItems || [])
+          owned.add(itemId)
+          updatePlayer(userId, { ownedItems: [...owned] })
+        }
       }).catch(() => {})
     }
   }, [userId, purchaseItem, ownedItems])
@@ -1198,7 +1204,7 @@ function App() {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} />
+        <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       </div>
     )
@@ -1248,6 +1254,7 @@ function App() {
         <ShopPage
           onBack={() => setCurrentPage('home')}
           coins={coins}
+          tournamentTickets={tournamentTickets}
           ownedItems={ownedItems}
           activeTitle={activeTitle}
           activeNameplate={activeNameplate}

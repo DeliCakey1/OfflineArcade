@@ -1,6 +1,15 @@
 export const SHOP_CATEGORIES = {
   titles: { id: 'titles', label: 'Titles', emoji: '🏷️', desc: 'Show off below your name in leagues' },
   nameplates: { id: 'nameplates', label: 'Nameplates', emoji: '✨', desc: 'Style your name in league standings' },
+  tickets: { id: 'tickets', label: 'Tickets', emoji: '🎫', desc: 'Entry passes for special events' },
+}
+
+export const TOURNAMENT_TICKET = {
+  id: 'ticket-tournament',
+  name: 'Tournament Ticket',
+  emoji: '🎫',
+  description: 'Required to enter the Diamond Tournament. Valid for all 3 stages.',
+  price: 2500,
 }
 
 export const TITLES = [
@@ -151,7 +160,7 @@ export const ACHIEVEMENT_COIN_REWARDS = {
   'league-wins-100': 150,
 }
 
-export const TOURNAMENT_COIN_REWARDS = { first: 2000, second: 1500, third: 1000 }
+export const TOURNAMENT_COIN_REWARDS = { first: 3000, second: 2000, third: 1500 }
 
 export const LEAGUE_COIN_REWARDS = {
   11: { first: 100, second: 75, third: 50 },

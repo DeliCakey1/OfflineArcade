@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import useSound from '../useSound'
-import { TITLES, ALL_NAMEPLATES, RARITY_COLORS } from '../shopItems'
+import { TITLES, ALL_NAMEPLATES, RARITY_COLORS, TOURNAMENT_TICKET } from '../shopItems'
 
 const NAMEPLATE_TABS = [
   { id: 'colors', label: 'Colors', emoji: '🎨' },
@@ -166,7 +166,7 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
   )
 }
 
-export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activeNameplate, activeNameplateEffect, onPurchase, onEquipTitle, onEquipNameplate, onEquipNameplateEffect, isChampion, isAdmin }) {
+export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems, activeTitle, activeNameplate, activeNameplateEffect, onPurchase, onEquipTitle, onEquipNameplate, onEquipNameplateEffect, isChampion, isAdmin }) {
   const [tab, setTab] = useState('titles')
   const [npTab, setNpTab] = useState('colors')
   const sound = useSound()
@@ -208,6 +208,9 @@ export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activ
         </button>
         <button className={`shop-tab ${tab === 'nameplates' ? 'active' : ''}`} onClick={() => { setTab('nameplates'); sound('click') }}>
           ✨ Nameplates
+        </button>
+        <button className={`shop-tab ${tab === 'tickets' ? 'active' : ''}`} onClick={() => { setTab('tickets'); sound('click') }}>
+          🎫 Tickets
         </button>
       </div>
 
@@ -263,6 +266,35 @@ export default function ShopPage({ onBack, coins, ownedItems, activeTitle, activ
                 isAdmin={isAdmin}
               />
             ))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'tickets' && (
+        <div className="full-page-content">
+          <p className="shop-section-desc">Tickets grant access to exclusive events. Each ticket is consumed on entry.</p>
+          <div className="shop-tickets-info">
+            <div className="shop-ticket-card">
+              <div className="shop-ticket-header">
+                <span className="shop-ticket-emoji">{TOURNAMENT_TICKET.emoji}</span>
+                <div className="shop-ticket-info">
+                  <h3 className="shop-ticket-name">{TOURNAMENT_TICKET.name}</h3>
+                  <p className="shop-ticket-desc">{TOURNAMENT_TICKET.description}</p>
+                </div>
+              </div>
+              <div className="shop-ticket-footer">
+                <span className="shop-ticket-owned">Owned: {tournamentTickets || 0}</span>
+                {coins >= TOURNAMENT_TICKET.price ? (
+                  <button className="shop-card-btn buy-btn" onClick={() => handleBuy(TOURNAMENT_TICKET.id, TOURNAMENT_TICKET.price)}>
+                    🪙 {TOURNAMENT_TICKET.price.toLocaleString()}
+                  </button>
+                ) : (
+                  <button className="shop-card-btn buy-btn disabled" disabled>
+                    🪙 {TOURNAMENT_TICKET.price.toLocaleString()}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

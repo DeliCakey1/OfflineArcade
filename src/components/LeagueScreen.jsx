@@ -13,7 +13,7 @@ import {
   processFinalsReset, updatePlayer, ensurePlayerInLeague,
 } from '../leagueService'
 import { MAX_PER_LEAGUE } from '../leagues'
-import { TITLES, ALL_NAMEPLATES } from '../shopItems'
+import { TITLES, ALL_NAMEPLATES, TOURNAMENT_TICKET } from '../shopItems'
 
 const LEAGUE_GAMES = [
   { id: 'rps', label: 'RPS', emoji: '✊' },
@@ -102,7 +102,7 @@ function getTitleName(titleId) {
   return t ? t.name : null
 }
 
-export default function LeagueScreen({ onBack, userId, onPlayGame }) {
+export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTickets, coins, onBuyTicket }) {
   const [player, setPlayer] = useState(null)
   const [league, setLeague] = useState(null)
   const [tournament, setTournament] = useState(null)
@@ -439,6 +439,28 @@ export default function LeagueScreen({ onBack, userId, onPlayGame }) {
           </div>
         )
       })()}
+
+      {player && !isTournament && (league?.rank || player.league) === 3 && (
+        <div className="league-ticket-prompt">
+          <div className="league-ticket-info">
+            <span className="league-ticket-icon">🎫</span>
+            <div>
+              <p className="league-ticket-text">Top 3 advance to <strong>Tournament</strong> — requires 1 Ticket</p>
+              <p className="league-ticket-sub">Without a ticket, you'll earn league coins based on placement.</p>
+            </div>
+          </div>
+          <div className="league-ticket-buy">
+            <span className="league-ticket-owned">Owned: {tournamentTickets || 0}</span>
+            {coins >= TOURNAMENT_TICKET.price ? (
+              <button className="league-ticket-btn" onClick={() => { sound('cash'); onBuyTicket(TOURNAMENT_TICKET.id, TOURNAMENT_TICKET.price) }}>
+                Buy 🪙 {TOURNAMENT_TICKET.price.toLocaleString()}
+              </button>
+            ) : (
+              <button className="league-ticket-btn disabled" disabled>Need 🪙 {TOURNAMENT_TICKET.price.toLocaleString()}</button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="league-play-section">
         <h3>Play for League XP</h3>

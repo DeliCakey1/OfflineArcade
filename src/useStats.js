@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { ACHIEVEMENT_COIN_REWARDS } from './shopItems'
+import { SCORE_BASED_GAMES } from './leagues'
 
 let currentUserId = null
 let statsListeners = new Set()
@@ -47,6 +48,7 @@ async function loadFromFirestore(uid) {
           if (player.nameplate) blob._activeNameplate = player.nameplate
           if (player.nameplateEffect) blob._activeNameplateEffect = player.nameplateEffect
           if (player.ownedItems?.length) blob._ownedItems = player.ownedItems
+          if (player.tournamentTickets != null) blob._tournamentTickets = player.tournamentTickets
           if (player.promotions) blob._league = { joined: true, promotions: player.promotions, bestRank: player.league || 11, tournamentEntries: 0, tournamentWins: player.tournamentWins || 0, firstPlaceFinishes: player.firstPlaceFinishes || 0, totalWins: player.wins || 0, wasInTournament: false }
         }
 
@@ -100,6 +102,7 @@ async function loadFromFirestore(uid) {
         if (player) {
           if ((player.xp || 0) > (blob._xp?.total || 0)) blob._xp = { total: player.xp }
           if ((player.coins || 0) !== (blob._coins || 0)) blob._coins = player.coins || 0
+          if ((player.tournamentTickets || 0) !== (blob._tournamentTickets || 0)) blob._tournamentTickets = player.tournamentTickets || 0
         }
         sharedStats = blob
         notifyListeners()
@@ -296,12 +299,22 @@ export default function useStats(gameId) {
   const gameStats = currentUserId ? (stats[gameId] || getEmptyGameStats()) : getEmptyGameStats()
 
   const recordGame = useCallback((won, streak = 0) => {
-    try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId: gameIdRef.current, won: !!won } })) } catch {}
-    try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId: gameIdRef.current, won: !!won } })) } catch {}
-    if (!currentUserId) return
     const gid = gameIdRef.current
+    const isScoreBased = SCORE_BASED_GAMES.includes(gid)
+    let score = 0
+    let isWin = false
+    if (isScoreBased) {
+      if (typeof won === 'number' && won > 0) { score = won; isWin = true }
+      else if (typeof streak === 'number' && streak > 0) { score = streak; isWin = true }
+      else { score = typeof won === 'number' ? won : 0; isWin = false }
+    } else {
+      isWin = !!won
+    }
+    try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId: gid, won: isWin, score } })) } catch {}
+    try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId: gid, won: isWin } })) } catch {}
+    if (!currentUserId) return
     const current = sharedStats[gid] || getEmptyGameStats()
-    const xpEarned = won ? 10 + Math.min(streak, 10) * 2 : 3
+    const xpEarned = isWin ? 10 + Math.min(streak, 10) * 2 : 3
     const prevXp = sharedStats._xp?.total || 0
     const recent = sharedStats._recent || []
     const newRecent = [gid, ...recent.filter(id => id !== gid)].slice(0, 8)
@@ -309,7 +322,7 @@ export default function useStats(gameId) {
       ...sharedStats,
       [gid]: {
         played: current.played + 1,
-        won: current.won + (won ? 1 : 0),
+        won: current.won + (isWin ? 1 : 0),
         bestStreak: Math.max(current.bestStreak, streak),
       },
       _xp: { total: prevXp + xpEarned },
@@ -355,6 +368,7 @@ export default function useStats(gameId) {
   const favorites = currentUserId ? (stats._favorites || []) : []
   const coins = currentUserId ? (stats._coins || 0) : 0
   const ownedItems = currentUserId ? (stats._ownedItems || []) : []
+  const tournamentTickets = currentUserId ? (stats._tournamentTickets || 0) : 0
   const activeTitle = currentUserId ? (stats._activeTitle || null) : null
   const activeNameplate = currentUserId ? (stats._activeNameplate || null) : null
   const activeNameplateEffect = currentUserId ? (stats._activeNameplateEffect || null) : null
@@ -411,11 +425,19 @@ export default function useStats(gameId) {
     if (!currentUserId) return
     const current = sharedStats._coins || 0
     if (current < price) return
-    if ((sharedStats._ownedItems || []).includes(itemId)) return
-    sharedStats = {
-      ...sharedStats,
-      _coins: current - price,
-      _ownedItems: [...(sharedStats._ownedItems || []), itemId],
+    if (itemId === 'ticket-tournament') {
+      sharedStats = {
+        ...sharedStats,
+        _coins: current - price,
+        _tournamentTickets: (sharedStats._tournamentTickets || 0) + 1,
+      }
+    } else {
+      if ((sharedStats._ownedItems || []).includes(itemId)) return
+      sharedStats = {
+        ...sharedStats,
+        _coins: current - price,
+        _ownedItems: [...(sharedStats._ownedItems || []), itemId],
+      }
     }
     scheduleSave()
     notifyListeners()
@@ -476,7 +498,7 @@ export default function useStats(gameId) {
     xp, recent, favorites, setFavorite, isFavorite,
     earnedAchievements, newAchievements, markAchievementsSeen,
     markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
-    coins, ownedItems, activeTitle, activeNameplate, activeNameplateEffect,
+    coins, ownedItems, tournamentTickets, activeTitle, activeNameplate, activeNameplateEffect,
     addCoins, spendCoins, purchaseItem, equipTitle, equipNameplate, equipNameplateEffect,
     checkAchievementCoins,
     getHighScore, setHighScore,
