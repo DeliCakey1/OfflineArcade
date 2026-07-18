@@ -26,13 +26,13 @@ export default function AdminPanel({ userId }) {
   const [myCoinAmount, setMyCoinAmount] = useState('')
   const [myCoinDone, setMyCoinDone] = useState('')
   const [myCoinError, setMyCoinError] = useState('')
-  const [coinSearch, setCoinSearch] = useState('')
-  const [coinSearchResults, setCoinSearchResults] = useState([])
-  const [coinSearchLoading, setCoinSearchLoading] = useState(false)
-  const [coinSearchError, setCoinSearchError] = useState('')
-  const [coinAmount, setCoinAmount] = useState('')
-  const [coinActionLoading, setCoinActionLoading] = useState('')
-  const [coinActionDone, setCoinActionDone] = useState('')
+  const [targetUsername, setTargetUsername] = useState('')
+  const [targetPlayer, setTargetPlayer] = useState(null)
+  const [targetLoading, setTargetLoading] = useState(false)
+  const [targetError, setTargetError] = useState('')
+  const [targetCoinAmount, setTargetCoinAmount] = useState('')
+  const [targetActionLoading, setTargetActionLoading] = useState('')
+  const [targetDone, setTargetDone] = useState('')
   const inputRef = useRef(null)
   const sound = useSound()
 
@@ -131,42 +131,48 @@ export default function AdminPanel({ userId }) {
     setResetting(false)
   }
 
-  async function handleCoinSearch(e) {
+  async function handleTargetLookup(e) {
     e.preventDefault()
-    if (!coinSearch.trim()) return
-    setCoinSearchLoading(true)
-    setCoinSearchError('')
-    setCoinSearchResults([])
+    const name = targetUsername.trim().toLowerCase()
+    if (!name) return
+    setTargetLoading(true)
+    setTargetError('')
+    setTargetPlayer(null)
+    setTargetDone('')
     try {
-      const results = await searchPlayersByName(coinSearch.trim())
-      if (results.length === 0) {
-        setCoinSearchError('No players found.')
+      const results = await searchPlayersByName(name)
+      const match = results.find(r => (r.username || '').toLowerCase() === name)
+      if (!match) {
+        setTargetError('Player not found.')
+      } else {
+        setTargetPlayer(match)
       }
-      setCoinSearchResults(results)
     } catch (err) {
-      setCoinSearchError(err.message || 'Search failed.')
+      setTargetError(err.message || 'Lookup failed.')
     }
-    setCoinSearchLoading(false)
+    setTargetLoading(false)
   }
 
-  async function handleCoinAction(targetUserId, action) {
-    const amount = parseInt(coinAmount)
-    if (!amount || amount <= 0) return
-    setCoinActionLoading(targetUserId + action)
-    setCoinActionDone('')
+  async function handleTargetCoinAction(action) {
+    const amount = parseInt(targetCoinAmount)
+    if (!amount || amount <= 0 || !targetPlayer) return
+    setTargetActionLoading(action)
+    setTargetDone('')
+    setTargetError('')
     try {
-      const player = await getPlayer(targetUserId)
+      const player = await getPlayer(targetPlayer.id)
       const current = player?.coins || 0
       const newCoins = action === 'add' ? current + amount : Math.max(0, current - amount)
-      await updatePlayer(targetUserId, { coins: newCoins })
-      setCoinSearchResults(prev => prev.map(r => r.id === targetUserId ? { ...r, coins: newCoins } : r))
-      setCoinActionDone(`${action === 'add' ? 'Added' : 'Removed'} ${amount} coins`)
+      await updatePlayer(targetPlayer.id, { coins: newCoins })
+      setTargetPlayer(prev => prev ? { ...prev, coins: newCoins } : prev)
+      setTargetDone(`${action === 'add' ? 'Added' : 'Removed'} ${amount} coins from @${targetPlayer.username}`)
+      setTargetCoinAmount('')
       sound('cash')
     } catch (err) {
-      setCoinSearchError(err.message || 'Action failed.')
+      setTargetError(err.message || 'Action failed.')
       sound('lose')
     }
-    setCoinActionLoading('')
+    setTargetActionLoading('')
   }
 
   if (!authenticated) {
@@ -258,58 +264,54 @@ export default function AdminPanel({ userId }) {
           </div>
           <div className="admin-section-card">
             <span className="admin-section-emoji">🪙</span>
-            <h4>Coin Management</h4>
-            <p>Search for a player by username to give or remove coins.</p>
-            <form onSubmit={handleCoinSearch} className="admin-coin-search">
+            <h4>Give / Remove Coins</h4>
+            <p>Look up a player by username, then give or remove coins.</p>
+            <form onSubmit={handleTargetLookup} className="admin-coin-search">
               <input
                 type="text"
                 className="admin-coin-input"
-                value={coinSearch}
-                onChange={e => setCoinSearch(e.target.value)}
-                placeholder="Search by username..."
+                value={targetUsername}
+                onChange={e => setTargetUsername(e.target.value)}
+                placeholder="Enter username..."
               />
-              <button type="submit" className="admin-coin-search-btn" disabled={coinSearchLoading || !coinSearch.trim()}>
-                {coinSearchLoading ? '...' : '🔍'}
+              <button type="submit" className="admin-coin-search-btn" disabled={targetLoading || !targetUsername.trim()}>
+                {targetLoading ? '...' : '🔍'}
               </button>
             </form>
-            {coinSearchError && <p className="admin-reset-error">{coinSearchError}</p>}
-            {coinActionDone && <p className="admin-reset-success">{coinActionDone}</p>}
-            {coinSearchResults.length > 0 && (
+            {targetError && <p className="admin-reset-error">{targetError}</p>}
+            {targetDone && <p className="admin-reset-success">{targetDone}</p>}
+            {targetPlayer && (
               <div className="admin-coin-results">
+                <div className="admin-coin-result">
+                  <div className="admin-coin-result-info">
+                    <span className="admin-coin-result-name">@{targetPlayer.username}</span>
+                    <span className="admin-coin-result-coins">🪙 {(targetPlayer.coins || 0).toLocaleString()}</span>
+                  </div>
+                </div>
                 <div className="admin-coin-amount-row">
                   <input
                     type="number"
                     className="admin-coin-amount-input"
-                    value={coinAmount}
-                    onChange={e => setCoinAmount(e.target.value)}
+                    value={targetCoinAmount}
+                    onChange={e => setTargetCoinAmount(e.target.value)}
                     placeholder="Amount"
                     min="1"
                   />
+                  <button
+                    className="admin-coin-action-btn admin-coin-give"
+                    onClick={() => handleTargetCoinAction('add')}
+                    disabled={targetActionLoading === 'add' || !targetCoinAmount}
+                  >
+                    {targetActionLoading === 'add' ? '...' : '+ Give'}
+                  </button>
+                  <button
+                    className="admin-coin-action-btn admin-coin-remove"
+                    onClick={() => handleTargetCoinAction('remove')}
+                    disabled={targetActionLoading === 'remove' || !targetCoinAmount}
+                  >
+                    {targetActionLoading === 'remove' ? '...' : '- Remove'}
+                  </button>
                 </div>
-                {coinSearchResults.map(r => (
-                  <div key={r.id} className="admin-coin-result">
-                    <div className="admin-coin-result-info">
-                      <span className="admin-coin-result-name">@{r.username}</span>
-                      <span className="admin-coin-result-coins">🪙 {(r.coins || 0).toLocaleString()}</span>
-                    </div>
-                    <div className="admin-coin-result-actions">
-                      <button
-                        className="admin-coin-action-btn admin-coin-give"
-                        onClick={() => handleCoinAction(r.id, 'add')}
-                        disabled={coinActionLoading === r.id + 'add' || !coinAmount}
-                      >
-                        {coinActionLoading === r.id + 'add' ? '...' : '+ Give'}
-                      </button>
-                      <button
-                        className="admin-coin-action-btn admin-coin-remove"
-                        onClick={() => handleCoinAction(r.id, 'remove')}
-                        disabled={coinActionLoading === r.id + 'remove' || !coinAmount}
-                      >
-                        {coinActionLoading === r.id + 'remove' ? '...' : '- Remove'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
