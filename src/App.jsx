@@ -663,7 +663,7 @@ function UserSearchModal({ onClose }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, userUsername, onSignIn, onSignOut, coins, xp, leaguePos }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, userUsername, onSignIn, onSignOut, coins, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -689,7 +689,12 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           {user && !user.isAnonymous && userUsername && (
             <div className="user-badge">
               <span className="user-avatar">{(userUsername[0] || 'U').toUpperCase()}</span>
-              <span className="user-name">@{userUsername}</span>
+              <span
+                className={`user-name ${nameplateEffectClass || ''}`}
+                style={{ ...nameplateStyle, ...nameplateBorderStyle, '--np-neon-color': nameplateNeonColor || undefined }}
+              >
+                @{userUsername}
+              </span>
             </div>
           )}
           {(!user || user.isAnonymous) && (
@@ -744,6 +749,50 @@ function App() {
     coins, ownedItems, activeTitle, activeNameplate, activeNameplateEffect,
     purchaseItem, equipTitle, equipNameplate, equipNameplateEffect, addCoins, checkAchievementCoins,
   } = useStats('_global')
+
+  function getNameplateStyle(npId) {
+    if (!npId) return {}
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    if (!np) return {}
+    if (np.type === 'solid' && np.color) return { color: np.color }
+    if (np.type === 'gradient' && np.gradient) return { background: np.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }
+    return {}
+  }
+
+  function getNameplateBorderStyle(npId) {
+    if (!npId) return {}
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    if (!np) return {}
+    if (np.type === 'border' && np.borderColor) return { border: `2px solid ${np.borderColor}`, borderRadius: 4, padding: '1px 4px' }
+    if (np.type === 'border' && np.gradientBorder) return { border: '2px solid transparent', borderImage: `${np.gradientBorder} 1`, borderRadius: 4, padding: '1px 4px' }
+    return {}
+  }
+
+  function getNameplateEffectClass(npId) {
+    if (!npId) return ''
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    if (!np) return ''
+    if (np.type === 'effect') {
+      if (np.neonColor) return 'np-fx-neon'
+      if (np.id === 'np-fx-rainbow-wave') return 'np-fx-rainbow'
+      if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
+      if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
+      if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
+      if (np.id === 'np-fx-smash') return 'np-fx-smash'
+      if (np.id === 'np-fx-spin-in') return 'np-fx-spin'
+      if (np.id === 'np-fx-pop-out') return 'np-fx-pop'
+      if (np.id === 'np-fx-glitch') return 'np-fx-glitch'
+      if (np.id === 'np-fx-float') return 'np-fx-float'
+      if (np.id === 'np-fx-pulse') return 'np-fx-pulse'
+    }
+    return ''
+  }
+
+  function getNameplateNeonColor(npId) {
+    if (!npId) return null
+    const np = ALL_NAMEPLATES.find(n => n.id === npId)
+    return np?.neonColor || null
+  }
 
   const dailyGame = useMemo(() => {
     const dg = getDailyGame(ALL_GAME_IDS)
@@ -1022,6 +1071,10 @@ function App() {
     coins,
     xp,
     leaguePos,
+    nameplateEffectClass: getNameplateEffectClass(activeNameplateEffect),
+    nameplateStyle: getNameplateStyle(activeNameplate),
+    nameplateBorderStyle: getNameplateBorderStyle(activeNameplateEffect),
+    nameplateNeonColor: getNameplateNeonColor(activeNameplateEffect),
   }
 
   const handleUpdatePlayerName = useCallback((newName) => {
