@@ -41,6 +41,12 @@ const VALID_ROUTES = [
   '/about-us',
   '/admin-panel',
   '/god-commands',
+  '/settings',
+  '/signin',
+  '/leagues',
+  '/stats',
+  '/achievements',
+  '/shop',
 ]
 
 const ABOUT_BLANK_HTML = `<!DOCTYPE html>

@@ -743,6 +743,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState(() => {
     const path = window.location.pathname.replace(/\/+$/, '')
     if (path === '/admin-panel') return 'admin'
+    if (path === '/about-us') return 'about'
+    if (path === '/god-commands') return 'cloak'
     return 'home'
   })
   const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
@@ -752,6 +754,14 @@ function App() {
   const [showConfetti, setShowConfetti] = useState(false)
   const hideConfetti = useCallback(() => setShowConfetti(false), [])
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
+
+  useEffect(() => {
+    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', cloak: '/god-commands' }
+    const path = routes[currentPage] || '/'
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path)
+    }
+  }, [currentPage])
   const [userId, setUserId] = useState(null)
   const adminSwitchingRef = useRef(false)
   const [playerName, setPlayerName] = useState(null)
