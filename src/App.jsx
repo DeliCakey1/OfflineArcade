@@ -20,6 +20,7 @@ import Tetris from './components/Tetris'
 import Breakout from './components/Breakout'
 import FlappyBird from './components/FlappyBird'
 import Minesweeper from './components/Minesweeper'
+import AboutUs from './components/AboutUs'
 import LeagueScreen from './components/LeagueScreen'
 import Confetti from './components/Confetti'
 import AchievementsPage from './components/AchievementsPage'
@@ -1270,6 +1271,15 @@ function App() {
     )
   }
 
+  if (currentPage === 'about') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <AboutUs onBack={() => setCurrentPage('home')} />
+      </div>
+    )
+  }
+
   if (activeGame) {
     const game = GAMES.find(g => g.id === activeGame)
     if (!game) { setActiveGame(null); return null }
@@ -1394,6 +1404,9 @@ function App() {
             ))}
           </div>
         )}
+        <div className="about-footer-link">
+          <button className="about-link-btn" onClick={() => setCurrentPage('about')}>About Offline Arcade →</button>
+        </div>
       </main>
       <Confetti active={showConfetti} onDone={hideConfetti} />
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
