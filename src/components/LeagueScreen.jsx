@@ -445,7 +445,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
           <div className="league-ticket-info">
             <span className="league-ticket-icon">🎫</span>
             <div>
-              <p className="league-ticket-text">Top 3 advance to <strong>God Tournament</strong> — requires 1 Ticket</p>
+              <p className="league-ticket-text">Top 8 advance to <strong>God Tournament</strong> — requires 1 Ticket</p>
               <p className="league-ticket-sub">Without a ticket, you'll earn league coins based on placement.</p>
             </div>
           </div>
