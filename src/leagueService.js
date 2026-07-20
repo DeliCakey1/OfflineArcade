@@ -322,7 +322,7 @@ export async function processSeasonReset(leagueId) {
   for (let i = 0; i < promoted.length; i++) {
     const p = promoted[i]
     const coinReward = coinRewardPositions[i] || 0
-    if (promoteRank === 2) {
+    if (currentRank === 1) {
       const hasTicket = (p.tournamentTickets || 0) > 0
       if (hasTicket) {
         await addToTournament(p.id)
@@ -453,11 +453,11 @@ export async function processTournamentReset() {
   }
 
   for (const p of bottom5) {
-    const diamondLeague = await findOrCreateLeagueInstance(3)
-    await joinLeague(diamondLeague.id, p.id)
+    const phoenixLeague = await findOrCreateLeagueInstance(2)
+    await joinLeague(phoenixLeague.id, p.id)
     await updatePlayer(p.id, {
-      league: 3,
-      leagueInstanceId: diamondLeague.id,
+      league: 2,
+      leagueInstanceId: phoenixLeague.id,
     })
   }
 
@@ -490,11 +490,11 @@ export async function processSemiFinalsReset() {
   }
 
   for (const p of bottom5) {
-    const diamondLeague = await findOrCreateLeagueInstance(3)
-    await joinLeague(diamondLeague.id, p.id)
+    const phoenixLeague = await findOrCreateLeagueInstance(2)
+    await joinLeague(phoenixLeague.id, p.id)
     await updatePlayer(p.id, {
-      league: 3,
-      leagueInstanceId: diamondLeague.id,
+      league: 2,
+      leagueInstanceId: phoenixLeague.id,
     })
   }
 

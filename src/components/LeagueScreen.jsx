@@ -396,8 +396,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
         <div className="league-rank-ladder">
           <div className="league-ladder-rank promotion-target">
             <span className="league-ladder-arrow">⬆️</span>
-            <span className="league-ladder-emoji">🌌</span>
-            <span className="league-ladder-name" style={{ color: '#b946ff' }}>Cosmic</span>
+            <span className="league-ladder-emoji">⚡</span>
+            <span className="league-ladder-name" style={{ color: '#ffd700' }}>God</span>
           </div>
           <div className="league-ladder-current">
             <span className="league-ladder-emoji current">{tournamentInfo.emoji}</span>
@@ -406,22 +406,22 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
           </div>
           <div className="league-ladder-rank demotion-target">
             <span className="league-ladder-arrow">⬇️</span>
-            <span className="league-ladder-emoji">🌌</span>
-            <span className="league-ladder-name" style={{ color: '#b946ff' }}>Cosmic</span>
+            <span className="league-ladder-emoji">🔥</span>
+            <span className="league-ladder-name" style={{ color: '#ff6b35' }}>Phoenix</span>
           </div>
         </div>
       ) : player && (() => {
         const cr = LEAGUE_RANKS.find(r => r.rank === (league?.rank || player.league))
         const prevRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 10) - 1)
         const nextRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 10) + 1)
-        const isCosmicPromo = cr?.rank === 3
+        const isGodPromo = cr?.rank === 1
         return (
           <div className="league-rank-ladder">
             {prevRank ? (
               <div className="league-ladder-rank promotion-target">
                 <span className="league-ladder-arrow">⬆️</span>
                 <span className="league-ladder-emoji">{prevRank.emoji}</span>
-                <span className="league-ladder-name" style={{ color: prevRank.color }}>{isCosmicPromo ? 'God Tournament' : prevRank.name}</span>
+                <span className="league-ladder-name" style={{ color: prevRank.color }}>{isGodPromo ? 'God Tournament' : prevRank.name}</span>
               </div>
             ) : <div className="league-ladder-rank" />}
             <div className="league-ladder-current">
@@ -440,7 +440,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
         )
       })()}
 
-      {player && !isTournament && (league?.rank || player.league) === 3 && (
+      {player && !isTournament && (league?.rank || player.league) === 1 && (
         <div className="league-ticket-prompt">
           <div className="league-ticket-info">
             <span className="league-ticket-icon">🎫</span>
@@ -524,8 +524,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
       <div className="league-footer">
         {isTournament
           ? tournament.stage === 'finals'
-            ? `Top 3 win · Bottom ${demoteCount} → Cosmic`
-            : `Top ${promoteCount} advance · Bottom ${demoteCount} → Cosmic`
+            ? `Top 3 win · Bottom ${demoteCount} → Phoenix`
+            : `Top ${promoteCount} advance · Bottom ${demoteCount} → Phoenix`
           : `Top ${promoteCount} promote · Bottom ${demoteCount} demote · Win +10 XP`
         }
       </div>

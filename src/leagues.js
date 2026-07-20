@@ -22,7 +22,8 @@ export const RANK_PROMO_DEMO = {
   5:  { promote: 7,  demote: 7 },
   4:  { promote: 5,  demote: 8 },
   3:  { promote: 3,  demote: 10 },
-  2:  { promote: 8,  demote: 10 },
+  2:  { promote: 3,  demote: 10 },
+  1:  { promote: 3,  demote: 10 },
 }
 
 export function getRankInfo(rank) {

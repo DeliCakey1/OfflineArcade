@@ -172,6 +172,7 @@ export const LEAGUE_COIN_REWARDS = {
   4: { first: 400, second: 300, third: 200 },
   3: { first: 500, second: 375, third: 250 },
   2: { first: 750, second: 550, third: 375 },
+  1: { first: 1000, second: 750, third: 500 },
 }
 
 export const RARITY_COLORS = {
