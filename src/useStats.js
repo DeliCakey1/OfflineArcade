@@ -49,7 +49,7 @@ async function loadFromFirestore(uid) {
           if (player.nameplateEffect) blob._activeNameplateEffect = player.nameplateEffect
           if (player.ownedItems?.length) blob._ownedItems = player.ownedItems
           if (player.tournamentTickets != null) blob._tournamentTickets = player.tournamentTickets
-          if (player.promotions) blob._league = { joined: true, promotions: player.promotions, bestRank: player.league || 11, tournamentEntries: 0, tournamentWins: player.tournamentWins || 0, firstPlaceFinishes: player.firstPlaceFinishes || 0, totalWins: player.wins || 0, wasInTournament: false }
+          if (player.promotions) blob._league = { joined: true, promotions: player.promotions, bestRank: player.league || 10, tournamentEntries: 0, tournamentWins: player.tournamentWins || 0, firstPlaceFinishes: player.firstPlaceFinishes || 0, totalWins: player.wins || 0, wasInTournament: false }
         }
 
         try {
@@ -187,13 +187,14 @@ export const ACHIEVEMENTS = [
   { id: 'promo-10', name: 'Ascender', emoji: '🚀', desc: 'Get promoted 10 times', category: 'league', check: s => (s._league?.promotions || 0) >= 10 },
   { id: 'promo-25', name: 'Relentless', emoji: '💫', desc: 'Get promoted 25 times', category: 'league', check: s => (s._league?.promotions || 0) >= 25 },
   { id: 'promo-50', name: 'Promotion Machine', emoji: '🏭', desc: 'Get promoted 50 times', category: 'league', check: s => (s._league?.promotions || 0) >= 50 },
-  { id: 'reach-iron', name: 'Iron Will', emoji: '⚙️', desc: 'Reach Iron rank', category: 'league', check: s => (s._league?.bestRank || 11) <= 8 },
-  { id: 'reach-bronze', name: 'Bronze Age', emoji: '🥉', desc: 'Reach Bronze rank', category: 'league', check: s => (s._league?.bestRank || 11) <= 7 },
-  { id: 'reach-silver', name: 'Silver Lining', emoji: '🥈', desc: 'Reach Silver rank', category: 'league', check: s => (s._league?.bestRank || 11) <= 6 },
-  { id: 'reach-gold', name: 'Gold Digger', emoji: '🥇', desc: 'Reach Gold rank', category: 'league', check: s => (s._league?.bestRank || 11) <= 5 },
-  { id: 'reach-platinum', name: 'Platinum Plus', emoji: '💠', desc: 'Reach Platinum rank', category: 'league', check: s => (s._league?.bestRank || 11) <= 4 },
-  { id: 'reach-diamond', name: 'Diamond Cutter', emoji: '💠', desc: 'Reach Diamond rank', category: 'league', check: s => (s._league?.bestRank || 11) <= 3 },
-  { id: 'reach-champion', name: 'True Champion', emoji: '👑', desc: 'Reach Champion rank', category: 'league', check: s => (s._league?.bestRank || 11) <= 1 },
+  { id: 'reach-bird', name: 'Free Bird', emoji: '🐦', desc: 'Reach Bird rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 8 },
+  { id: 'reach-lion', name: 'Lion Heart', emoji: '🦁', desc: 'Reach Lion rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 7 },
+  { id: 'reach-dino', name: 'Dino Rider', emoji: '🦕', desc: 'Reach Dinosaur rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 6 },
+  { id: 'reach-monster', name: 'Monster Mash', emoji: '👹', desc: 'Reach Monster rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 5 },
+  { id: 'reach-thunderbird', name: 'Thunderstruck', emoji: '🪶', desc: 'Reach Thunderbird rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 4 },
+  { id: 'reach-cosmic', name: 'Cosmic Mind', emoji: '🌌', desc: 'Reach Cosmic rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 3 },
+  { id: 'reach-phoenix', name: 'Rise From Ashes', emoji: '🔥', desc: 'Reach Phoenix rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 2 },
+  { id: 'reach-god', name: 'Ascended', emoji: '⚡', desc: 'Reach God rank', category: 'league', check: s => (s._league?.bestRank || 10) <= 1 },
   { id: 'tournament-entry', name: 'Tournament Bound', emoji: '🏟️', desc: 'Enter a tournament', category: 'league', check: s => (s._league?.tournamentEntries || 0) >= 1 },
   { id: 'tournament-win', name: 'Tournament Victor', emoji: '🏆', desc: 'Win a tournament', category: 'league', check: s => (s._league?.tournamentWins || 0) >= 1 },
   { id: 'tournament-3wins', name: 'Tournament Legend', emoji: '🌟', desc: 'Win 3 tournaments', category: 'league', check: s => (s._league?.tournamentWins || 0) >= 3 },
@@ -380,7 +381,7 @@ export default function useStats(gameId) {
     const league = {
       joined: true,
       promotions: playerData.promotions || 0,
-      bestRank: Math.min(sharedStats._league?.bestRank || 11, playerData.league || 11),
+      bestRank: Math.min(sharedStats._league?.bestRank || 10, playerData.league || 10),
       tournamentEntries: (sharedStats._league?.tournamentEntries || 0) + (playerData.league === 2 && !sharedStats._league?.wasInTournament ? 1 : 0),
       tournamentWins: playerData.tournamentWins || 0,
       firstPlaceFinishes: playerData.firstPlaceFinishes || 0,

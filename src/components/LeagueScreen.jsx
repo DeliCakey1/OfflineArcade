@@ -31,7 +31,7 @@ const LEAGUE_GAMES = [
 ]
 
 const TOURNAMENT_LABELS = {
-  tournament: { name: 'Tournament', emoji: '🏟️', size: 20 },
+  tournament: { name: 'God Tournament', emoji: '🏟️', size: 20 },
   semiFinals: { name: 'Semi-Finals', emoji: '⚔️', size: 15 },
   finals: { name: 'Finals', emoji: '🏆', size: 10 },
 }
@@ -396,8 +396,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
         <div className="league-rank-ladder">
           <div className="league-ladder-rank promotion-target">
             <span className="league-ladder-arrow">⬆️</span>
-            <span className="league-ladder-emoji">💠</span>
-            <span className="league-ladder-name" style={{ color: '#00d4ff' }}>Diamond</span>
+            <span className="league-ladder-emoji">🌌</span>
+            <span className="league-ladder-name" style={{ color: '#b946ff' }}>Cosmic</span>
           </div>
           <div className="league-ladder-current">
             <span className="league-ladder-emoji current">{tournamentInfo.emoji}</span>
@@ -406,22 +406,22 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
           </div>
           <div className="league-ladder-rank demotion-target">
             <span className="league-ladder-arrow">⬇️</span>
-            <span className="league-ladder-emoji">💠</span>
-            <span className="league-ladder-name" style={{ color: '#00d4ff' }}>Diamond</span>
+            <span className="league-ladder-emoji">🌌</span>
+            <span className="league-ladder-name" style={{ color: '#b946ff' }}>Cosmic</span>
           </div>
         </div>
       ) : player && (() => {
         const cr = LEAGUE_RANKS.find(r => r.rank === (league?.rank || player.league))
-        const prevRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 11) - 1)
-        const nextRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 11) + 1)
-        const isDiamondPromo = cr?.rank === 3
+        const prevRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 10) - 1)
+        const nextRank = LEAGUE_RANKS.find(r => r.rank === (cr?.rank || 10) + 1)
+        const isCosmicPromo = cr?.rank === 3
         return (
           <div className="league-rank-ladder">
             {prevRank ? (
               <div className="league-ladder-rank promotion-target">
                 <span className="league-ladder-arrow">⬆️</span>
                 <span className="league-ladder-emoji">{prevRank.emoji}</span>
-                <span className="league-ladder-name" style={{ color: prevRank.color }}>{isDiamondPromo ? 'Tournament' : prevRank.name}</span>
+                <span className="league-ladder-name" style={{ color: prevRank.color }}>{isCosmicPromo ? 'God Tournament' : prevRank.name}</span>
               </div>
             ) : <div className="league-ladder-rank" />}
             <div className="league-ladder-current">
@@ -445,7 +445,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
           <div className="league-ticket-info">
             <span className="league-ticket-icon">🎫</span>
             <div>
-              <p className="league-ticket-text">Top 3 advance to <strong>Tournament</strong> — requires 1 Ticket</p>
+              <p className="league-ticket-text">Top 3 advance to <strong>God Tournament</strong> — requires 1 Ticket</p>
               <p className="league-ticket-sub">Without a ticket, you'll earn league coins based on placement.</p>
             </div>
           </div>
@@ -524,8 +524,8 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
       <div className="league-footer">
         {isTournament
           ? tournament.stage === 'finals'
-            ? `Top 3 win · Bottom ${demoteCount} → Diamond`
-            : `Top ${promoteCount} advance · Bottom ${demoteCount} → Diamond`
+            ? `Top 3 win · Bottom ${demoteCount} → Cosmic`
+            : `Top ${promoteCount} advance · Bottom ${demoteCount} → Cosmic`
           : `Top ${promoteCount} promote · Bottom ${demoteCount} demote · Win +10 XP`
         }
       </div>

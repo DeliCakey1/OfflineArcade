@@ -1,23 +1,21 @@
 export const MAX_PER_LEAGUE = 20
 
 export const LEAGUE_RANKS = [
-  { rank: 1, name: 'Champion', emoji: '👑', color: '#ffd700' },
-  { rank: 2, name: 'Master', emoji: '💎', color: '#b946ff' },
-  { rank: 3, name: 'Diamond', emoji: '💠', color: '#00d4ff' },
-  { rank: 4, name: 'Platinum', emoji: '🔷', color: '#3b82f6' },
-  { rank: 5, name: 'Gold', emoji: '🥇', color: '#f59e0b' },
-  { rank: 6, name: 'Copper', emoji: '🪙', color: '#b87333' },
-  { rank: 7, name: 'Bronze', emoji: '🥉', color: '#cd7f32' },
-  { rank: 8, name: 'Iron', emoji: '⚙️', color: '#6b7280' },
-  { rank: 9, name: 'Stone', emoji: '🪨', color: '#78716c' },
-  { rank: 10, name: 'Wood', emoji: '🪵', color: '#a3a3a3' },
-  { rank: 11, name: 'Paper', emoji: '📄', color: '#d4d4d4' },
+  { rank: 1, name: 'God', emoji: '⚡', color: '#ffd700' },
+  { rank: 2, name: 'Phoenix', emoji: '🔥', color: '#ff6b35' },
+  { rank: 3, name: 'Cosmic', emoji: '🌌', color: '#b946ff' },
+  { rank: 4, name: 'Thunderbird', emoji: '🪶', color: '#00d4ff' },
+  { rank: 5, name: 'Monster', emoji: '👹', color: '#22c55e' },
+  { rank: 6, name: 'Dinosaur', emoji: '🦕', color: '#3b82f6' },
+  { rank: 7, name: 'Lion', emoji: '🦁', color: '#f59e0b' },
+  { rank: 8, name: 'Bird', emoji: '🐦', color: '#a3a3a3' },
+  { rank: 9, name: 'Insect', emoji: '🐛', color: '#78716c' },
+  { rank: 10, name: 'Microbe', emoji: '🦠', color: '#6b7280' },
 ]
 
 export const RANK_PROMO_DEMO = {
-  11: { promote: 15, demote: 0 },
-  10: { promote: 12, demote: 3 },
-  9:  { promote: 12, demote: 5 },
+  10: { promote: 15, demote: 0 },
+  9:  { promote: 12, demote: 3 },
   8:  { promote: 10, demote: 5 },
   7:  { promote: 8,  demote: 6 },
   6:  { promote: 8,  demote: 5 },
@@ -28,19 +26,19 @@ export const RANK_PROMO_DEMO = {
 }
 
 export function getRankInfo(rank) {
-  return LEAGUE_RANKS.find(r => r.rank === rank) || LEAGUE_RANKS[10]
+  return LEAGUE_RANKS.find(r => r.rank === rank) || LEAGUE_RANKS[9]
 }
 
 export function getPromotionZone(rank) {
-  return (RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[11]).promote
+  return (RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[10]).promote
 }
 
 export function getDemotionZone(rank) {
-  return (RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[11]).demote
+  return (RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[10]).demote
 }
 
 export function getStayZone(rank, totalPlayers) {
-  const pd = RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[11]
+  const pd = RANK_PROMO_DEMO[rank] || RANK_PROMO_DEMO[10]
   return totalPlayers - pd.promote - pd.demote
 }
 

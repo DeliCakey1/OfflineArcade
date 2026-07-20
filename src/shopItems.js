@@ -8,7 +8,7 @@ export const TOURNAMENT_TICKET = {
   id: 'ticket-tournament',
   name: 'Tournament Ticket',
   emoji: '🎫',
-  description: 'Required to enter the Diamond Tournament. Valid for all 3 stages.',
+  description: 'Required to enter the God Tournament. Valid for all 3 stages.',
   price: 2500,
 }
 
@@ -163,15 +163,15 @@ export const ACHIEVEMENT_COIN_REWARDS = {
 export const TOURNAMENT_COIN_REWARDS = { first: 3000, second: 2000, third: 1500 }
 
 export const LEAGUE_COIN_REWARDS = {
-  11: { first: 100, second: 75, third: 50 },
-  10: { first: 120, second: 90, third: 60 },
-  9: { first: 150, second: 110, third: 75 },
-  8: { first: 200, second: 150, third: 100 },
-  7: { first: 250, second: 185, third: 125 },
-  6: { first: 300, second: 225, third: 150 },
-  5: { first: 400, second: 300, third: 200 },
-  4: { first: 500, second: 375, third: 250 },
-  3: { first: 750, second: 550, third: 375 },
+  10: { first: 100, second: 75, third: 50 },
+  9: { first: 120, second: 90, third: 60 },
+  8: { first: 150, second: 110, third: 75 },
+  7: { first: 200, second: 150, third: 100 },
+  6: { first: 250, second: 185, third: 125 },
+  5: { first: 300, second: 225, third: 150 },
+  4: { first: 400, second: 300, third: 200 },
+  3: { first: 500, second: 375, third: 250 },
+  2: { first: 750, second: 550, third: 375 },
 }
 
 export const RARITY_COLORS = {

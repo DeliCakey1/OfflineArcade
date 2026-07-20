@@ -21,7 +21,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     const data = snap.data()
     const updates = {}
     if (!data.nameLower && data.name) updates.nameLower = data.name.toLowerCase()
-    if (data.league == null) updates.league = 11
+    if (data.league == null) updates.league = 10
     if (data.leagueInstanceId === undefined) updates.leagueInstanceId = null
     if (data.wins == null) updates.wins = 0
     if (data.losses == null) updates.losses = 0
@@ -53,7 +53,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     username: username || null,
     usernameChangedAt: null,
     xp: 0,
-    league: 11,
+    league: 10,
     leagueInstanceId: null,
     wins: 0,
     losses: 0,
@@ -633,7 +633,7 @@ export async function resetAllScores(adminUserId) {
     nameplate: null,
     nameplateEffect: null,
       ownedItems: [],
-      league: 11,
+      league: 10,
       leagueInstanceId: null,
       statsBlob: null,
       lastActive: Date.now(),
