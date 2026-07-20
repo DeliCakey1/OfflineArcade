@@ -5183,6 +5183,12 @@ body::after {
   margin-bottom: 12px;
   line-height: 1.6;
 }
+.about-section h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 16px 0 8px;
+}
 .about-section p {
   font-size: 14px;
   color: var(--text-dim);
@@ -5191,6 +5197,13 @@ body::after {
 }
 .about-section p:last-child {
   margin-bottom: 0;
+}
+.about-hero p {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.about-hero p strong {
+  color: var(--text-light);
 }
 .about-list {
   list-style: none;
@@ -5210,6 +5223,9 @@ body::after {
   left: 4px;
   color: var(--neon-purple);
 }
+.about-list li strong {
+  color: var(--text-light);
+}
 .about-link {
   color: var(--neon-purple);
   text-decoration: none;
@@ -5218,16 +5234,30 @@ body::after {
 .about-link:hover {
   text-decoration: underline;
 }
+.about-category-labels {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.about-cat-chip {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  color: var(--text-dim);
+}
 .about-games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
+  grid-template-columns: 1fr;
+  gap: 6px;
   margin: 12px 0;
 }
 .about-game-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: var(--bg-glass);
   border: 1px solid var(--border-glass);
   border-radius: 8px;
@@ -5236,17 +5266,90 @@ body::after {
 }
 .about-game-emoji {
   font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+.about-game-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 .about-game-name {
   color: var(--text-light);
   font-weight: 600;
-  flex: 1;
+  font-size: 13px;
+}
+.about-game-desc {
+  font-size: 11px;
+  color: var(--text-dim);
 }
 .about-game-cat {
   font-size: 10px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.about-game-earnings {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-glass);
+}
+.about-game-earnings h3 {
+  margin-top: 0;
+}
+.about-earnings-table {
+  margin: 8px 0;
+}
+.about-earnings-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 90px;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-glass);
+}
+.about-earnings-row:last-child {
+  border-bottom: none;
+}
+.about-earnings-header {
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+.about-zones-table {
+  margin: 8px 0;
+}
+.about-zones-row {
+  display: grid;
+  grid-template-columns: 1fr 70px 60px 70px;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border-glass);
+}
+.about-zones-row:last-child {
+  border-bottom: none;
+}
+.about-zones-header {
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+.about-zones-promote {
+  color: #22c55e;
+}
+.about-zones-stay {
+  color: var(--text-dim);
+}
+.about-zones-demotion {
+  color: #ef4444;
 }
 .about-leagues-list {
   display: flex;
@@ -5303,6 +5406,104 @@ body::after {
   font-size: 12px;
   color: var(--text-dim);
   margin: 2px 0 0;
+}
+.about-prizes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+.about-prize {
+  font-size: 14px;
+  color: var(--text-light);
+  padding: 8px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  font-weight: 600;
+}
+.about-shop-cats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+.about-shop-cat {
+  padding: 12px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+}
+.about-shop-cat strong {
+  color: var(--text-light);
+  font-size: 14px;
+}
+.about-shop-cat p {
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+.about-cosmetic-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.about-cosmetic-chip {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+}
+.about-effects-grid {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.about-effect-chip {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--neon-purple);
+}
+.about-rarity-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.about-rarity-chip {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+}
+.about-themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.about-theme-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.about-theme-chip span {
+  font-size: 18px;
 }
 .about-footer-section {
   text-align: center;
