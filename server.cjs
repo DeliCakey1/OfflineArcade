@@ -36,6 +36,13 @@ function serveFile(res, filePath) {
   stream.pipe(res)
 }
 
+const VALID_ROUTES = [
+  '/',
+  '/about-us',
+  '/admin-panel',
+  '/god-commands',
+]
+
 const ABOUT_BLANK_HTML = `<!DOCTYPE html>
 <html>
 <head><title>New Tab</title></head>
@@ -80,8 +87,11 @@ const server = http.createServer((req, res) => {
 
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       serveFile(res, filePath)
-    } else {
+    } else if (VALID_ROUTES.includes(pathname)) {
       serveFile(res, path.join(DIST, 'index.html'))
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end('<!DOCTYPE html><html><head><title>404</title></head><body style="background:#1a1033;color:#f0e6ff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center"><div><h1>404</h1><p>Page not found</p><a href="/" style="color:#b946ff">← Back to Arcade</a></div></body></html>')
     }
   } catch (e) {
     console.error('Request error:', e)
