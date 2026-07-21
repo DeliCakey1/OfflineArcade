@@ -628,7 +628,7 @@ function UserSearchModal({ onClose }) {
                       <span className="user-search-display-name">{p.name}</span>
                     )}
                     <span className="user-search-meta">
-                      {ri?.emoji || '📄'} {ri?.name || 'Paper'} · ⭐ {(p.xp || 0).toLocaleString()} XP · 🏆 {(p.wins || 0).toLocaleString()} wins
+                      {ri?.emoji || '🦠'} {ri?.name || 'Microbe'} · ⭐ {(p.xp || 0).toLocaleString()} XP · 🏆 {(p.wins || 0).toLocaleString()} wins
                     </span>
                   </div>
                 </button>
@@ -1281,7 +1281,7 @@ function App() {
           onEquipTitle={handleEquipTitle}
           onEquipNameplate={handleEquipNameplate}
           onEquipNameplateEffect={handleEquipNameplateEffect}
-          isChampion={earnedAchievements.includes('reach-champion')}
+          isChampion={earnedAchievements.includes('reach-god')}
           isAdmin={isAdminLoggedIn()}
         />
       </div>

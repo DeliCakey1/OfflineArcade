@@ -300,12 +300,12 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
         <div className="league-page-header">
           <button className="quit-btn" onClick={onBack}>← Back</button>
           <div className="league-header-text">
-            <h2>👑 Champion</h2>
+            <h2>⚡ God</h2>
           </div>
         </div>
         <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>👑</div>
-          <h3 style={{ color: '#ffd700', marginBottom: 8 }}>You are Champion!</h3>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⚡</div>
+          <h3 style={{ color: '#ffd700', marginBottom: 8 }}>You are God!</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>You've reached the highest rank. Congratulations!</p>
           {player.tournamentWins > 0 && (
             <p style={{ color: 'var(--neon-yellow)', fontSize: 13, marginTop: 8 }}>🏆 Tournament Wins: {player.tournamentWins}</p>
