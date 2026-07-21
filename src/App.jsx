@@ -34,7 +34,7 @@ import SignInPage from './components/SignInPage'
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow, setCurrentUserId, clearCurrentUserId } from './useStats'
-import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS, GAME_XP, GAME_COINS } from './leagues'
+import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS, GAME_XP, GAME_COINS, SCORE_BASED_GAMES } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
 import { TITLES, ALL_NAMEPLATES } from './shopItems'
@@ -118,6 +118,7 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
   const gameStats = stats[game.id]
   const xpReward = GAME_XP[game.id] || 0
   const coinReward = GAME_COINS[game.id] || 0
+  const isScoreBased = SCORE_BASED_GAMES.includes(game.id)
   return (
     <div className="game-select-card" onClick={onClick} style={{ '--card-accent': game.color }} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}>
       <button
@@ -133,7 +134,7 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
       <div className="game-select-desc">{game.desc}</div>
       <div className="game-select-rewards">
         <span className="game-reward-xp">⭐ {xpReward} XP</span>
-        <span className="game-reward-coins">🪙 {coinReward}</span>
+        <span className="game-reward-coins">🪙 {coinReward}{isScoreBased ? '+' : ''}</span>
       </div>
       {gameStats && gameStats.played > 0 && (
         <div className="game-select-stats">
