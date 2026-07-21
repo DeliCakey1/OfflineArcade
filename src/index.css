@@ -1762,6 +1762,9 @@ body::after {
 
 /* ===== GAME SELECT STATS ===== */
 .game-select-stats { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+.game-select-rewards { display: flex; gap: 12px; margin-bottom: 10px; font-size: 12px; font-weight: 600; }
+.game-reward-xp { color: var(--neon-yellow); }
+.game-reward-coins { color: var(--neon-orange, #f59e0b); }
 
 /* ===== STATS MODAL ===== */
 .stats-overlay {
