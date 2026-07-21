@@ -133,7 +133,7 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
       <div className="game-select-label">{game.label}</div>
       <div className="game-select-desc">{game.desc}</div>
       <div className="game-select-rewards">
-        <span className="game-reward-xp">⭐ {xpReward} XP</span>
+        <span className="game-reward-xp">⭐ {xpReward}{isScoreBased ? '+' : ''} XP</span>
         <span className="game-reward-coins">🪙 {coinReward}{isScoreBased ? '+' : ''}</span>
       </div>
       {gameStats && gameStats.played > 0 && (
