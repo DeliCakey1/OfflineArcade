@@ -369,7 +369,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
         <div className="league-header-text">
           <h2>{isTournament ? `${tournamentInfo.emoji} ${tournamentInfo.name}` : `${rankInfo.emoji} ${rankInfo.name}`}</h2>
           <span className="league-season-timer" style={{ color: seasonTime < 3600000 ? 'var(--neon-red)' : 'var(--neon-blue)' }}>
-            ⏱ {formatSeasonTime(seasonTime)}
+            ⏱ {formatSeasonTime(seasonTime)} until promotion & demotion
           </span>
         </div>
       </div>
