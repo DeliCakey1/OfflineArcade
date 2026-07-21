@@ -5516,6 +5516,37 @@ body::after {
   color: var(--text-dim);
   font-style: italic;
 }
+.about-support-text {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 10px;
+}
+.about-cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+}
+.about-cta-button:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 28px rgba(139, 92, 246, 0.5);
+}
+.about-cta-favicon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
 .about-footer-link {
   text-align: center;
   padding: 20px 0 8px;

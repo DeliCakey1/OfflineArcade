@@ -473,6 +473,14 @@ export default function AboutUs({ onBack }) {
             Offline Arcade is a passion project. No ads, no tracking, no paywalls. 
             Just games. Have fun.
           </p>
+          <p className="about-support-text">
+            Questions, bugs, or feedback? Join the community on{' '}
+            <a href="https://discord.gg/7uf5b25qfQ" target="_blank" rel="noopener noreferrer" className="about-link">Discord</a>.
+          </p>
+          <button className="about-cta-button" onClick={onBack}>
+            <img src="/favicon.ico" alt="" className="about-cta-favicon" />
+            Start playing now!
+          </button>
         </section>
 
       </div>
