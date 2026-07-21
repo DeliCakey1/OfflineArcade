@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { ACHIEVEMENT_COIN_REWARDS } from './shopItems'
-import { SCORE_BASED_GAMES } from './leagues'
+import { SCORE_BASED_GAMES, GAME_XP } from './leagues'
 
 let currentUserId = null
 let statsListeners = new Set()
@@ -315,7 +315,7 @@ export default function useStats(gameId) {
     try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId: gid, won: isWin } })) } catch {}
     if (!currentUserId) return
     const current = sharedStats[gid] || getEmptyGameStats()
-    const xpEarned = isWin ? 10 + Math.min(streak, 10) * 2 : 3
+    const xpEarned = isScoreBased ? (isWin ? Math.round(score * (GAME_XP[gid] || 20) / 20) : 0) : (isWin ? 10 + Math.min(streak, 10) * 2 : 3)
     const prevXp = sharedStats._xp?.total || 0
     const recent = sharedStats._recent || []
     const newRecent = [gid, ...recent.filter(id => id !== gid)].slice(0, 8)

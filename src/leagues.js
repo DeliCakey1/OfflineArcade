@@ -130,7 +130,12 @@ export const GAME_COINS = {
 
 export const SCORE_BASED_GAMES = ['snake', 'tetris', 'breakout', 'flappy', 'minesweeper']
 
-export function calculateWinXP(gameId, streak = 0) {
+export function calculateWinXP(gameId, streak = 0, score = 0) {
+  if (SCORE_BASED_GAMES.includes(gameId)) {
+    if (!score || score <= 0) return 0
+    const base = GAME_XP[gameId] || 20
+    return Math.round(score * base / 20)
+  }
   const base = GAME_XP[gameId] || 20
   const streakBonus = Math.min(streak, 10)
   return base + streakBonus
@@ -140,7 +145,7 @@ export function calculateWinCoins(gameId, streak = 0, score = 0) {
   if (SCORE_BASED_GAMES.includes(gameId)) {
     if (!score || score <= 0) return 0
     const base = GAME_COINS[gameId] || 2
-    return base + Math.round(score * base * 0.1)
+    return Math.round(score * base * 0.1)
   }
   const base = GAME_COINS[gameId] || 5
   const streakBonus = Math.min(Math.floor(streak / 3), 5)

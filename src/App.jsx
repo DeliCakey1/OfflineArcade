@@ -133,8 +133,8 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
       <div className="game-select-label">{game.label}</div>
       <div className="game-select-desc">{game.desc}</div>
       <div className="game-select-rewards">
-        <span className="game-reward-xp">⭐ {xpReward}{isScoreBased ? '+' : ''} XP</span>
-        <span className="game-reward-coins">🪙 {coinReward}{isScoreBased ? '+' : ''}</span>
+        <span className="game-reward-xp">⭐ {isScoreBased ? '0+' : xpReward} XP</span>
+        <span className="game-reward-coins">🪙 {isScoreBased ? '0+' : coinReward}</span>
       </div>
       {gameStats && gameStats.played > 0 && (
         <div className="game-select-stats">
@@ -947,7 +947,7 @@ function App() {
       import('./leagueService').then(({ updatePlayer, getPlayer, increment }) => {
         getPlayer(userId).then(p => {
           if (!p) return
-          const xp = calculateWinXP(gameId, p.streak || 0)
+          const xp = calculateWinXP(gameId, p.streak || 0, score || 0)
           const coinReward = calculateWinCoins(gameId, p.streak || 0, score || 0)
           if (won) {
             updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) })
