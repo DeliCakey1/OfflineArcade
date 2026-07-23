@@ -20,6 +20,11 @@ import Tetris from './components/Tetris'
 import Breakout from './components/Breakout'
 import FlappyBird from './components/FlappyBird'
 import Minesweeper from './components/Minesweeper'
+import LightsOut from './components/LightsOut'
+import Mastermind from './components/Mastermind'
+import Dodge from './components/Dodge'
+import MergeBlitz from './components/MergeBlitz'
+import ConnectFour from './components/ConnectFour'
 import AboutUs from './components/AboutUs'
 import LeagueScreen from './components/LeagueScreen'
 import Confetti from './components/Confetti'
@@ -29,6 +34,9 @@ import ShopPage from './components/ShopPage'
 import AdminPanel from './components/AdminPanel'
 import { VolumeSlider } from './components/VolumeSlider'
 import SettingsPage from './components/SettingsPage'
+import DailyLeaderboard from './components/DailyLeaderboard'
+import FriendsPanel from './components/FriendsPanel'
+import AmbientParticles from './components/AmbientParticles'
 import ThemePicker from './components/ThemePicker'
 import SignInPage from './components/SignInPage'
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
@@ -37,7 +45,7 @@ import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorro
 import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS, GAME_XP, GAME_COINS, SCORE_BASED_GAMES } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
-import { TITLES, ALL_NAMEPLATES } from './shopItems'
+import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor, getTitleName } from './nameplateUtils'
 import './index.css'
 
 const CATEGORIES = [
@@ -71,6 +79,11 @@ const GAMES = [
   { id: 'breakout', label: 'Breakout', emoji: '🏓', desc: 'Smash all the bricks with the ball!', color: '#ff2d7b', component: Breakout, category: 'classic' },
   { id: 'flappy', label: 'Flappy Bird', emoji: '🐦', desc: 'Tap to flap, dodge the pipes!', color: '#ffe600', component: FlappyBird, category: 'classic' },
   { id: 'minesweeper', label: 'Minesweeper', emoji: '💣', desc: 'Clear the field without hitting a mine!', color: '#f97316', component: Minesweeper, category: 'brain' },
+  { id: 'lightsout', label: 'Lights Out', emoji: '💡', desc: 'Toggle lights to turn them all off!', color: '#ffe600', component: LightsOut, category: 'brain' },
+  { id: 'mastermind', label: 'Mastermind', emoji: '🧠', desc: 'Crack the hidden code using logic and deduction!', color: '#b946ff', component: Mastermind, category: 'brain' },
+  { id: 'dodge', label: 'Dodge', emoji: '🎮', desc: 'Move your orb to dodge the falling obstacles!', color: '#00d4ff', component: Dodge, category: 'reflex' },
+  { id: 'mergeblitz', label: 'Merge Blitz', emoji: '⚡', desc: 'Timed 2048! Chain merges for combo multipliers!', color: '#ffe600', component: MergeBlitz, category: 'brain' },
+  { id: 'connect4', label: 'Connect Four', emoji: '🔴', desc: 'Drop discs to get four in a row against the AI!', color: '#1a47b8', component: ConnectFour, category: 'card' },
 ]
 
 function getSaved(key, fallback) {
@@ -499,68 +512,6 @@ function UserSearchModal({ onClose }) {
   const [selected, setSelected] = useState(null)
   const timerRef = useRef(null)
 
-  function getNameplateStyle(npId) {
-    if (!npId) return {}
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    if (!np) return {}
-    if (np.type === 'solid' && np.color) return { color: np.color }
-    if (np.type === 'gradient' && np.gradient) return { background: np.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }
-    return {}
-  }
-
-  function getNameplateBorderStyle(npId) {
-    if (!npId) return {}
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    if (!np) return {}
-    if (np.type === 'border' && np.borderColor) return { border: `2px solid ${np.borderColor}`, borderRadius: 4, padding: '1px 4px' }
-    if (np.type === 'border' && np.gradientBorder) return { border: '2px solid transparent', borderImage: `${np.gradientBorder} 1`, borderRadius: 4, padding: '1px 4px' }
-    return {}
-  }
-
-  function getNameplateEffectClass(npId) {
-    if (!npId) return ''
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    if (!np) return ''
-    if (np.type === 'effect') {
-      if (np.neonColor) return 'np-fx-neon'
-      if (np.id === 'np-fx-rainbow-wave') return 'np-fx-rainbow'
-      if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
-      if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
-      if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
-      if (np.id === 'np-fx-smash') return 'np-fx-smash'
-      if (np.id === 'np-fx-spin-in') return 'np-fx-spin-in'
-      if (np.id === 'np-fx-pop-out') return 'np-fx-pop-out'
-      if (np.id === 'np-fx-glitch') return 'np-fx-glitch'
-      if (np.id === 'np-fx-float') return 'np-fx-float'
-      if (np.id === 'np-fx-pulse') return 'np-fx-pulse'
-      if (np.id === 'np-fx-fire') return 'np-fx-fire'
-      if (np.id === 'np-fx-electric') return 'np-fx-electric'
-      if (np.id === 'np-fx-frost') return 'np-fx-frost'
-      if (np.id === 'np-fx-toxic') return 'np-fx-toxic'
-      if (np.id === 'np-fx-hologram') return 'np-fx-hologram'
-      if (np.id === 'np-fx-ghost') return 'np-fx-ghost'
-      if (np.id === 'np-fx-scanner') return 'np-fx-scanner'
-      if (np.id === 'np-fx-wobble') return 'np-fx-wobble'
-      if (np.id === 'np-fx-stroke') return 'np-fx-stroke'
-      if (np.id === 'np-fx-matrix') return 'np-fx-matrix'
-      if (np.id === 'np-fx-comet') return 'np-fx-comet'
-      if (np.id === 'np-fx-breathe') return 'np-fx-breathe'
-    }
-    return ''
-  }
-
-  function getNameplateNeonColor(npId) {
-    if (!npId) return null
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    return np?.neonColor || null
-  }
-
-  function getTitleName(titleId) {
-    if (!titleId) return null
-    const t = TITLES.find(ti => ti.id === titleId)
-    return t?.name || null
-  }
-
   const doSearch = useCallback((val) => {
     if (!val || val.trim().length < 2) { setResults([]); return }
     setLoading(true)
@@ -689,7 +640,7 @@ function UserSearchModal({ onClose }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, user, playerName, userUsername, onSignIn, onSignOut, coins, tournamentTickets, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, onLeaderboard, onFriends, user, playerName, userUsername, onSignIn, onSignOut, coins, tournamentTickets, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor }) {
   return (
     <div className="settings-bar-wrap">
       <div className="settings-bar">
@@ -697,6 +648,8 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
           <GamesDropdown onNavigate={onNavigateGame} />
           <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
+          <button className="settings-btn nav-btn" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
+          <button className="settings-btn nav-btn" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>
           <button className="settings-btn nav-btn" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
           <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
           <button className="settings-btn nav-btn" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
@@ -786,62 +739,6 @@ function App() {
     coins, ownedItems, tournamentTickets, activeTitle, activeNameplate, activeNameplateEffect,
     purchaseItem, equipTitle, equipNameplate, equipNameplateEffect, addCoins, checkAchievementCoins,
   } = useStats('_global')
-
-  function getNameplateStyle(npId) {
-    if (!npId) return {}
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    if (!np) return {}
-    if (np.type === 'solid' && np.color) return { color: np.color }
-    if (np.type === 'gradient' && np.gradient) return { background: np.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }
-    return {}
-  }
-
-  function getNameplateBorderStyle(npId) {
-    if (!npId) return {}
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    if (!np) return {}
-    if (np.type === 'border' && np.borderColor) return { border: `2px solid ${np.borderColor}`, borderRadius: 4, padding: '1px 4px' }
-    if (np.type === 'border' && np.gradientBorder) return { border: '2px solid transparent', borderImage: `${np.gradientBorder} 1`, borderRadius: 4, padding: '1px 4px' }
-    return {}
-  }
-
-  function getNameplateEffectClass(npId) {
-    if (!npId) return ''
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    if (!np) return ''
-    if (np.type === 'effect') {
-      if (np.neonColor) return 'np-fx-neon'
-      if (np.id === 'np-fx-rainbow-wave') return 'np-fx-rainbow'
-      if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
-      if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
-      if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
-      if (np.id === 'np-fx-smash') return 'np-fx-smash'
-      if (np.id === 'np-fx-spin-in') return 'np-fx-spin-in'
-      if (np.id === 'np-fx-pop-out') return 'np-fx-pop-out'
-      if (np.id === 'np-fx-glitch') return 'np-fx-glitch'
-      if (np.id === 'np-fx-float') return 'np-fx-float'
-      if (np.id === 'np-fx-pulse') return 'np-fx-pulse'
-      if (np.id === 'np-fx-fire') return 'np-fx-fire'
-      if (np.id === 'np-fx-electric') return 'np-fx-electric'
-      if (np.id === 'np-fx-frost') return 'np-fx-frost'
-      if (np.id === 'np-fx-toxic') return 'np-fx-toxic'
-      if (np.id === 'np-fx-hologram') return 'np-fx-hologram'
-      if (np.id === 'np-fx-ghost') return 'np-fx-ghost'
-      if (np.id === 'np-fx-scanner') return 'np-fx-scanner'
-      if (np.id === 'np-fx-wobble') return 'np-fx-wobble'
-      if (np.id === 'np-fx-stroke') return 'np-fx-stroke'
-      if (np.id === 'np-fx-matrix') return 'np-fx-matrix'
-      if (np.id === 'np-fx-comet') return 'np-fx-comet'
-      if (np.id === 'np-fx-breathe') return 'np-fx-breathe'
-    }
-    return ''
-  }
-
-  function getNameplateNeonColor(npId) {
-    if (!npId) return null
-    const np = ALL_NAMEPLATES.find(n => n.id === npId)
-    return np?.neonColor || null
-  }
 
   const dailyGame = useMemo(() => {
     const dg = getDailyGame(ALL_GAME_IDS)
@@ -1112,6 +1009,8 @@ function App() {
     onAchievements: () => { setShowConfetti(false); setCurrentPage('achievements') },
     onShop: () => { setShowConfetti(false); setCurrentPage('shop') },
     onSearch: () => setShowUserSearch(true),
+    onLeaderboard: () => { setShowConfetti(false); setCurrentPage('leaderboard') },
+    onFriends: () => { setShowConfetti(false); setCurrentPage('friends') },
     user,
     playerName,
     userUsername,
@@ -1251,7 +1150,7 @@ function App() {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} onClose={() => setCurrentPage('home')} />
+        <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => setCurrentPage('home')} />
       </div>
     )
   }
@@ -1297,6 +1196,24 @@ function App() {
     )
   }
 
+  if (currentPage === 'leaderboard') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <DailyLeaderboard gameId={dailyGame.gameId} onClose={() => setCurrentPage('home')} />
+      </div>
+    )
+  }
+
+  if (currentPage === 'friends') {
+    return (
+      <div>
+        {waveBar && <div className="wave-bar" aria-hidden="true" />}
+        <FriendsPanel userId={user?.uid} onClose={() => setCurrentPage('home')} />
+      </div>
+    )
+  }
+
   if (activeGame) {
     const game = GAMES.find(g => g.id === activeGame)
     if (!game) { setActiveGame(null); return null }
@@ -1335,6 +1252,7 @@ function App() {
 
   return (
     <div>
+      {bg && <AmbientParticles />}
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
       <SettingsBar {...settings} />
       <header className="arcade-header">

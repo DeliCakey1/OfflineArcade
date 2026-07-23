@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import useEffects from '../useEffects'
 import QuitConfirmButton from './QuitConfirmButton'
 
 const COLORS = [
@@ -29,7 +30,9 @@ export default function SimonSays({ onPlayingChange }) {
   const [copied, setCopied] = useState(false)
   const [showingIdx, setShowingIdx] = useState(0)
   const timeoutRef = useRef(null)
+  const gridRef = useRef(null)
   const sound = useSound()
+  const { spawnParticles, floatText, shakeScreen, renderParticles, shakeStyle } = useEffects()
   const { recordGame } = useStats('simon')
   const isPlaying = mode && !gameOver
 
@@ -62,16 +65,24 @@ export default function SimonSays({ onPlayingChange }) {
     setBestScore(0)
     setGameOver(false)
     setCopied(false)
+    setSpeedMultiplier(1)
     const first = Math.floor(Math.random() * 4)
     setSequence([first])
-    startPlayback([first], m)
+    startPlayback([first], m, 1)
   }
 
-  function startPlayback(seq, m) {
+  const [speedMultiplier, setSpeedMultiplier] = useState(1)
+
+  function getSpeed(modeSpeed, mult) {
+    return Math.max(150, Math.round(modeSpeed * mult))
+  }
+
+  function startPlayback(seq, m, mult) {
     setPhase('showing')
     setPlayerInput([])
     setShowingIdx(0)
     let i = 0
+    const spd = getSpeed(m.speed, mult)
     function showNext() {
       if (i >= seq.length) {
         setHighlight(null)
@@ -86,10 +97,26 @@ export default function SimonSays({ onPlayingChange }) {
         timeoutRef.current = setTimeout(() => {
           i++
           showNext()
-        }, 150)
-      }, m.speed)
+        }, Math.round(spd * 0.2))
+      }, spd)
     }
     showNext()
+  }
+
+  function burstAllButtons() {
+    const el = gridRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+    COLORS.forEach((c, i) => {
+      const btn = el.children[i]
+      if (btn) {
+        const br = btn.getBoundingClientRect()
+        spawnParticles(br.left + br.width / 2, br.top + br.height / 2, c.color, 5, { speed: 2, life: 20, sizeMin: 3, sizeMax: 5 })
+      }
+    })
+    floatText(cx, cy - 20, '+1 Round', '#39ff14')
   }
 
   function handlePress(colorIdx) {
@@ -104,7 +131,16 @@ export default function SimonSays({ onPlayingChange }) {
     if (colorIdx !== sequence[newInput.length - 1]) {
       setGameOver(true)
       recordGame(score > 5, score)
-      sound('lose')
+      sound('death')
+      shakeScreen(8, 500)
+      const el = gridRef.current
+      if (el) {
+        const btn = el.children[colorIdx]
+        if (btn) {
+          const br = btn.getBoundingClientRect()
+          spawnParticles(br.left + br.width / 2, br.top + br.height / 2, '#ff2d7b', 12, { speed: 4, life: 30, sizeMin: 3, sizeMax: 7 })
+        }
+      }
       return
     }
 
@@ -115,7 +151,12 @@ export default function SimonSays({ onPlayingChange }) {
       const nextColor = Math.floor(Math.random() * 4)
       const newSeq = [...sequence, nextColor]
       setSequence(newSeq)
-      setTimeout(() => startPlayback(newSeq, mode), 600)
+      const newMult = Math.max(0.35, 1 - newScore * 0.03)
+      setSpeedMultiplier(newMult)
+      setTimeout(() => {
+        burstAllButtons()
+        startPlayback(newSeq, mode, newMult)
+      }, 600)
     }
   }
 
@@ -153,7 +194,8 @@ export default function SimonSays({ onPlayingChange }) {
   }
 
   return (
-    <div className="game-card slide-in">
+    <div className="game-card slide-in" style={{ position: 'relative', overflow: 'hidden', ...shakeStyle }}>
+      {renderParticles()}
       <h2>Simon Says</h2>
       <p className="description">
         {phase === 'showing' ? `Watch the sequence! (${sequence.length} colors)` : 'Your turn! Repeat the sequence'}
@@ -172,9 +214,15 @@ export default function SimonSays({ onPlayingChange }) {
           <div className="hol-stat-label">Best</div>
           <div className="hol-stat-num">{bestScore}</div>
         </div>
+        <div className="hol-stat">
+          <div className="hol-stat-label">Speed</div>
+          <div className="hol-stat-num" style={{ color: speedMultiplier < 0.6 ? 'var(--neon-pink)' : speedMultiplier < 0.8 ? 'var(--neon-yellow)' : 'var(--neon-green)' }}>
+            {Math.round((1 / speedMultiplier) * 100)}%
+          </div>
+        </div>
       </div>
 
-      <div className="simon-grid">
+      <div ref={gridRef} className="simon-grid">
         {COLORS.map((c, i) => (
           <button
             key={i}

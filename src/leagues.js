@@ -102,6 +102,11 @@ export const GAME_XP = {
   breakout: 24,
   flappy: 20,
   minesweeper: 30,
+  lightsout: 20,
+  mastermind: 20,
+  dodge: 16,
+  mergeblitz: 24,
+  connect4: 20,
 }
 
 export const GAME_COINS = {
@@ -121,11 +126,16 @@ export const GAME_COINS = {
   slots: 5,
   blackjack: 8,
   whack: 8,
-  snake: 2,
-  tetris: 2,
-  breakout: 2,
-  flappy: 2,
-  minesweeper: 3,
+  snake: 6,
+  tetris: 6,
+  breakout: 6,
+  flappy: 6,
+  minesweeper: 8,
+  lightsout: 8,
+  mastermind: 8,
+  dodge: 6,
+  mergeblitz: 10,
+  connect4: 8,
 }
 
 export const SCORE_BASED_GAMES = ['snake', 'tetris', 'breakout', 'flappy', 'minesweeper']

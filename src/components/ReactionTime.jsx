@@ -213,9 +213,9 @@ export default function ReactionTime({ onPlayingChange }) {
             <span className="bot">{best}ms best</span>
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={() => startGame(mode)}>Play Again</button>
+            <button className="play-again-btn" onClick={() => { sound('click'); startGame(mode) }}>Play Again</button>
             <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }}
-              onClick={() => setMode(null)}>Change Mode</button>
+              onClick={() => { sound('click'); setMode(null) }}>Change Mode</button>
             <button className="play-again-btn share-btn" onClick={shareResult}>
               {copied ? '✓ Copied!' : '📋 Copy Result'}
             </button>

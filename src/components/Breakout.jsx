@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import { createParticlePool, spawnParticles, updateParticles, drawParticles, screenShakeApply, screenShakeRestore } from '../canvasEffects'
 
 const W = 400, H = 500
 const BRICK_ROWS = 6, BRICK_COLS = 8, BRICK_W = 46, BRICK_H = 18, BRICK_PAD = 3, BRICK_TOP = 40
@@ -34,7 +35,7 @@ export default function Breakout({ onPlayingChange }) {
   const [copied, setCopied] = useState(false)
   const [highScore, setHighScore] = useState(() => 0)
   const canvasRef = useRef(null)
-  const gameRef = useRef({ paddleX: W / 2, ballX: W / 2, ballY: PADDLE_Y - 15, ballDX: 0, ballDY: 0, bricks: [], paused: false })
+  const gameRef = useRef({ paddleX: W / 2, ballX: W / 2, ballY: PADDLE_Y - 15, ballDX: 0, ballDY: 0, bricks: [], paused: false, floats: [] })
   const animRef = useRef(null)
   const scoreRef = useRef(0)
   const livesRef = useRef(3)
@@ -43,6 +44,8 @@ export default function Breakout({ onPlayingChange }) {
   const sound = useSound()
   const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('breakout')
   const isPlaying = difficulty && !gameOver
+  const particlePoolRef = useRef(createParticlePool())
+  const shakeIntensityRef = useRef(0)
 
   useEffect(() => { onPlayingChange?.(isPlaying); return () => onPlayingChange?.(false) }, [isPlaying, onPlayingChange])
   useEffect(() => { gameOverRef.current = gameOver }, [gameOver])
@@ -87,23 +90,25 @@ export default function Breakout({ onPlayingChange }) {
       g.ballDX = Math.cos(angle) * speed
       g.ballDY = Math.sin(angle) * speed
       g.ballY = PADDLE_Y - BALL_R
+      spawnParticles(particlePoolRef.current, g.ballX, PADDLE_Y, '#ffffff', 4, { spread: Math.PI, speed: 1.5, gravity: 0.08, life: 20, sizeMin: 2, sizeMax: 4, angle: -Math.PI / 2 })
       sound('click')
     }
 
     if (g.ballY > H + 20) {
       livesRef.current--
       setLives(livesRef.current)
+      shakeIntensityRef.current = 6
       if (livesRef.current <= 0) {
         gameOverRef.current = true
         setGameOver(true)
-        sound('lose')
+        sound('death')
         const finalScore = scoreRef.current
         if (finalScore > highScore) { setHighScore(finalScore); saveHighScore('breakout', finalScore) }
         recordGame(finalScore, 0)
         return
       }
       resetBall(diffRef.current)
-      sound('click')
+      sound('death')
     }
 
     for (const b of g.bricks) {
@@ -113,7 +118,9 @@ export default function Breakout({ onPlayingChange }) {
         g.ballDY *= -1
         scoreRef.current += b.points
         setScore(scoreRef.current)
-        sound('click')
+        g.floats.push({ x: b.x + BRICK_W / 2, y: b.y, text: `+${b.points}`, color: b.color, life: 40, vy: -1.5 })
+        spawnParticles(particlePoolRef.current, b.x + BRICK_W / 2, b.y + BRICK_H / 2, b.color, 10, { spread: Math.PI * 2, speed: 3, gravity: 0.08, life: 35, sizeMin: 2, sizeMax: 5 })
+        sound('hit')
         break
       }
     }
@@ -121,7 +128,11 @@ export default function Breakout({ onPlayingChange }) {
     if (g.bricks.every(b => !b.alive)) {
       gameOverRef.current = true
       setGameOver(true)
-      sound('win')
+      const colors = ['#ff2d7b', '#ff6b2b', '#ffe600', '#39ff14', '#00d4ff', '#b946ff', '#ffffff']
+      for (let i = 0; i < 50; i++) {
+        spawnParticles(particlePoolRef.current, Math.random() * W, Math.random() * H * 0.5, colors[i % colors.length], 1, { spread: Math.PI, speed: 2, gravity: 0.03, life: 60, sizeMin: 3, sizeMax: 6, angle: -Math.PI / 2 })
+      }
+      sound('victory')
       const finalScore = scoreRef.current + 500
       scoreRef.current = finalScore
       setScore(finalScore)
@@ -133,6 +144,13 @@ export default function Breakout({ onPlayingChange }) {
     ctx.clearRect(0, 0, W, H)
     ctx.fillStyle = 'rgba(0,0,0,0.3)'
     ctx.fillRect(0, 0, W, H)
+
+    const shakeAmt = shakeIntensityRef.current
+    if (shakeAmt > 0) {
+      screenShakeApply(ctx, shakeAmt)
+      shakeIntensityRef.current *= 0.8
+      if (shakeIntensityRef.current < 0.5) shakeIntensityRef.current = 0
+    }
 
     for (const b of g.bricks) {
       if (!b.alive) continue
@@ -160,12 +178,31 @@ export default function Breakout({ onPlayingChange }) {
     ctx.fill()
     ctx.shadowBlur = 0
 
+    for (let i = g.floats.length - 1; i >= 0; i--) {
+      const f = g.floats[i]
+      f.y += f.vy
+      f.life--
+      const alpha = f.life / 40
+      ctx.fillStyle = f.color
+      ctx.globalAlpha = alpha
+      ctx.font = "bold 14px 'Press Start 2P', monospace"
+      ctx.textAlign = 'center'
+      ctx.fillText(f.text, f.x, f.y)
+      ctx.globalAlpha = 1
+      if (f.life <= 0) g.floats.splice(i, 1)
+    }
+
     for (let i = 0; i < livesRef.current; i++) {
-      ctx.fillStyle = 'var(--neon-pink)'
+      ctx.fillStyle = '#ff2d7b'
       ctx.beginPath()
       ctx.arc(W - 20 - i * 18, 16, 5, 0, Math.PI * 2)
       ctx.fill()
     }
+
+    updateParticles(particlePoolRef.current)
+    drawParticles(ctx, particlePoolRef.current)
+
+    if (shakeAmt > 0) screenShakeRestore(ctx)
 
     animRef.current = requestAnimationFrame(gameLoop)
   }, [sound, highScore, recordGame, resetBall])
@@ -217,6 +254,9 @@ export default function Breakout({ onPlayingChange }) {
     scoreRef.current = 0
     livesRef.current = d.lives
     gameOverRef.current = false
+    particlePoolRef.current = []
+    shakeIntensityRef.current = 0
+    g.floats = []
     setScore(0)
     setLives(d.lives)
     setGameOver(false)

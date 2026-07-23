@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import Confetti from './Confetti'
 
 const MODES = [
   { name: 'Very Easy', attempts: 25, emoji: '🟢', color: '#39ff14' },
@@ -23,6 +24,7 @@ export default function GuessTheNumber({ onPlayingChange }) {
   const [won, setWon] = useState(false)
   const [animating, setAnimating] = useState(false)
   const [shake, setShake] = useState(false)
+  const [confetti, setConfetti] = useState(false)
   const [lastGuess, setLastGuess] = useState(null)
   const inputRef = useRef(null)
   const sound = useSound()
@@ -73,6 +75,7 @@ export default function GuessTheNumber({ onPlayingChange }) {
       if (hint === 'correct') {
         setWon(true)
         setGameOver(true)
+        setConfetti(true)
         recordGame(true, maxAttempts - attempts)
         sound('victory')
       } else {
@@ -147,6 +150,7 @@ export default function GuessTheNumber({ onPlayingChange }) {
 
   return (
     <div className="game-card slide-in">
+      <Confetti active={confetti} onDone={() => setConfetti(false)} />
       <h2>Guess The Number</h2>
       <p className="description">
         I'm thinking of a number between 1 and 100. You have {maxAttempts} {maxAttempts === 1 ? 'attempt' : 'attempts'}!

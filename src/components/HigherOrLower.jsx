@@ -237,8 +237,8 @@ export default function HigherOrLower({ onPlayingChange }) {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={reset}>Play Again</button>
-            <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }} onClick={quitToMenu}>Change Difficulty</button>
+            <button className="play-again-btn" onClick={() => { sound('click'); reset() }}>Play Again</button>
+            <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }} onClick={() => { sound('click'); quitToMenu() }}>Change Difficulty</button>
             <button className="play-again-btn share-btn" onClick={shareResult}>
               {copied ? '✓ Copied!' : '📋 Copy Result'}
             </button>

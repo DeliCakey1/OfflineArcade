@@ -218,9 +218,9 @@ export default function WordScramble({ onPlayingChange }) {
             <span className="bot">🔥 {bestStreak} best streak</span>
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={() => startGame(mode, totalRounds)}>Play Again</button>
+            <button className="play-again-btn" onClick={() => { sound('click'); startGame(mode, totalRounds) }}>Play Again</button>
             <button className="play-again-btn" style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }}
-              onClick={() => { setMode(null); setTotalRounds(0); setSelectedRounds(null) }}>New Game</button>
+              onClick={() => { sound('click'); setMode(null); setTotalRounds(0); setSelectedRounds(null) }}>New Game</button>
             <button className="play-again-btn share-btn" onClick={shareResult}>
               {copied ? '✓ Copied!' : '📋 Copy Result'}
             </button>

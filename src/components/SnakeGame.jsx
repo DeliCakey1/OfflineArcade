@@ -2,14 +2,21 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import useEffects from '../useEffects.jsx'
 
 const GRID_SIZE = 20
-const INITIAL_SPEED = 150
 const SPEED_DECREASE = 10
 const MIN_SPEED = 60
 const FOOD_INTERVAL = 5
 const FOOD_POINTS = 10
 const CELL_SIZE = 18
+
+const DIFFICULTIES = [
+  { name: 'Easy', emoji: '🟢', desc: 'Relaxed pace', initialSpeed: 180 },
+  { name: 'Normal', emoji: '🟡', desc: 'Standard snake', initialSpeed: 150 },
+  { name: 'Hard', emoji: '🟠', desc: 'Fast and tricky', initialSpeed: 110 },
+  { name: 'Insane', emoji: '💀', desc: 'Blink and you lose', initialSpeed: 80 },
+]
 
 function getInitialSnake() {
   const mid = Math.floor(GRID_SIZE / 2)
@@ -43,10 +50,12 @@ export default function SnakeGame({ onPlayingChange }) {
   const [highScore, setHighScoreState] = useState(() => 0)
   const [gameState, setGameState] = useState('idle')
   const [copied, setCopied] = useState(false)
-  const [renderTick, setRenderTick] = useState(0)
+  const [, setRenderTick] = useState(0)
+  const [difficulty, setDifficulty] = useState(null)
 
   const sound = useSound()
   const { recordGame, getHighScore, setHighScore } = useStats('snake')
+  const { spawnParticles, floatText, shakeScreen, renderParticles, shakeStyle } = useEffects()
 
   const gameRef = useRef({
     snake: getInitialSnake(),
@@ -55,7 +64,7 @@ export default function SnakeGame({ onPlayingChange }) {
     food: null,
     score: 0,
     foodEaten: 0,
-    speed: INITIAL_SPEED,
+    speed: 150,
     running: false,
     paused: false,
     intervalId: null,
@@ -63,9 +72,10 @@ export default function SnakeGame({ onPlayingChange }) {
 
   const dirQueueRef = useRef([])
   const gameCardRef = useRef(null)
+  const gridContainerRef = useRef(null)
+  const speedLevelRef = useRef(1)
 
   const isPlaying = gameState === 'playing'
-  const currentSpeed = gameRef.current.speed
 
   useEffect(() => {
     onPlayingChange?.(isPlaying)
@@ -97,7 +107,11 @@ export default function SnakeGame({ onPlayingChange }) {
       if (g.intervalId) clearInterval(g.intervalId)
       setGameState('gameover')
       recordGame(false, g.score)
-      sound('lose')
+      shakeScreen(6, 300)
+      const hx = head.x * CELL_SIZE + CELL_SIZE / 2 + 4
+      const hy = head.y * CELL_SIZE + CELL_SIZE / 2 + 4
+      spawnParticles(hx, hy, '#ff2d7b', 12, { spread: Math.PI * 2, speed: 2.5, gravity: 0.1, life: 30, sizeMin: 3, sizeMax: 6, angle: Math.random() * Math.PI * 2 })
+      sound('death')
       const prev = getHighScore('snake')
       if (g.score > prev) {
         setHighScore('snake', g.score)
@@ -112,7 +126,11 @@ export default function SnakeGame({ onPlayingChange }) {
         if (g.intervalId) clearInterval(g.intervalId)
         setGameState('gameover')
         recordGame(false, g.score)
-        sound('lose')
+        shakeScreen(6, 300)
+        const hx = newHead.x * CELL_SIZE + CELL_SIZE / 2 + 4
+        const hy = newHead.y * CELL_SIZE + CELL_SIZE / 2 + 4
+        spawnParticles(hx, hy, '#ff2d7b', 12, { spread: Math.PI * 2, speed: 2.5, gravity: 0.1, life: 30, sizeMin: 3, sizeMax: 6, angle: Math.random() * Math.PI * 2 })
+        sound('death')
         const prev = getHighScore('snake')
         if (g.score > prev) {
           setHighScore('snake', g.score)
@@ -130,20 +148,33 @@ export default function SnakeGame({ onPlayingChange }) {
       g.score += FOOD_POINTS
       g.foodEaten += 1
       if (g.foodEaten % FOOD_INTERVAL === 0) {
+        const oldLevel = Math.floor((150 - g.speed) / SPEED_DECREASE) + 1
         g.speed = Math.max(MIN_SPEED, g.speed - SPEED_DECREASE)
+        const newLevel = Math.floor((150 - g.speed) / SPEED_DECREASE) + 1
+        if (newLevel > oldLevel) {
+          floatText(9 * CELL_SIZE + CELL_SIZE / 2 + 4, 9 * CELL_SIZE + 4, 'SPEED UP!', '#ffe600')
+          sound('levelup')
+        }
+        speedLevelRef.current = newLevel
         if (g.intervalId) clearInterval(g.intervalId)
         g.intervalId = setInterval(tick, g.speed)
       }
+      const foodPxX = g.food.x * CELL_SIZE + CELL_SIZE / 2 + 4
+      const foodPxY = g.food.y * CELL_SIZE + CELL_SIZE / 2 + 4
+      spawnParticles(foodPxX, foodPxY, '#39ff14', 8, { spread: Math.PI * 2, speed: 2.5, gravity: 0.1, life: 30, sizeMin: 3, sizeMax: 6 })
+      floatText(foodPxX, foodPxY - 10, `+${FOOD_POINTS}`, '#39ff14')
       g.food = spawnFood(newSnake)
       setScore(g.score)
-      sound('win')
+      sound('score')
     }
 
     g.snake = newSnake
     setRenderTick(t => t + 1)
-  }, [recordGame, sound])
+  }, [recordGame, sound, spawnParticles, floatText, shakeScreen])
 
-  function startGame() {
+  function startGame(diffName) {
+    const d = DIFFICULTIES.find(x => x.name === diffName) || DIFFICULTIES[1]
+    setDifficulty(diffName)
     const g = gameRef.current
     if (g.intervalId) clearInterval(g.intervalId)
     dirQueueRef.current = []
@@ -153,11 +184,12 @@ export default function SnakeGame({ onPlayingChange }) {
     g.nextDirection = { x: 1, y: 0 }
     g.score = 0
     g.foodEaten = 0
-    g.speed = INITIAL_SPEED
+    g.speed = d.initialSpeed
     g.running = true
     g.paused = false
     g.food = spawnFood(g.snake)
     g.intervalId = setInterval(tick, g.speed)
+    speedLevelRef.current = 1
 
     setScore(0)
     setGameState('playing')
@@ -221,9 +253,10 @@ export default function SnakeGame({ onPlayingChange }) {
   }
 
   function shareResult() {
+    const d = DIFFICULTIES.find(x => x.name === difficulty)
     const lines = [
       `🐍 Snake: ${score} points`,
-      `⚡ Speed Level: ${Math.floor((INITIAL_SPEED - currentSpeed) / SPEED_DECREASE) + 1}`,
+      d ? `${d.emoji} ${difficulty}` : '',
       highScore > 0 ? `🏆 High Score: ${highScore}` : '',
       ``,
       `🎮 Offline Arcade`,
@@ -235,8 +268,7 @@ export default function SnakeGame({ onPlayingChange }) {
   }
 
   const g = gameRef.current
-  const snakeSet = new Set(g.snake.map(s => `${s.x},${s.y}`))
-  const speedLevel = Math.floor((INITIAL_SPEED - currentSpeed) / SPEED_DECREASE) + 1
+  const speedLevel = speedLevelRef.current
 
   const grid = []
   for (let y = 0; y < GRID_SIZE; y++) {
@@ -287,43 +319,56 @@ export default function SnakeGame({ onPlayingChange }) {
     WebkitTapHighlightColor: 'transparent',
   }
 
+  if (gameState === 'idle') {
+    return (
+      <div className="game-card slide-in">
+        <h2>Snake</h2>
+        <p className="description">Eat food to grow! Avoid walls and yourself.</p>
+        <div className="rps-mode-grid">
+          {DIFFICULTIES.map(d => (
+            <button key={d.name} className="rps-mode-card" onClick={() => startGame(d.name)}>
+              <div className="rps-mode-icon">{d.emoji}</div>
+              <div className="rps-mode-label">{d.name}</div>
+              <div className="rps-mode-desc">{d.desc}</div>
+            </button>
+          ))}
+        </div>
+        {highScore > 0 && (
+          <div className="rps-history-item" style={{ marginTop: 16, textAlign: 'center' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>🏆 Best: {highScore}</span>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="game-card slide-in" ref={gameCardRef}>
-      <h2>Snake</h2>
-      <p className="description">
-        {gameState === 'idle' && 'Eat food to grow! Avoid walls and yourself.'}
-        {gameState === 'playing' && 'Use arrow keys or WASD to move'}
-        {gameState === 'paused' && 'Paused - Press Space to resume'}
-        {gameState === 'gameover' && 'Game Over!'}
-      </p>
-
-      <div className="hol-stats-row">
-        <div className="hol-stat">
-          <div className="hol-stat-label">Score</div>
-          <div className="hol-stat-num player">{score}</div>
-        </div>
-        <div className="hol-stat">
-          <div className="hol-stat-label">Speed</div>
-          <div className="hol-stat-num">{speedLevel}</div>
-        </div>
-        <div className="hol-stat">
-          <div className="hol-stat-label">Best</div>
-          <div className="hol-stat-num">{highScore}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <QuitConfirmButton onQuit={() => { if (gameRef.current.intervalId) clearInterval(gameRef.current.intervalId); gameRef.current.running = false; setGameState('idle'); setDifficulty(null); onPlayingChange?.(false) }} gameOver={gameState === 'gameover'} className="quit-btn" />
+        <div style={{ display: 'flex', gap: 24, fontSize: 13 }}>
+          <div style={{ textAlign: 'center' }}><div style={{ color: 'var(--text-dim)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Score</div><div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: 'var(--neon-yellow)' }}>{score}</div></div>
+          <div style={{ textAlign: 'center' }}><div style={{ color: 'var(--text-dim)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Speed</div><div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: 'var(--neon-green)' }}>{speedLevel}</div></div>
+          <div style={{ textAlign: 'center' }}><div style={{ color: 'var(--text-dim)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Best</div><div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: 'var(--neon-orange)' }}>{highScore}</div></div>
         </div>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${GRID_SIZE}, ${CELL_SIZE}px)`,
-        gap: 1,
-        justifyContent: 'center',
-        margin: '0 auto',
-        background: 'rgba(0,0,0,0.3)',
-        padding: 4,
-        borderRadius: 8,
-        border: '1px solid rgba(57, 255, 20, 0.15)',
-      }}>
-        {grid}
+      <div style={{ position: 'relative', display: 'inline-block', margin: '0 auto' }} ref={gridContainerRef}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${GRID_SIZE}, ${CELL_SIZE}px)`,
+          gap: 1,
+          justifyContent: 'center',
+          margin: '0 auto',
+          background: 'rgba(0,0,0,0.3)',
+          padding: 4,
+          borderRadius: 8,
+          border: '1px solid rgba(57, 255, 20, 0.15)',
+          ...shakeStyle,
+        }}>
+          {grid}
+        </div>
+        {renderParticles({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8 })}
       </div>
 
       {(gameState === 'playing' || gameState === 'paused') && (
@@ -344,12 +389,6 @@ export default function SnakeGame({ onPlayingChange }) {
         </div>
       )}
 
-      {gameState === 'idle' && (
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
-          <button className="play-again-btn" onClick={startGame}>Start Game</button>
-        </div>
-      )}
-
       {gameState === 'gameover' && (
         <div className="rps-game-over">
           <div className="rps-game-over-emoji">🐍</div>
@@ -363,11 +402,11 @@ export default function SnakeGame({ onPlayingChange }) {
             <div className="result-message">🏆 New High Score!</div>
           )}
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={startGame}>Play Again</button>
+            <button className="play-again-btn" onClick={() => startGame(difficulty)}>Play Again</button>
             <button
               className="play-again-btn"
               style={{ background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))' }}
-              onClick={() => { setGameState('idle') }}
+              onClick={() => { setGameState('idle'); setDifficulty(null) }}
             >
               New Game
             </button>
@@ -383,10 +422,6 @@ export default function SnakeGame({ onPlayingChange }) {
           <button className="play-again-btn" onClick={pauseResume}>Resume</button>
         </div>
       )}
-
-      <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <QuitConfirmButton onQuit={() => { if (gameRef.current.intervalId) clearInterval(gameRef.current.intervalId); gameRef.current.running = false; setGameState('idle'); onPlayingChange?.(false) }} gameOver={gameState === 'gameover'} className="quit-btn" />
-      </div>
     </div>
   )
 }

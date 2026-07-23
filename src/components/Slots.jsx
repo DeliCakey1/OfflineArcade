@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import Confetti from './Confetti'
 
 const SYMBOLS = ['🍒', '🍋', '🍊', '🍇', '⭐', '💎']
 
@@ -40,6 +41,7 @@ export default function Slots({ onPlayingChange }) {
   const [copied, setCopied] = useState(false)
   const [pointAnim, setPointAnim] = useState('')
   const [gameOver, setGameOver] = useState(false)
+  const [confetti, setConfetti] = useState(false)
   const spinIntervals = useRef([])
   const sound = useSound()
   const { gameStats, recordGame } = useStats('slots')
@@ -142,9 +144,11 @@ export default function Slots({ onPlayingChange }) {
 
   useEffect(() => {
     if (targetRounds && totalSpins >= targetRounds && !spinning) {
+      const wins = history.filter(h => h.won).length
       setTimeout(() => {
         setGameOver(true)
-        sound('defeat')
+        if (wins > 0) setConfetti(true)
+        sound(wins > 0 ? 'victory' : 'defeat')
       }, 800)
     }
   }, [totalSpins, targetRounds, spinning, sound])
@@ -303,9 +307,10 @@ export default function Slots({ onPlayingChange }) {
 
   const remaining = targetRounds - totalSpins
 
-  return (
-    <div className="game-card slide-in">
-      <h2>Slot Machine</h2>
+    return (
+      <div className="game-card slide-in">
+        <Confetti active={confetti} onDone={() => setConfetti(false)} />
+        <h2>Slot Machine</h2>
       <p className="description">Spin the reels and try your luck!</p>
 
       <div className="slots-stats">

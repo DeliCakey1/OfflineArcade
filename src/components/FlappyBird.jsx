@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import { createParticlePool, spawnParticles, updateParticles, drawParticles, screenShakeApply, screenShakeRestore } from '../canvasEffects'
 
 const W = 360, H = 520
 const BIRD_SIZE = 20
@@ -26,7 +27,7 @@ export default function FlappyBird({ onPlayingChange }) {
   const [copied, setCopied] = useState(false)
   const [started, setStarted] = useState(false)
   const canvasRef = useRef(null)
-  const gameRef = useRef({ birdY: H / 2, birdVY: 0, pipes: [], pipeTimer: 0, frame: 0 })
+  const gameRef = useRef({ birdY: H / 2, birdVY: 0, pipes: [], pipeTimer: 0, frame: 0, deathVY: 0, deathAngle: 0 })
   const animRef = useRef(null)
   const scoreRef = useRef(0)
   const gameOverRef = useRef(false)
@@ -35,6 +36,8 @@ export default function FlappyBird({ onPlayingChange }) {
   const sound = useSound()
   const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('flappy')
   const isPlaying = difficulty && !gameOver
+  const particlePoolRef = useRef(createParticlePool())
+  const shakeIntensityRef = useRef(0)
 
   useEffect(() => { onPlayingChange?.(isPlaying); return () => onPlayingChange?.(false) }, [isPlaying, onPlayingChange])
   useEffect(() => { gameOverRef.current = gameOver }, [gameOver])
@@ -58,7 +61,49 @@ export default function FlappyBird({ onPlayingChange }) {
     const g = gameRef.current
     const d = DIFFICULTIES.find(x => x.name === diffRef.current) || DIFFICULTIES[1]
 
-    if (!startedRef.current || gameOverRef.current) {
+    if (!startedRef.current) {
+      animRef.current = requestAnimationFrame(gameLoop)
+      return
+    }
+
+    if (gameOverRef.current) {
+      const g2 = gameRef.current
+      g2.deathVY += 0.5
+      g2.birdY += g2.deathVY
+      g2.deathAngle += 8
+      ctx.clearRect(0, 0, W, H)
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H)
+      skyGrad.addColorStop(0, '#1a1033')
+      skyGrad.addColorStop(1, '#2a1f4e')
+      ctx.fillStyle = skyGrad
+      ctx.fillRect(0, 0, W, H)
+      for (const p of g2.pipes) {
+        ctx.fillStyle = '#39ff14'
+        ctx.beginPath()
+        ctx.roundRect(p.x, 0, PIPE_W, p.gapTop, [6, 6, 0, 0])
+        ctx.fill()
+        ctx.fillStyle = '#39ff14'
+        ctx.beginPath()
+        ctx.roundRect(p.x, p.gapBot, PIPE_W, H - p.gapBot, [0, 0, 6, 6])
+        ctx.fill()
+      }
+      if (g2.birdY < H + 40) {
+        ctx.save()
+        ctx.translate(30, g2.birdY)
+        ctx.rotate(g2.deathAngle * Math.PI / 180)
+        ctx.fillStyle = '#ffe600'
+        ctx.beginPath()
+        ctx.ellipse(0, 0, BIRD_SIZE / 2, BIRD_SIZE / 2 - 2, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
+      }
+      const flashAlpha = Math.max(0, 0.3 - g2.deathVY * 0.02)
+      if (flashAlpha > 0) {
+        ctx.fillStyle = `rgba(255, 50, 50, ${flashAlpha})`
+        ctx.fillRect(0, 0, W, H)
+      }
+      updateParticles(particlePoolRef.current)
+      drawParticles(ctx, particlePoolRef.current)
       animRef.current = requestAnimationFrame(gameLoop)
       return
     }
@@ -79,6 +124,14 @@ export default function FlappyBird({ onPlayingChange }) {
         p.passed = true
         scoreRef.current++
         setScore(scoreRef.current)
+        spawnParticles(particlePoolRef.current, p.x + PIPE_W, p.gapTop + (p.gapBot - p.gapTop) / 2, '#39ff14', 6, { spread: Math.PI * 0.8, speed: 2, gravity: 0.03, life: 25, sizeMin: 2, sizeMax: 4, angle: Math.PI })
+        sound('score')
+        if (scoreRef.current % 10 === 0) {
+          for (let i = 0; i < 20; i++) {
+            spawnParticles(particlePoolRef.current, W / 2 + (Math.random() - 0.5) * 100, H / 3 + (Math.random() - 0.5) * 60, ['#ffe600', '#ff6b2b', '#ff2d7b'][i % 3], 1, { spread: Math.PI * 2, speed: 3, gravity: 0.02, life: 50, sizeMin: 3, sizeMax: 6, angle: Math.random() * Math.PI * 2 })
+          }
+          sound('levelup')
+        }
       }
     }
     g.pipes = g.pipes.filter(p => p.x > -PIPE_W)
@@ -87,7 +140,11 @@ export default function FlappyBird({ onPlayingChange }) {
     if (g.birdY + BIRD_SIZE / 2 >= H || g.birdY - BIRD_SIZE / 2 <= 0) {
       gameOverRef.current = true
       setGameOver(true)
-      sound('lose')
+      shakeIntensityRef.current = 5
+      g.deathVY = -4
+      g.deathAngle = 0
+      sound('death')
+      spawnParticles(particlePoolRef.current, 30, g.birdY, '#ff2d7b', 15, { spread: Math.PI * 2, speed: 3, gravity: 0.04, life: 40, sizeMin: 2, sizeMax: 5, angle: 0 })
       const finalScore = scoreRef.current
       if (finalScore > bestScore) { setBestScore(finalScore); saveHighScore('flappy', finalScore) }
       recordGame(finalScore, 0)
@@ -98,7 +155,11 @@ export default function FlappyBird({ onPlayingChange }) {
         if (bird.y - bird.h / 2 < p.gapTop || bird.y + bird.h / 2 > p.gapBot) {
           gameOverRef.current = true
           setGameOver(true)
-          sound('lose')
+          shakeIntensityRef.current = 5
+          g.deathVY = -4
+          g.deathAngle = 0
+          sound('death')
+          spawnParticles(particlePoolRef.current, 30, g.birdY, '#ff2d7b', 15, { spread: Math.PI * 2, speed: 3, gravity: 0.04, life: 40, sizeMin: 2, sizeMax: 5, angle: 0 })
           const finalScore = scoreRef.current
           if (finalScore > bestScore) { setBestScore(finalScore); saveHighScore('flappy', finalScore) }
           recordGame(finalScore, 0)
@@ -108,6 +169,13 @@ export default function FlappyBird({ onPlayingChange }) {
     }
 
     ctx.clearRect(0, 0, W, H)
+
+    const shakeAmt = shakeIntensityRef.current
+    if (shakeAmt > 0) {
+      screenShakeApply(ctx, shakeAmt)
+      shakeIntensityRef.current *= 0.8
+      if (shakeIntensityRef.current < 0.5) shakeIntensityRef.current = 0
+    }
 
     const skyGrad = ctx.createLinearGradient(0, 0, 0, H)
     skyGrad.addColorStop(0, '#1a1033')
@@ -171,6 +239,11 @@ export default function FlappyBird({ onPlayingChange }) {
       const sy = (i * 67 + 20) % H
       ctx.fillRect(sx, sy, 2, 2)
     }
+
+    updateParticles(particlePoolRef.current)
+    drawParticles(ctx, particlePoolRef.current)
+    if (shakeAmt > 0) screenShakeRestore(ctx)
+
     g.frame++
 
     animRef.current = requestAnimationFrame(gameLoop)
@@ -204,9 +277,13 @@ export default function FlappyBird({ onPlayingChange }) {
     g.pipes = []
     g.pipeTimer = 0
     g.frame = 0
+    g.deathVY = 0
+    g.deathAngle = 0
     scoreRef.current = 0
     gameOverRef.current = false
     startedRef.current = false
+    particlePoolRef.current = []
+    shakeIntensityRef.current = 0
     setScore(0)
     setGameOver(false)
     setStarted(false)

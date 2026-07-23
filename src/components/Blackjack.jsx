@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import Confetti from './Confetti'
 
 const SUITS = ['♠', '♥', '♦', '♣']
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
@@ -116,6 +117,7 @@ export default function Blackjack({ onPlayingChange }) {
   const [copied, setCopied] = useState(false)
   const [history, setHistory] = useState([])
   const [gameOver, setGameOver] = useState(false)
+  const [confetti, setConfetti] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('blackjack')
   const deckRef = useRef([])
@@ -133,7 +135,8 @@ export default function Blackjack({ onPlayingChange }) {
     if (targetRounds && round >= targetRounds && !animating && phase === 'betting') {
       setTimeout(() => {
         setGameOver(true)
-        sound('defeat')
+        if (wins > losses) setConfetti(true)
+        sound(wins > losses ? 'victory' : 'defeat')
       }, 600)
     }
   }, [round, targetRounds, animating, phase, sound])
@@ -487,9 +490,10 @@ export default function Blackjack({ onPlayingChange }) {
 
   const remaining = targetRounds - round
 
-  return (
-    <div className="game-card slide-in">
-      <h2>Blackjack</h2>
+    return (
+      <div className="game-card slide-in">
+        <Confetti active={confetti} onDone={() => setConfetti(false)} />
+        <h2>Blackjack</h2>
       <p className="description">Beat the dealer to 21!</p>
 
       <div className="bj-stats-row">

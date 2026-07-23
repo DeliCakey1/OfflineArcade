@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import useEffects from '../useEffects.jsx'
 
 const COLS = 10
 const ROWS = 20
@@ -81,7 +82,9 @@ export default function Tetris({ onPlayingChange }) {
   const [difficulty, setDifficulty] = useState(null)
   const [grid, setGrid] = useState(createGrid)
   const [current, setCurrent] = useState(null)
-  const [next, setNext] = useState(null)
+  const [nextQueue, setNextQueue] = useState([])
+  const [holdPiece, setHoldPiece] = useState(null)
+  const [canHold, setCanHold] = useState(true)
   const [score, setScore] = useState(0)
   const [lines, setLines] = useState(0)
   const [level, setLevel] = useState(0)
@@ -91,14 +94,24 @@ export default function Tetris({ onPlayingChange }) {
   const dropTimer = useRef(null)
   const gridRef = useRef(createGrid())
   const currentRef = useRef(null)
-  const nextRef = useRef(null)
+  const nextQueueRef = useRef([])
+  const holdPieceRef = useRef(null)
+  const canHoldRef = useRef(true)
   const scoreRef = useRef(0)
   const linesRef = useRef(0)
   const gameOverRef = useRef(false)
   const levelRef = useRef(0)
   const sound = useSound()
-  const { recordGame, gameStats, getHighScore, setHighScore: saveHighScore } = useStats('tetris')
+  const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('tetris')
+  const { spawnParticles, floatText, shakeScreen, renderParticles, shakeStyle } = useEffects()
   const isPlaying = difficulty && !gameOver
+
+  const touchBtn = {
+    width: 48, height: 48, borderRadius: '50%', border: '2px solid rgba(0,212,255,0.4)',
+    background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontSize: 20, cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'all 0.1s', userSelect: 'none', WebkitTapHighlightColor: 'transparent',
+  }
 
   useEffect(() => {
     onPlayingChange?.(isPlaying)
@@ -113,13 +126,21 @@ export default function Tetris({ onPlayingChange }) {
     return Math.max(50, spd.baseInterval - linesRef.current * spd.speedUp)
   }, [difficulty])
 
+  const fillNextQueue = useCallback(() => {
+    while (nextQueueRef.current.length < 3) {
+      nextQueueRef.current.push(randomPiece())
+    }
+    setNextQueue([...nextQueueRef.current])
+  }, [])
+
   const spawnPiece = useCallback(() => {
-    const p = nextRef.current || randomPiece()
-    nextRef.current = randomPiece()
-    setNext(nextRef.current)
+    if (nextQueueRef.current.length === 0) fillNextQueue()
+    const p = nextQueueRef.current.shift()
+    fillNextQueue()
     if (collides(gridRef.current, p.shape, p.x, p.y)) {
       setGameOver(true)
-      sound('lose')
+      shakeScreen(6, 400)
+      sound('death')
       const finalScore = scoreRef.current
       if (finalScore > highScore) {
         setHighScore(finalScore)
@@ -130,7 +151,9 @@ export default function Tetris({ onPlayingChange }) {
     }
     currentRef.current = p
     setCurrent(p)
-  }, [highScore, recordGame, sound, saveHighScore])
+    canHoldRef.current = true
+    setCanHold(true)
+  }, [highScore, recordGame, sound, saveHighScore, fillNextQueue, shakeScreen])
 
   const tick = useCallback(() => {
     if (gameOverRef.current) return
@@ -152,12 +175,33 @@ export default function Tetris({ onPlayingChange }) {
         setScore(scoreRef.current)
         setLines(linesRef.current)
         const newLevel = Math.floor(linesRef.current / 10)
-        if (newLevel !== levelRef.current) { levelRef.current = newLevel; setLevel(newLevel) }
-        sound(cleared >= 4 ? 'win' : 'click')
+        if (newLevel !== levelRef.current) {
+          levelRef.current = newLevel
+          setLevel(newLevel)
+          floatText(150, 300, 'LEVEL UP!', '#b946ff')
+          sound('levelup')
+        }
+        if (cleared >= 4) {
+          shakeScreen(5, 350)
+          floatText(140, 250, 'TETRIS!', '#ffe600')
+          for (let i = 0; i < 25; i++) {
+            spawnParticles(140 + (Math.random() - 0.5) * 200, 200 + Math.random() * 200, ['#00d4ff', '#ffe600', '#b946ff', '#39ff14'][i % 4], 1, { spread: Math.PI * 2, speed: 2, gravity: 0.05, life: 45, sizeMin: 3, sizeMax: 6, angle: Math.random() * Math.PI * 2 })
+          }
+        } else {
+          floatText(140, 280, `+${pts}`, '#00d4ff')
+          for (let r = 0; r < ROWS; r++) {
+            if (newGrid[r].some(c => c) && !gridRef.current[r]) {
+              for (let c = 0; c < COLS; c++) {
+                spawnParticles(c * CELL + CELL / 2, r * CELL + CELL / 2, '#ffffff', 2, { spread: Math.PI, speed: 1.5, gravity: 0.05, life: 20, sizeMin: 2, sizeMax: 4, angle: -Math.PI / 2 })
+              }
+            }
+          }
+        }
+        sound(cleared >= 4 ? 'win' : 'score')
       }
       spawnPiece()
     }
-  }, [spawnPiece, sound])
+  }, [spawnPiece, sound, floatText, shakeScreen, spawnParticles])
 
   useEffect(() => {
     if (!isPlaying) return
@@ -168,11 +212,113 @@ export default function Tetris({ onPlayingChange }) {
     return () => clearInterval(dropTimer.current)
   }, [isPlaying, tick, getInterval])
 
+  const doHold = useCallback(() => {
+    if (!canHoldRef.current || gameOverRef.current) return
+    const p = currentRef.current
+    if (!p) return
+    canHoldRef.current = false
+    setCanHold(false)
+    const held = holdPieceRef.current
+    const resetPiece = { shape: SHAPES[p.name].shape.map(r => [...r]), color: SHAPES[p.name].color, name: p.name, x: Math.floor((COLS - SHAPES[p.name].shape[0].length) / 2), y: 0 }
+    holdPieceRef.current = resetPiece
+    setHoldPiece(resetPiece)
+    if (held) {
+      currentRef.current = held
+      setCurrent(held)
+    } else {
+      spawnPiece()
+    }
+    sound('click')
+  }, [spawnPiece, sound])
+
+  const moveLeft = useCallback(() => {
+    if (!isPlaying || gameOverRef.current) return
+    const p = currentRef.current
+    if (!p) return
+    if (!collides(gridRef.current, p.shape, p.x - 1, p.y)) { p.x--; setCurrent({ ...p }); currentRef.current = p; sound('click') }
+  }, [isPlaying, sound])
+
+  const moveRight = useCallback(() => {
+    if (!isPlaying || gameOverRef.current) return
+    const p = currentRef.current
+    if (!p) return
+    if (!collides(gridRef.current, p.shape, p.x + 1, p.y)) { p.x++; setCurrent({ ...p }); currentRef.current = p; sound('click') }
+  }, [isPlaying, sound])
+
+  const moveDown = useCallback(() => {
+    if (!isPlaying || gameOverRef.current) return
+    const p = currentRef.current
+    if (!p) return
+    if (!collides(gridRef.current, p.shape, p.x, p.y + 1)) { p.y++; setCurrent({ ...p }); currentRef.current = p }
+  }, [isPlaying])
+
+  const rotatePiece = useCallback(() => {
+    if (!isPlaying || gameOverRef.current) return
+    const p = currentRef.current
+    if (!p) return
+    const rotated = rotate(p.shape)
+    let kick = 0
+    if (!collides(gridRef.current, rotated, p.x, p.y)) kick = 0
+    else if (!collides(gridRef.current, rotated, p.x - 1, p.y)) kick = -1
+    else if (!collides(gridRef.current, rotated, p.x + 1, p.y)) kick = 1
+    else if (!collides(gridRef.current, rotated, p.x - 2, p.y)) kick = -2
+    else if (!collides(gridRef.current, rotated, p.x + 2, p.y)) kick = 2
+    else return
+    p.shape = rotated; p.x += kick
+    setCurrent({ ...p }); currentRef.current = p; sound('click')
+  }, [isPlaying, sound])
+
+  const hardDrop = useCallback(() => {
+    if (!isPlaying || gameOverRef.current) return
+    const p = currentRef.current
+    if (!p) return
+    let dropY = p.y
+    while (!collides(gridRef.current, p.shape, p.x, dropY + 1)) dropY++
+    for (let r = 0; r < p.shape.length; r++)
+      for (let c = 0; c < p.shape[r].length; c++)
+        if (p.shape[r][c]) spawnParticles((p.x + c) * CELL + CELL / 2, (dropY + r) * CELL + CELL / 2, p.color, 3, { spread: Math.PI, speed: 1.5, gravity: 0.08, life: 20, sizeMin: 2, sizeMax: 4, angle: -Math.PI / 2 })
+    p.y = dropY
+    gridRef.current = merge(gridRef.current, p)
+    const { grid: newGrid, cleared } = clearLines(gridRef.current)
+    gridRef.current = newGrid
+    setGrid(newGrid.map(r => [...r]))
+    if (cleared > 0) {
+      const pts = calcScore(cleared, levelRef.current)
+      scoreRef.current += pts
+      linesRef.current += cleared
+      setScore(scoreRef.current)
+      setLines(linesRef.current)
+      const newLevel = Math.floor(linesRef.current / 10)
+      if (newLevel !== levelRef.current) {
+        levelRef.current = newLevel
+        setLevel(newLevel)
+        floatText(150, 300, 'LEVEL UP!', '#b946ff')
+        sound('levelup')
+      }
+      if (cleared >= 4) {
+        shakeScreen(5, 350)
+        floatText(140, 250, 'TETRIS!', '#ffe600')
+        for (let i = 0; i < 25; i++) {
+          spawnParticles(140 + (Math.random() - 0.5) * 200, 200 + Math.random() * 200, ['#00d4ff', '#ffe600', '#b946ff', '#39ff14'][i % 4], 1, { spread: Math.PI * 2, speed: 2, gravity: 0.05, life: 45, sizeMin: 3, sizeMax: 6, angle: Math.random() * Math.PI * 2 })
+        }
+      } else {
+        floatText(140, 280, `+${pts}`, '#00d4ff')
+      }
+      sound(cleared >= 4 ? 'win' : 'score')
+    }
+    spawnPiece()
+  }, [isPlaying, sound, spawnParticles, floatText, shakeScreen, spawnPiece])
+
   useEffect(() => {
     if (!isPlaying) return
     function handleKey(e) {
       if (gameOverRef.current) return
       const p = currentRef.current
+      if (e.key === 'c' || e.key === 'C' || e.key === 'Shift') {
+        e.preventDefault()
+        doHold()
+        return
+      }
       if (!p) return
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         e.preventDefault()
@@ -199,6 +345,9 @@ export default function Tetris({ onPlayingChange }) {
         e.preventDefault()
         let dropY = p.y
         while (!collides(gridRef.current, p.shape, p.x, dropY + 1)) dropY++
+        for (let r = 0; r < p.shape.length; r++)
+          for (let c = 0; c < p.shape[r].length; c++)
+            if (p.shape[r][c]) spawnParticles((p.x + c) * CELL + CELL / 2, (dropY + r) * CELL + CELL / 2, p.color, 3, { spread: Math.PI, speed: 1.5, gravity: 0.08, life: 20, sizeMin: 2, sizeMax: 4, angle: -Math.PI / 2 })
         p.y = dropY
         gridRef.current = merge(gridRef.current, p)
         const { grid: newGrid, cleared } = clearLines(gridRef.current)
@@ -211,15 +360,29 @@ export default function Tetris({ onPlayingChange }) {
           setScore(scoreRef.current)
           setLines(linesRef.current)
           const newLevel = Math.floor(linesRef.current / 10)
-          if (newLevel !== levelRef.current) { levelRef.current = newLevel; setLevel(newLevel) }
-          sound(cleared >= 4 ? 'win' : 'click')
+          if (newLevel !== levelRef.current) {
+            levelRef.current = newLevel
+            setLevel(newLevel)
+            floatText(150, 300, 'LEVEL UP!', '#b946ff')
+            sound('levelup')
+          }
+          if (cleared >= 4) {
+            shakeScreen(5, 350)
+            floatText(140, 250, 'TETRIS!', '#ffe600')
+            for (let i = 0; i < 25; i++) {
+              spawnParticles(140 + (Math.random() - 0.5) * 200, 200 + Math.random() * 200, ['#00d4ff', '#ffe600', '#b946ff', '#39ff14'][i % 4], 1, { spread: Math.PI * 2, speed: 2, gravity: 0.05, life: 45, sizeMin: 3, sizeMax: 6, angle: Math.random() * Math.PI * 2 })
+            }
+          } else {
+            floatText(140, 280, `+${pts}`, '#00d4ff')
+          }
+          sound(cleared >= 4 ? 'win' : 'score')
         }
         spawnPiece()
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [isPlaying, spawnPiece, sound])
+  }, [isPlaying, spawnPiece, sound, doHold, floatText, shakeScreen, spawnParticles])
 
   function startGame(diff) {
     setDifficulty(diff)
@@ -228,27 +391,33 @@ export default function Tetris({ onPlayingChange }) {
     scoreRef.current = 0
     linesRef.current = 0
     levelRef.current = 0
+    nextQueueRef.current = []
+    holdPieceRef.current = null
+    canHoldRef.current = true
     setScore(0)
     setLines(0)
     setLevel(0)
+    setHoldPiece(null)
+    setCanHold(true)
+    setNextQueue([])
     setGameOver(false)
     setCopied(false)
-    const p = randomPiece()
+    fillNextQueue()
+    const p = nextQueueRef.current.shift()
+    fillNextQueue()
     currentRef.current = p
     setCurrent(p)
-    nextRef.current = randomPiece()
-    setNext(nextRef.current)
   }
 
   function handleShare() {
-    const text = `🎮 Tetris — ${score} pts | ${lines} lines | Level ${level}`
+    const text = `🧱 Tetris — ${score} pts | ${lines} lines | Level ${level}`
     navigator.clipboard?.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
 
   if (!difficulty) {
     return (
       <div className="game-card slide-in">
-        <h2>🧱 Tetris</h2>
+        <h2>Tetris</h2>
         <p className="description">Stack blocks, clear lines!</p>
         <div className="rps-mode-grid">
           {SPEEDS.map(s => (
@@ -260,7 +429,7 @@ export default function Tetris({ onPlayingChange }) {
           ))}
         </div>
         <div className="rps-history-item" style={{ marginTop: 16, textAlign: 'center' }}>
-          <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>Controls: ← → Move | ↑ Rotate | ↓ Soft Drop | Space Hard Drop</span>
+          <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>← → Move | ↑ Rotate | ↓ Soft Drop | Space Hard Drop | C Hold</span>
         </div>
       </div>
     )
@@ -271,6 +440,13 @@ export default function Tetris({ onPlayingChange }) {
     let gy = current.y
     while (!collides(gridRef.current, current.shape, current.x, gy + 1)) gy++
     return gy
+  })()
+
+  const dangerLevel = (() => {
+    for (let r = 0; r < 4; r++) {
+      if (gridRef.current[r] && gridRef.current[r].some(c => c)) return 1 - r / 4
+    }
+    return 0
   })()
 
   const renderGrid = grid.map(r => [...r])
@@ -290,6 +466,27 @@ export default function Tetris({ onPlayingChange }) {
         }
   }
 
+  function renderMiniPiece(p, cellSize = 18) {
+    if (!p) return null
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {p.shape.map((row, r) => (
+          <div key={r} style={{ display: 'flex' }}>
+            {row.map((cell, c) => (
+              <div key={c} style={{
+                width: cellSize, height: cellSize,
+                background: cell ? p.color : 'transparent',
+                border: cell ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                borderRadius: 2,
+                boxShadow: cell ? `inset 0 -1px 0 rgba(0,0,0,0.3)` : 'none',
+              }} />
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="game-card slide-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -300,9 +497,15 @@ export default function Tetris({ onPlayingChange }) {
           <div style={{ textAlign: 'center' }}><div style={{ color: 'var(--text-dim)', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>Level</div><div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 18, color: 'var(--neon-purple)' }}>{level}</div></div>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-        <div>
-          <div style={{ border: '2px solid var(--border-glass)', borderRadius: 8, overflow: 'hidden', background: 'rgba(0,0,0,0.4)' }}>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+        <div style={{ width: 80 }}>
+          <div style={{ fontSize: 11, color: canHold ? 'var(--text-dim)' : 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, textAlign: 'center' }}>Hold</div>
+          <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 8, border: `1px solid ${canHold ? 'var(--border-glass)' : 'rgba(255,255,255,0.05)'}`, display: 'flex', justifyContent: 'center', minHeight: 60, opacity: canHold ? 1 : 0.4, transition: 'opacity 0.2s' }}>
+            {holdPiece ? renderMiniPiece(holdPiece) : <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>C</span>}
+          </div>
+        </div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ border: `2px solid var(--border-glass)`, borderRadius: 8, overflow: 'hidden', background: 'rgba(0,0,0,0.4)', boxShadow: dangerLevel > 0 ? `inset 0 0 ${dangerLevel * 30}px rgba(255,45,123,${dangerLevel * 0.4}), 0 0 ${dangerLevel * 20}px rgba(255,45,123,${dangerLevel * 0.3})` : 'none', transition: 'box-shadow 0.3s', ...shakeStyle }}>
             {renderGrid.map((row, r) => (
               <div key={r} style={{ display: 'flex' }}>
                 {row.map((cell, c) => (
@@ -317,27 +520,16 @@ export default function Tetris({ onPlayingChange }) {
               </div>
             ))}
           </div>
+          {renderParticles({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8 })}
         </div>
-        <div style={{ width: 100 }}>
+        <div style={{ width: 80 }}>
           <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, textAlign: 'center' }}>Next</div>
-          <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 8, border: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'center', minHeight: 80 }}>
-            {next && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                {next.shape.map((row, r) => (
-                  <div key={r} style={{ display: 'flex' }}>
-                    {row.map((cell, c) => (
-                      <div key={c} style={{
-                        width: 22, height: 22,
-                        background: cell ? next.color : 'transparent',
-                        border: cell ? '1px solid rgba(255,255,255,0.15)' : 'none',
-                        borderRadius: 2,
-                        boxShadow: cell ? `inset 0 -1px 0 rgba(0,0,0,0.3)` : 'none',
-                      }} />
-                    ))}
-                  </div>
-                ))}
+          <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: 6, border: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', minHeight: 180 }}>
+            {nextQueue.map((p, i) => (
+              <div key={i} style={{ opacity: 1 - i * 0.25, transform: `scale(${1 - i * 0.1})`, transition: 'all 0.15s' }}>
+                {renderMiniPiece(p, i === 0 ? 18 : 14)}
               </div>
-            )}
+            ))}
           </div>
           {highScore > 0 && (
             <div style={{ marginTop: 12, textAlign: 'center', fontSize: 11, color: 'var(--text-dim)' }}>
@@ -347,6 +539,20 @@ export default function Tetris({ onPlayingChange }) {
           )}
         </div>
       </div>
+      {!gameOver && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button style={touchBtn} aria-label="Rotate" onClick={rotatePiece}>&#8635;</button>
+            <button style={{ ...touchBtn, width: 52, height: 52, fontSize: 14 }} aria-label="Hard drop" onClick={hardDrop}>&#9660;&#9660;</button>
+            <button style={{ ...touchBtn, fontSize: 14, opacity: canHold ? 1 : 0.4 }} aria-label="Hold" onClick={doHold}>C</button>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button style={touchBtn} aria-label="Move left" onClick={moveLeft}>&#9664;</button>
+            <button style={touchBtn} aria-label="Move down" onClick={moveDown}>&#9660;</button>
+            <button style={touchBtn} aria-label="Move right" onClick={moveRight}>&#9654;</button>
+          </div>
+        </div>
+      )}
       {gameOver && (
         <div className="confirm-area" style={{ marginTop: 20 }}>
           <div className="confirm-text" style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 20, color: 'var(--lose-color)', marginBottom: 8 }}>GAME OVER</div>

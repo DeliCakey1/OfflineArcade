@@ -133,6 +133,8 @@ export default function NumberMerge({ onPlayingChange }) {
   const [slideDir, setSlideDir] = useState(null)
   const [animating, setAnimating] = useState(false)
   const animTimer = useRef(null)
+  const prevTilesRef = useRef(null)
+  const prevScoreRef = useRef(0)
   const sound = useSound()
   const { recordGame } = useStats('merge')
   const isPlaying = screen === 'game' && !gameOver && !won && !goalReached
@@ -154,10 +156,17 @@ export default function NumberMerge({ onPlayingChange }) {
     const gridsEqual = grid.every((row, r) => row.every((v, c) => v === newGrid[r][c]))
     if (gridsEqual) return
 
+    prevTilesRef.current = tiles
+    prevScoreRef.current = score
+
     sound('click')
     let gained = 0
+    let maxMerged = 0
     for (const t of slid) {
-      if (t.mergedFrom) gained += t.value
+      if (t.mergedFrom) {
+        gained += t.value
+        if (t.value > maxMerged) maxMerged = t.value
+      }
     }
 
     setAnimating(true)
@@ -175,7 +184,8 @@ export default function NumberMerge({ onPlayingChange }) {
       setTiles(finalTiles)
       setSlideDir(null)
       setAnimating(false)
-      if (gained > 0) {
+      if (maxMerged > 0) {
+        sound(`merge-${maxMerged}`)
         setScorePop(true)
         setTimeout(() => setScorePop(false), 300)
       }
@@ -193,6 +203,15 @@ export default function NumberMerge({ onPlayingChange }) {
       }
     }, SLIDE_MS)
   }, [tiles, score, bestScore, gameOver, won, boardSize, goal, infinite, animating, sound, recordGame])
+
+  function undoMove() {
+    if (!prevTilesRef.current || animating || gameOver || won || goalReached) return
+    sound('click')
+    setTiles(prevTilesRef.current)
+    setScore(prevScoreRef.current)
+    prevTilesRef.current = null
+    prevScoreRef.current = 0
+  }
 
   useEffect(() => {
     if (screen !== 'game' || gameOver || won || goalReached) return
@@ -425,6 +444,10 @@ export default function NumberMerge({ onPlayingChange }) {
             {d.label}
           </button>
         ))}
+        <button className="merge-dir-btn" aria-label="Undo" onClick={undoMove} disabled={!prevTilesRef.current || animating}
+          style={{ opacity: prevTilesRef.current ? 1 : 0.3 }}>
+          ↩
+        </button>
       </div>
 
       {goalReached && (

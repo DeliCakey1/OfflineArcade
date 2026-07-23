@@ -12,15 +12,24 @@ const DIFFICULTIES = [
 
 const NUM_COLORS = ['', '#00d4ff', '#39ff14', '#ff2d7b', '#b946ff', '#f97316', '#06b6d4', '#fff', '#9b8ec4']
 
-function createBoard(rows, cols, mines) {
-  const board = Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => ({ mine: false, revealed: false, flagged: false, adjacent: 0 }))
+function createEmptyBoard(rows, cols) {
+  return Array.from({ length: rows }, () =>
+    Array.from({ length: cols }, () => ({ mine: false, revealed: false, flagged: false, adjacent: 0, revealDelay: 0 }))
   )
+}
+
+function placeMines(board, rows, cols, mines, safeR, safeC) {
+  const safeCells = new Set()
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++) {
+      const nr = safeR + dr, nc = safeC + dc
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) safeCells.add(`${nr},${nc}`)
+    }
   let placed = 0
   while (placed < mines) {
     const r = Math.floor(Math.random() * rows)
     const c = Math.floor(Math.random() * cols)
-    if (!board[r][c].mine) { board[r][c].mine = true; placed++ }
+    if (!board[r][c].mine && !safeCells.has(`${r},${c}`)) { board[r][c].mine = true; placed++ }
   }
   for (let r = 0; r < rows; r++)
     for (let c = 0; c < cols; c++) {
@@ -38,14 +47,18 @@ function createBoard(rows, cols, mines) {
 
 function cloneBoard(board) { return board.map(r => r.map(c => ({ ...c }))) }
 
-function reveal(board, r, c, rows, cols) {
+function floodReveal(board, r, c, rows, cols, delay = 0) {
   if (r < 0 || r >= rows || c < 0 || c >= cols) return
   if (board[r][c].revealed || board[r][c].flagged) return
   board[r][c].revealed = true
+  board[r][c].revealDelay = delay
   if (board[r][c].adjacent === 0 && !board[r][c].mine) {
     for (let dr = -1; dr <= 1; dr++)
-      for (let dc = -1; dc <= 1; dc++)
-        reveal(board, r + dr, c + dc, rows, cols)
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue
+        const dist = Math.abs(dr) + Math.abs(dc)
+        floodReveal(board, r + dr, c + dc, rows, cols, delay + dist * 30)
+      }
   }
 }
 
@@ -55,6 +68,16 @@ function checkWin(board, rows, cols, mines) {
     for (let c = 0; c < cols; c++)
       if (board[r][c].revealed) revealed++
   return revealed === rows * cols - mines
+}
+
+function countAdjacentFlags(board, r, c, rows, cols) {
+  let count = 0
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++) {
+      const nr = r + dr, nc = c + dc
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc].flagged) count++
+    }
+  return count
 }
 
 export default function Minesweeper({ onPlayingChange }) {
@@ -86,7 +109,7 @@ export default function Minesweeper({ onPlayingChange }) {
   function startGame(diffName) {
     setDifficulty(diffName)
     const d = DIFFICULTIES.find(x => x.name === diffName)
-    setBoard(createBoard(d.rows, d.cols, d.mines))
+    setBoard(createEmptyBoard(d.rows, d.cols))
     setGameOver(false)
     setWon(false)
     setFlagCount(0)
@@ -98,8 +121,35 @@ export default function Minesweeper({ onPlayingChange }) {
 
   function handleReveal(r, c) {
     if (gameOver || !board || board[r][c].revealed || board[r][c].flagged) return
-    if (!started) setStarted(true)
+    const d = DIFFICULTIES.find(x => x.name === difficulty)
+
+    if (!started) {
+      setStarted(true)
+      const newBoard = cloneBoard(board)
+      placeMines(newBoard, d.rows, d.cols, d.mines, r, c)
+      floodReveal(newBoard, r, c, d.rows, d.cols, 0)
+      setBoard(newBoard)
+      sound('click')
+      if (checkWin(newBoard, d.rows, d.cols, d.mines)) {
+        setGameOver(true)
+        setWon(true)
+        clearInterval(timerRef.current)
+        const finalTime = Math.floor((Date.now() - startTimeRef.current) / 1000)
+        setTimer(finalTime)
+        sound('win')
+        const best = bestTime[difficulty] || Infinity
+        if (finalTime < best) {
+          const updated = { ...bestTime, [difficulty]: finalTime }
+          setBestTime(updated)
+          saveHighScore('minesweeper', updated)
+        }
+        recordGame(finalTime, 1)
+      }
+      return
+    }
+
     const newBoard = cloneBoard(board)
+
     if (newBoard[r][c].mine) {
       for (let rr = 0; rr < newBoard.length; rr++)
         for (let cc = 0; cc < newBoard[0].length; cc++)
@@ -108,11 +158,54 @@ export default function Minesweeper({ onPlayingChange }) {
       setGameOver(true)
       sound('lose')
       clearInterval(timerRef.current)
-      const d = DIFFICULTIES.find(x => x.name === difficulty)
       recordGame(0, 0)
       return
     }
-    reveal(newBoard, r, c, d.rows, d.cols)
+
+    if (newBoard[r][c].revealed && newBoard[r][c].adjacent > 0) {
+      const adjFlags = countAdjacentFlags(newBoard, r, c, d.rows, d.cols)
+      if (adjFlags === newBoard[r][c].adjacent) {
+        let hitMine = false
+        for (let dr = -1; dr <= 1; dr++)
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = r + dr, nc = c + dc
+            if (nr >= 0 && nr < d.rows && nc >= 0 && nc < d.cols && !newBoard[nr][nc].flagged && !newBoard[nr][nc].revealed) {
+              if (newBoard[nr][nc].mine) {
+                hitMine = true
+                for (let rr = 0; rr < newBoard.length; rr++)
+                  for (let cc = 0; cc < newBoard[0].length; cc++)
+                    if (newBoard[rr][cc].mine) newBoard[rr][cc].revealed = true
+              } else {
+                floodReveal(newBoard, nr, nc, d.rows, d.cols, 0)
+              }
+            }
+          }
+        setBoard(newBoard)
+        if (hitMine) {
+          setGameOver(true)
+          sound('lose')
+          clearInterval(timerRef.current)
+          recordGame(0, 0)
+        } else if (checkWin(newBoard, d.rows, d.cols, d.mines)) {
+          setGameOver(true)
+          setWon(true)
+          clearInterval(timerRef.current)
+          const finalTime = Math.floor((Date.now() - startTimeRef.current) / 1000)
+          setTimer(finalTime)
+          sound('win')
+          const best = bestTime[difficulty] || Infinity
+          if (finalTime < best) {
+            const updated = { ...bestTime, [difficulty]: finalTime }
+            setBestTime(updated)
+            saveHighScore('minesweeper', updated)
+          }
+          recordGame(finalTime, 1)
+        }
+        return
+      }
+    }
+
+    floodReveal(newBoard, r, c, d.rows, d.cols, 0)
     setBoard(newBoard)
     sound('click')
     if (checkWin(newBoard, d.rows, d.cols, d.mines)) {
@@ -144,7 +237,6 @@ export default function Minesweeper({ onPlayingChange }) {
   }
 
   function handleShare() {
-    const d = DIFFICULTIES.find(x => x.name === difficulty)
     const text = `💣 Minesweeper ${difficulty} — ${timer}s | ${won ? 'Won!' : 'Lost'}`
     navigator.clipboard?.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })
   }
@@ -164,7 +256,7 @@ export default function Minesweeper({ onPlayingChange }) {
           ))}
         </div>
         <div className="rps-history-item" style={{ marginTop: 16, textAlign: 'center' }}>
-          <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>Click to reveal | Right-click to flag</span>
+          <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>Click to reveal | Right-click to flag | Click revealed number to chord</span>
         </div>
       </div>
     )
@@ -192,6 +284,7 @@ export default function Minesweeper({ onPlayingChange }) {
               key={`${r}-${c}`}
               onClick={() => handleReveal(r, c)}
               onContextMenu={(e) => handleFlag(e, r, c)}
+              className={cell.revealed && !cell.mine && cell.adjacent === 0 ? 'ms-flood-reveal' : ''}
               style={{
                 width: cellSize, height: cellSize,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -200,8 +293,9 @@ export default function Minesweeper({ onPlayingChange }) {
                 fontFamily: "'Press Start 2P', monospace",
                 border: 'none',
                 borderRadius: 4,
-                cursor: cell.revealed ? 'default' : 'pointer',
+                cursor: cell.revealed ? (cell.revealed && cell.adjacent > 0 ? 'pointer' : 'default') : 'pointer',
                 transition: 'all 0.1s ease',
+                animationDelay: cell.revealDelay ? `${cell.revealDelay}ms` : '0ms',
                 background: cell.revealed
                   ? cell.mine ? 'rgba(255, 45, 123, 0.3)' : 'rgba(255,255,255,0.06)'
                   : cell.flagged ? 'rgba(255, 230, 0, 0.15)' : 'rgba(255,255,255,0.1)',

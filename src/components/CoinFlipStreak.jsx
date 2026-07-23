@@ -208,7 +208,7 @@ export default function CoinFlipStreak({ onPlayingChange }) {
             ))}
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="play-again-btn" onClick={reset}>Play Again</button>
+            <button className="play-again-btn" onClick={() => { sound('click'); reset() }}>Play Again</button>
             <button className="play-again-btn share-btn" onClick={shareResult}>
               {copied ? '✓ Copied!' : '📋 Copy Result'}
             </button>

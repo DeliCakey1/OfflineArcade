@@ -13,93 +13,42 @@ import {
   processFinalsReset, updatePlayer, ensurePlayerInLeague,
 } from '../leagueService'
 import { MAX_PER_LEAGUE } from '../leagues'
-import { TITLES, ALL_NAMEPLATES, TOURNAMENT_TICKET } from '../shopItems'
+import { TOURNAMENT_TICKET } from '../shopItems'
+import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor, getTitleName } from '../nameplateUtils'
 
 const LEAGUE_GAMES = [
   { id: 'rps', label: 'RPS', emoji: '✊' },
+  { id: 'ssg', label: 'Split Steal', emoji: '💰' },
   { id: 'gtn', label: 'Guess #', emoji: '🔢' },
+  { id: 'gtn-hc', label: 'Hot/Cold', emoji: '🌡️' },
   { id: 'hol', label: 'Hi/Lo', emoji: '🃏' },
   { id: 'dice', label: 'Dice', emoji: '🎲' },
-  { id: 'simon', label: 'Simon', emoji: '🎵' },
-  { id: 'typing', label: 'Typing', emoji: '⌨️' },
   { id: 'coin', label: 'Coin Flip', emoji: '🪙' },
   { id: 'memory', label: 'Memory', emoji: '🧠' },
   { id: 'word', label: 'Word Scramble', emoji: '📚' },
+  { id: 'minesweeper', label: 'Minesweeper', emoji: '💣' },
+  { id: 'merge', label: 'Number Merge', emoji: '🔢' },
+  { id: 'simon', label: 'Simon', emoji: '🎵' },
+  { id: 'typing', label: 'Typing', emoji: '⌨️' },
+  { id: 'reaction', label: 'Reaction', emoji: '⚡' },
   { id: 'whack', label: 'Whack-a-Mole', emoji: '🔨' },
   { id: 'slots', label: 'Slots', emoji: '🎰' },
   { id: 'blackjack', label: 'Blackjack', emoji: '🃏' },
+  { id: 'snake', label: 'Snake', emoji: '🐍' },
+  { id: 'tetris', label: 'Tetris', emoji: '🧱' },
+  { id: 'breakout', label: 'Breakout', emoji: '🏓' },
+  { id: 'flappy', label: 'Flappy Bird', emoji: '🐦' },
+  { id: 'lightsout', label: 'Lights Out', emoji: '💡' },
+  { id: 'mastermind', label: 'Mastermind', emoji: '🧠' },
+  { id: 'dodge', label: 'Dodge', emoji: '🎮' },
+  { id: 'mergeblitz', label: 'Merge Blitz', emoji: '⚡' },
+  { id: 'connect4', label: 'Connect Four', emoji: '🔴' },
 ]
 
 const TOURNAMENT_LABELS = {
   tournament: { name: 'God Tournament', emoji: '🏟️', size: 20 },
   semiFinals: { name: 'Semi-Finals', emoji: '⚔️', size: 15 },
   finals: { name: 'Finals', emoji: '🏆', size: 10 },
-}
-
-function getNameplateStyle(nameplateId) {
-  if (!nameplateId) return null
-  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
-  if (!np) return null
-  if (np.type === 'solid') return { color: np.color }
-  if (np.type === 'gradient') return { background: np.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }
-  return null
-}
-
-function getNameplateBorderStyle(nameplateId) {
-  if (!nameplateId) return null
-  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
-  if (!np) return null
-  if (np.type === 'border') {
-    if (np.gradientBorder) return { borderImage: `${np.gradientBorder} 1`, borderImageSlice: 1, borderWidth: 2, borderStyle: 'solid' }
-    return { borderColor: np.borderColor, borderWidth: 2, borderStyle: 'solid' }
-  }
-  return null
-}
-
-function getNameplateEffectClass(nameplateId) {
-  if (!nameplateId) return ''
-  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
-  if (!np) return ''
-  if (np.type === 'effect') {
-    if (np.neonColor) return 'np-fx-neon'
-    if (np.id === 'np-fx-rainbow-wave') return 'np-fx-rainbow'
-    if (np.id === 'np-fx-gold-shimmer') return 'np-fx-shimmer'
-    if (np.id === 'np-fx-champion-glow') return 'np-fx-champion'
-    if (np.id === 'np-fx-diamond-dust') return 'np-fx-diamond'
-    if (np.id === 'np-fx-smash') return 'np-fx-smash'
-    if (np.id === 'np-fx-spin-in') return 'np-fx-spin-in'
-    if (np.id === 'np-fx-pop-out') return 'np-fx-pop-out'
-    if (np.id === 'np-fx-glitch') return 'np-fx-glitch'
-    if (np.id === 'np-fx-float') return 'np-fx-float'
-    if (np.id === 'np-fx-pulse') return 'np-fx-pulse'
-    if (np.id === 'np-fx-fire') return 'np-fx-fire'
-    if (np.id === 'np-fx-electric') return 'np-fx-electric'
-    if (np.id === 'np-fx-frost') return 'np-fx-frost'
-    if (np.id === 'np-fx-toxic') return 'np-fx-toxic'
-    if (np.id === 'np-fx-hologram') return 'np-fx-hologram'
-    if (np.id === 'np-fx-ghost') return 'np-fx-ghost'
-    if (np.id === 'np-fx-scanner') return 'np-fx-scanner'
-    if (np.id === 'np-fx-wobble') return 'np-fx-wobble'
-    if (np.id === 'np-fx-stroke') return 'np-fx-stroke'
-    if (np.id === 'np-fx-matrix') return 'np-fx-matrix'
-    if (np.id === 'np-fx-comet') return 'np-fx-comet'
-    if (np.id === 'np-fx-breathe') return 'np-fx-breathe'
-  }
-  if (np.type === 'border') return 'np-fx-border'
-  return ''
-}
-
-function getNameplateNeonColor(nameplateId) {
-  if (!nameplateId) return null
-  const np = ALL_NAMEPLATES.find(n => n.id === nameplateId)
-  if (!np || np.type !== 'effect' || !np.neonColor) return null
-  return np.neonColor
-}
-
-function getTitleName(titleId) {
-  if (!titleId) return null
-  const t = TITLES.find(ti => ti.id === titleId)
-  return t ? t.name : null
 }
 
 export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTickets, coins, onBuyTicket }) {

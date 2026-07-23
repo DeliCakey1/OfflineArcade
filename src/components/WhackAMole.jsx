@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import useEffects from '../useEffects'
 import QuitConfirmButton from './QuitConfirmButton'
 
 const DIFFICULTIES = [
@@ -30,7 +31,9 @@ export default function WhackAMole({ onPlayingChange }) {
   const activeMolesRef = useRef({})
   const gameOverRef = useRef(false)
   const difficultyRef = useRef(null)
+  const gridRef = useRef(null)
   const sound = useSound()
+  const { spawnParticles, floatText, shakeScreen, renderParticles, shakeStyle } = useEffects()
   const { recordGame, gameStats, getHighScore, setHighScore: saveHighScore } = useStats('whack')
   const isPlaying = difficulty && !gameOver
 
@@ -141,14 +144,22 @@ export default function WhackAMole({ onPlayingChange }) {
       }
       recordGame(score > 10, maxStreak)
       sound(score > 15 ? 'victory' : score > 8 ? 'win' : 'lose')
+      shakeScreen(6, 400)
     }
-  }, [timeLeft, difficulty, gameOver, bestScores, score, maxStreak, recordGame, sound])
+  }, [timeLeft, difficulty, gameOver, bestScores, score, maxStreak, recordGame, sound, shakeScreen])
 
   function whackMole(hole) {
     if (gameOverRef.current || !difficulty) return
 
     const moleId = activeMolesRef.current[hole]
-    if (!moleId) return
+    if (!moleId) {
+      const el = gridRef.current?.children[hole]
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#666', 3, { speed: 1.5, life: 15, sizeMin: 2, sizeMax: 4 })
+      }
+      return
+    }
 
     if (moleTimersRef.current[moleId]) {
       clearTimeout(moleTimersRef.current[moleId])
@@ -178,7 +189,18 @@ export default function WhackAMole({ onPlayingChange }) {
       setMaxStreak(m => Math.max(m, next))
       return next
     })
-    sound('click')
+
+    const el = gridRef.current?.children[hole]
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      spawnParticles(cx, cy, '#39ff14', 8, { speed: 3, life: 25, sizeMin: 3, sizeMax: 6 })
+      const newStreak = (activeMolesRef.current, streak + 1)
+      floatText(cx, cy - 10, newStreak >= 5 ? `${newStreak}x!` : newStreak >= 3 ? `+2` : '+1', newStreak >= 5 ? '#ff2d7b' : newStreak >= 3 ? '#ff6b2b' : '#39ff14')
+    }
+    shakeScreen(3, 100)
+    sound('hit')
   }
 
   function shareResult() {
@@ -218,7 +240,8 @@ export default function WhackAMole({ onPlayingChange }) {
   }
 
   return (
-    <div className="game-card slide-in">
+    <div className="game-card slide-in" style={{ position: 'relative', overflow: 'hidden', ...shakeStyle }}>
+      {renderParticles()}
       <h2>Whack-a-Mole</h2>
       <p className="description">Click the moles before they escape!</p>
 
@@ -245,7 +268,7 @@ export default function WhackAMole({ onPlayingChange }) {
         }} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 360, margin: '0 auto' }}>
+      <div ref={gridRef} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 360, margin: '0 auto' }}>
         {HOLES.map(hole => {
           const isUp = moles[hole] !== undefined
           const isHit = hitEffects[hole]

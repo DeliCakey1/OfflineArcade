@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import Confetti from './Confetti'
 
 const MODES = [
   { name: 'Easy', emoji: '🟢', color: '#39ff14', words: ['the','cat','sun','run','big','red','hat','dog','pen','cup','top','fun','map','box','sky','bee','fox','owl','jam','bus'], rounds: 10 },
@@ -25,6 +26,7 @@ export default function TypingSpeed({ onPlayingChange }) {
   const [correctCount, setCorrectCount] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [confetti, setConfetti] = useState(false)
   const [wpm, setWpm] = useState(0)
   const inputRef = useRef(null)
   const sound = useSound()
@@ -78,6 +80,7 @@ export default function TypingSpeed({ onPlayingChange }) {
         const finalElapsed = (Date.now() - startTime) / 60000
         const finalWpm = finalElapsed > 0 ? Math.round((totalChars / 5) / finalElapsed) : 0
         setWpm(finalWpm)
+        if (finalWpm > 20) setConfetti(true)
         recordGame(finalWpm > 20, finalWpm)
         sound(finalWpm > 20 ? 'victory' : 'lose')
       } else {
@@ -122,6 +125,7 @@ export default function TypingSpeed({ onPlayingChange }) {
 
   return (
     <div className="game-card slide-in">
+      <Confetti active={confetti} onDone={() => setConfetti(false)} />
       <h2>Typing Speed</h2>
       <p className="description">Type each word then press Space</p>
 

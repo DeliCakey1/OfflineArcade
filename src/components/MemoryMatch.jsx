@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
@@ -32,6 +32,9 @@ export default function MemoryMatch({ onPlayingChange }) {
   const [bestScore, setBestScore] = useState(null)
   const [copied, setCopied] = useState(false)
   const [animating, setAnimating] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
+  const [sparkles, setSparkles] = useState([])
+  const sparkleId = useRef(0)
   const sound = useSound()
   const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('memory')
   const isPlaying = mode && !gameOver
@@ -60,6 +63,13 @@ export default function MemoryMatch({ onPlayingChange }) {
     setGameOver(false)
     setBestScore(null)
     setCopied(false)
+    setSparkles([])
+    setPreviewing(true)
+    setFlipped(deck.map((_, i) => i))
+    setTimeout(() => {
+      setFlipped([])
+      setPreviewing(false)
+    }, 1500)
   }, [])
 
   useEffect(() => {
@@ -77,7 +87,7 @@ export default function MemoryMatch({ onPlayingChange }) {
   }, [matched, cards, moves, mode, recordGame, sound])
 
   function flipCard(id) {
-    if (animating || flipped.includes(id) || matched.has(id) || gameOver) return
+    if (animating || flipped.includes(id) || matched.has(id) || gameOver || previewing) return
     sound('click')
     const newFlipped = [...flipped, id]
     setFlipped(newFlipped)
@@ -88,6 +98,28 @@ export default function MemoryMatch({ onPlayingChange }) {
       const [a, b] = newFlipped
       if (cards[a].emoji === cards[b].emoji) {
         sound('win')
+        const container = document.querySelector('.game-card.slide-in')
+        const containerRect = container?.getBoundingClientRect() || { left: 0, top: 0 }
+        const cardEls = document.querySelectorAll('.memory-card')
+        const newSparkles = []
+        for (const idx of [a, b]) {
+          const el = cardEls[idx]
+          if (el) {
+            const rect = el.getBoundingClientRect()
+            const cx = rect.left - containerRect.left + rect.width / 2
+            const cy = rect.top - containerRect.top + rect.height / 2
+            for (let i = 0; i < 6; i++) {
+              newSparkles.push({
+                id: sparkleId.current++,
+                x: cx + (Math.random() - 0.5) * 60,
+                y: cy + (Math.random() - 0.5) * 60,
+                emoji: ['✨', '⭐', '💫', '🌟'][Math.floor(Math.random() * 4)],
+              })
+            }
+          }
+        }
+        setSparkles(prev => [...prev, ...newSparkles])
+        setTimeout(() => setSparkles(prev => prev.filter(s => !newSparkles.includes(s))), 600)
         setTimeout(() => {
           setMatched(prev => new Set([...prev, a, b]))
           setFlipped([])
@@ -141,9 +173,9 @@ export default function MemoryMatch({ onPlayingChange }) {
   const foundPairs = matched.size / 2
 
   return (
-    <div className="game-card slide-in">
+    <div className="game-card slide-in" style={{ position: 'relative', overflow: 'hidden' }}>
       <h2>Memory Match</h2>
-      <p className="description">Find all {totalPairs} pairs!</p>
+      <p className="description">{previewing ? 'Memorize the cards!' : `Find all ${totalPairs} pairs!`}</p>
 
       <div className="hol-stats-row">
         <div className="hol-stat">
@@ -193,7 +225,7 @@ export default function MemoryMatch({ onPlayingChange }) {
                 className={`memory-card ${isFlipped ? 'flipped' : ''} ${isMatched ? 'matched' : ''}`}
                 aria-label={isFlipped ? `${card.emoji} card, face up` : `Card ${i + 1}, face down`}
                 onClick={() => flipCard(i)}
-                disabled={isFlipped || animating}
+                disabled={isFlipped || animating || previewing}
               >
                 <div className="memory-card-inner">
                   <div className="memory-card-front">?</div>
@@ -208,6 +240,11 @@ export default function MemoryMatch({ onPlayingChange }) {
       <div style={{ textAlign: 'center', marginTop: 16 }}>
         <QuitConfirmButton onQuit={() => { setMode(null); onPlayingChange?.(false) }} gameOver={gameOver} className="quit-btn" />
       </div>
+      {sparkles.map(s => (
+        <div key={s.id} className="memory-sparkle" style={{ left: s.x, top: s.y }}>
+          {s.emoji}
+        </div>
+      ))}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
+import Confetti from './Confetti'
 
 const CHOICES = [
   { name: 'Rock', emoji: '🪨', class: 'rock' },
@@ -38,6 +39,7 @@ export default function RockPaperScissors({ onPlayingChange }) {
   const [gameOver, setGameOver] = useState(null)
   const [shake, setShake] = useState(false)
   const [reveal, setReveal] = useState(false)
+  const [confetti, setConfetti] = useState(false)
   const sound = useSound()
   const { recordGame } = useStats('rps')
 
@@ -112,6 +114,7 @@ export default function RockPaperScissors({ onPlayingChange }) {
           const winner = checkGameOver(newScores, newRound)
           if (winner) {
             setGameOver(winner)
+            if (winner === 'player') setConfetti(true)
             recordGame(winner === 'player', streakCount)
             setTimeout(() => sound(winner === 'player' ? 'victory' : 'defeat'), 300)
           }
@@ -214,6 +217,7 @@ export default function RockPaperScissors({ onPlayingChange }) {
 
   return (
     <div className="game-card slide-in">
+      <Confetti active={confetti} onDone={() => setConfetti(false)} />
       <h2>Rock Paper Scissors</h2>
       <p className="description">
         {gameMode === 'firstTo' ? `First to ${target} wins — Round ${round}` : `Round ${round} of ${target}`}
