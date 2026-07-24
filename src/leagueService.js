@@ -1,13 +1,17 @@
-import {
-  collection, doc, setDoc, getDoc, getDocs, query, where, orderBy,
-  updateDoc, increment, arrayUnion, arrayRemove, deleteDoc, serverTimestamp,
-  onSnapshot, limit as firestoreLimit
-} from 'firebase/firestore'
-import { db } from './firebase'
+import { increment } from 'firebase/firestore'
+import { getDb } from './firebase'
 import { MAX_PER_LEAGUE, LEAGUE_RANKS, RANK_PROMO_DEMO, getNextWednesdayMidnightUTC, TOURNAMENT_SIZES, isInLockoutPeriod } from './leagues'
 import { TOURNAMENT_COIN_REWARDS, LEAGUE_COIN_REWARDS } from './shopItems'
 
 export { increment }
+
+let _f = null
+async function f() {
+  if (_f) return _f
+  const [firestore, db] = await Promise.all([import('firebase/firestore'), getDb()])
+  _f = { ...firestore, db }
+  return _f
+}
 
 const PLAYERS = 'players'
 const LEAGUES = 'leagues'
@@ -15,6 +19,8 @@ const MATCHES = 'matches'
 const TOURNAMENTS = 'tournaments'
 
 export async function getOrCreatePlayer(userId, name, username) {
+  const { doc, getDoc, setDoc, updateDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   const snap = await getDoc(ref)
   if (snap.exists()) {
@@ -78,29 +84,38 @@ export async function getOrCreatePlayer(userId, name, username) {
 }
 
 export async function loadPlayerStats(userId) {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   const snap = await getDoc(ref)
   if (!snap.exists()) return null
-  const data = snap.data()
-  return data.statsBlob || null
+  return snap.data().statsBlob || null
 }
 
 export async function savePlayerStats(userId, stats) {
+  const { doc, updateDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   await updateDoc(ref, { statsBlob: stats, lastActive: Date.now() })
 }
 
 export async function updatePlayer(userId, data) {
+  const { doc, updateDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   await updateDoc(ref, { ...data, lastActive: Date.now() })
 }
 
 export async function setAdminStatus(userId, isAdmin) {
+  const { doc, setDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   await setDoc(ref, { isAdmin, lastActive: Date.now() }, { merge: true })
 }
 
 export async function getPlayer(userId) {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   const snap = await getDoc(ref)
   if (!snap.exists()) return null
@@ -109,15 +124,11 @@ export async function getPlayer(userId) {
 
 export async function isUsernameAvailable(username, excludeUserId) {
   if (!username || username.trim().length === 0) return false
+  const { collection, query, orderBy, where, getDocs, limit: firestoreLimit } = await f()
+  const { db } = await f()
   const term = username.trim().toLowerCase()
   const col = collection(db, PLAYERS)
-  const q = query(
-    col,
-    orderBy('username'),
-    where('username', '>=', term),
-    where('username', '<=', term + '\uf8ff'),
-    firestoreLimit(20)
-  )
+  const q = query(col, orderBy('username'), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), firestoreLimit(20))
   const snap = await getDocs(q)
   for (const d of snap.docs) {
     if (excludeUserId && d.id === excludeUserId) continue
@@ -146,7 +157,9 @@ export async function updateUsername(userId, newUsername) {
   return trimmed
 }
 
-export function subscribeToPlayer(userId, callback) {
+export async function subscribeToPlayer(userId, callback) {
+  const { doc, onSnapshot } = await f()
+  const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   return onSnapshot(ref, (snap) => {
     if (snap.exists()) callback({ id: userId, ...snap.data() })
@@ -154,11 +167,9 @@ export function subscribeToPlayer(userId, callback) {
 }
 
 export async function findOrCreateLeagueInstance(rank) {
-  const q = query(
-    collection(db, LEAGUES),
-    where('rank', '==', rank),
-    orderBy('createdAt', 'asc')
-  )
+  const { collection, query, where, orderBy, getDocs, doc, setDoc } = await f()
+  const { db } = await f()
+  const q = query(collection(db, LEAGUES), where('rank', '==', rank), orderBy('createdAt', 'asc'))
   const snap = await getDocs(q)
   for (const d of snap.docs) {
     const data = d.data()
@@ -167,40 +178,37 @@ export async function findOrCreateLeagueInstance(rank) {
     }
   }
   const newRef = doc(collection(db, LEAGUES))
-  const instance = {
-    rank,
-    instance: snap.size,
-    players: [],
-    seasonStart: Date.now(),
-    status: 'active',
-    createdAt: Date.now(),
-  }
+  const instance = { rank, instance: snap.size, players: [], seasonStart: Date.now(), status: 'active', createdAt: Date.now() }
   await setDoc(newRef, instance)
   return { id: newRef.id, ...instance }
 }
 
 export async function joinLeague(leagueId, userId) {
+  const { doc, updateDoc, arrayUnion } = await f()
+  const { db } = await f()
   const ref = doc(db, LEAGUES, leagueId)
-  await updateDoc(ref, {
-    players: arrayUnion(userId),
-  })
+  await updateDoc(ref, { players: arrayUnion(userId) })
 }
 
 export async function leaveLeague(leagueId, userId) {
+  const { doc, updateDoc, arrayRemove } = await f()
+  const { db } = await f()
   const ref = doc(db, LEAGUES, leagueId)
-  await updateDoc(ref, {
-    players: arrayRemove(userId),
-  })
+  await updateDoc(ref, { players: arrayRemove(userId) })
 }
 
 export async function getLeagueInstance(leagueId) {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, LEAGUES, leagueId)
   const snap = await getDoc(ref)
   if (!snap.exists()) return null
   return { id: leagueId, ...snap.data() }
 }
 
-export function subscribeToLeague(leagueId, callback) {
+export async function subscribeToLeague(leagueId, callback) {
+  const { doc, onSnapshot } = await f()
+  const { db } = await f()
   const ref = doc(db, LEAGUES, leagueId)
   return onSnapshot(ref, (snap) => {
     if (snap.exists()) callback({ id: leagueId, ...snap.data() })
@@ -215,15 +223,11 @@ export async function getLeaguePlayers(playerIds) {
 
 export async function searchPlayers(searchTerm) {
   if (!searchTerm || searchTerm.trim().length === 0) return []
+  const { collection, query, orderBy, where, getDocs, limit: firestoreLimit } = await f()
+  const { db } = await f()
   const term = searchTerm.trim().toLowerCase()
   const col = collection(db, PLAYERS)
-  const q = query(
-    col,
-    orderBy('nameLower'),
-    where('nameLower', '>=', term),
-    where('nameLower', '<=', term + '\uf8ff'),
-    firestoreLimit(20)
-  )
+  const q = query(col, orderBy('nameLower'), where('nameLower', '>=', term), where('nameLower', '<=', term + '\uf8ff'), firestoreLimit(20))
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
@@ -233,54 +237,32 @@ export async function findMatch(leagueId, excludeUserId) {
   if (!league) return null
   const candidates = league.players.filter(id => id !== excludeUserId)
   if (candidates.length === 0) return null
-  const randomIdx = Math.floor(Math.random() * candidates.length)
-  return candidates[randomIdx]
+  return candidates[Math.floor(Math.random() * candidates.length)]
 }
 
 export async function createMatch(player1Id, player2Id, game) {
+  const { collection, doc, setDoc } = await f()
+  const { db } = await f()
   const matchRef = doc(collection(db, MATCHES))
-  const match = {
-    id: matchRef.id,
-    player1: player1Id,
-    player2: player2Id,
-    game,
-    result: null,
-    status: 'pending',
-    createdAt: Date.now(),
-  }
+  const match = { id: matchRef.id, player1: player1Id, player2: player2Id, game, result: null, status: 'pending', createdAt: Date.now() }
   await setDoc(matchRef, match)
   return match
 }
 
-export async function acceptMatch(matchId, userId) {
+export async function acceptMatch(matchId) {
+  const { doc, updateDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, MATCHES, matchId)
-  await updateDoc(ref, {
-    status: 'accepted',
-    acceptedAt: Date.now(),
-  })
+  await updateDoc(ref, { status: 'accepted', acceptedAt: Date.now() })
 }
 
 export async function finishMatch(matchId, winnerId, loserId) {
+  const { doc, updateDoc, increment } = await f()
+  const { db } = await f()
   const ref = doc(db, MATCHES, matchId)
-  await updateDoc(ref, {
-    result: winnerId,
-    status: 'finished',
-    finishedAt: Date.now(),
-  })
-  const xpGain = 10
-  const xpLoss = 5
-  const coinReward = 10
-  await updateDoc(doc(db, PLAYERS, winnerId), {
-    wins: increment(1),
-    xp: increment(xpGain),
-    streak: increment(1),
-    coins: increment(coinReward),
-  })
-  await updateDoc(doc(db, PLAYERS, loserId), {
-    losses: increment(1),
-    xp: increment(-xpLoss),
-    streak: 0,
-  })
+  await updateDoc(ref, { result: winnerId, status: 'finished', finishedAt: Date.now() })
+  await updateDoc(doc(db, PLAYERS, winnerId), { wins: increment(1), xp: increment(10), streak: increment(1), coins: increment(10) })
+  await updateDoc(doc(db, PLAYERS, loserId), { losses: increment(1), xp: increment(-5), streak: 0 })
 }
 
 export async function ensurePlayerInLeague(userId) {
@@ -306,16 +288,11 @@ export async function processSeasonReset(leagueId) {
 
   const currentRank = league.rank
   const pd = RANK_PROMO_DEMO[currentRank] || { promote: 0, demote: 0 }
-  const promoteCount = pd.promote
-  const demoteCount = pd.demote
-
-  const promoted = players.slice(0, promoteCount)
-  const demoted = demoteCount > 0 ? players.slice(-demoteCount) : []
-  const stayers = players.slice(promoteCount, demoteCount > 0 ? -demoteCount : undefined)
-
+  const promoted = players.slice(0, pd.promote)
+  const demoted = pd.demote > 0 ? players.slice(-pd.demote) : []
+  const stayers = players.slice(pd.promote, pd.demote > 0 ? -pd.demote : undefined)
   const promoteRank = Math.max(1, currentRank - 1)
   const demoteRank = Math.min(11, currentRank + 1)
-
   const leagueRewards = LEAGUE_COIN_REWARDS[currentRank] || { first: 100, second: 75, third: 50 }
   const coinRewardPositions = [leagueRewards.first, leagueRewards.second, leagueRewards.third]
 
@@ -323,32 +300,17 @@ export async function processSeasonReset(leagueId) {
     const p = promoted[i]
     const coinReward = coinRewardPositions[i] || 0
     if (currentRank === 1) {
-      const hasTicket = (p.tournamentTickets || 0) > 0
-      if (hasTicket) {
+      if ((p.tournamentTickets || 0) > 0) {
         await addToTournament(p.id)
-        await updatePlayer(p.id, {
-          league: promoteRank,
-          leagueInstanceId: null,
-          promotions: increment(1),
-          tournamentTickets: increment(-1),
-          coins: increment(coinReward),
-        })
+        await updatePlayer(p.id, { league: promoteRank, leagueInstanceId: null, promotions: increment(1), tournamentTickets: increment(-1), coins: increment(coinReward) })
       } else {
-        await updatePlayer(p.id, {
-          promotions: increment(1),
-          coins: increment(coinReward),
-        })
+        await updatePlayer(p.id, { promotions: increment(1), coins: increment(coinReward) })
       }
     } else {
       const newLeague = await findOrCreateLeagueInstance(promoteRank)
       await leaveLeague(leagueId, p.id)
       await joinLeague(newLeague.id, p.id)
-      await updatePlayer(p.id, {
-        league: promoteRank,
-        leagueInstanceId: newLeague.id,
-        promotions: increment(1),
-        coins: increment(coinReward),
-      })
+      await updatePlayer(p.id, { league: promoteRank, leagueInstanceId: newLeague.id, promotions: increment(1), coins: increment(coinReward) })
     }
   }
 
@@ -363,46 +325,36 @@ export async function processSeasonReset(leagueId) {
     await updatePlayer(p.id, { leagueInstanceId: leagueId })
   }
 
-  const ref = doc(db, LEAGUES, leagueId)
-  await updateDoc(ref, {
-    status: 'completed',
-    completedAt: Date.now(),
-  })
+  const { doc, updateDoc } = await f()
+  const { db } = await f()
+  await updateDoc(doc(db, LEAGUES, leagueId), { status: 'completed', completedAt: Date.now() })
 }
 
 export async function addToTournament(userId) {
-  const q = query(
-    collection(db, TOURNAMENTS),
-    where('stage', '==', 'tournament'),
-    where('status', '==', 'active')
-  )
+  const { collection, query, where, getDocs, doc, setDoc, updateDoc, arrayUnion } = await f()
+  const { db } = await f()
+  const q = query(collection(db, TOURNAMENTS), where('stage', '==', 'tournament'), where('status', '==', 'active'))
   const snap = await getDocs(q)
 
   for (const d of snap.docs) {
     const data = d.data()
     if (data.players.length < TOURNAMENT_SIZES.tournament) {
-      await updateDoc(doc(db, TOURNAMENTS, d.id), {
-        players: arrayUnion(userId),
-      })
+      await updateDoc(doc(db, TOURNAMENTS, d.id), { players: arrayUnion(userId) })
       await updatePlayer(userId, { leagueInstanceId: d.id })
       return { id: d.id, ...data }
     }
   }
 
   const newRef = doc(collection(db, TOURNAMENTS))
-  const tournament = {
-    stage: 'tournament',
-    season: Date.now(),
-    players: [userId],
-    status: 'active',
-    createdAt: Date.now(),
-  }
+  const tournament = { stage: 'tournament', season: Date.now(), players: [userId], status: 'active', createdAt: Date.now() }
   await setDoc(newRef, tournament)
   await updatePlayer(userId, { leagueInstanceId: newRef.id })
   return { id: newRef.id, ...tournament }
 }
 
-export function subscribeToTournament(tournamentId, callback) {
+export async function subscribeToTournament(tournamentId, callback) {
+  const { doc, onSnapshot } = await f()
+  const { db } = await f()
   const ref = doc(db, TOURNAMENTS, tournamentId)
   return onSnapshot(ref, (snap) => {
     if (snap.exists()) callback({ id: tournamentId, ...snap.data() })
@@ -410,6 +362,8 @@ export function subscribeToTournament(tournamentId, callback) {
 }
 
 export async function getTournament(tournamentId) {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
   const ref = doc(db, TOURNAMENTS, tournamentId)
   const snap = await getDoc(ref)
   if (!snap.exists()) return null
@@ -417,11 +371,9 @@ export async function getTournament(tournamentId) {
 }
 
 export async function getActiveTournament(stage) {
-  const q = query(
-    collection(db, TOURNAMENTS),
-    where('stage', '==', stage),
-    where('status', '==', 'active')
-  )
+  const { collection, query, where, getDocs } = await f()
+  const { db } = await f()
+  const q = query(collection(db, TOURNAMENTS), where('stage', '==', stage), where('status', '==', 'active'))
   const snap = await getDocs(q)
   if (snap.empty) return null
   const d = snap.docs[0]
@@ -437,32 +389,20 @@ export async function processTournamentReset() {
 
   const top15 = players.slice(0, 15)
   const bottom5 = players.slice(15)
+  const { collection, doc, setDoc, updateDoc } = await f()
+  const { db } = await f()
 
   const semiRef = doc(collection(db, TOURNAMENTS))
-  const semiFinals = {
-    stage: 'semiFinals',
-    season: tournament.season,
-    players: top15.map(p => p.id),
-    status: 'active',
-    createdAt: Date.now(),
-  }
-  await setDoc(semiRef, semiFinals)
+  await setDoc(semiRef, { stage: 'semiFinals', season: tournament.season, players: top15.map(p => p.id), status: 'active', createdAt: Date.now() })
 
-  for (const p of top15) {
-    await updatePlayer(p.id, { leagueInstanceId: semiRef.id })
-  }
-
+  for (const p of top15) await updatePlayer(p.id, { leagueInstanceId: semiRef.id })
   for (const p of bottom5) {
     const phoenixLeague = await findOrCreateLeagueInstance(2)
     await joinLeague(phoenixLeague.id, p.id)
-    await updatePlayer(p.id, {
-      league: 2,
-      leagueInstanceId: phoenixLeague.id,
-    })
+    await updatePlayer(p.id, { league: 2, leagueInstanceId: phoenixLeague.id })
   }
 
-  const tRef = doc(db, TOURNAMENTS, tournament.id)
-  await updateDoc(tRef, { status: 'completed', completedAt: Date.now() })
+  await updateDoc(doc(db, TOURNAMENTS, tournament.id), { status: 'completed', completedAt: Date.now() })
 }
 
 export async function processSemiFinalsReset() {
@@ -474,32 +414,20 @@ export async function processSemiFinalsReset() {
 
   const top10 = players.slice(0, 10)
   const bottom5 = players.slice(10)
+  const { collection, doc, setDoc, updateDoc } = await f()
+  const { db } = await f()
 
   const finalsRef = doc(collection(db, TOURNAMENTS))
-  const finals = {
-    stage: 'finals',
-    season: semi.season,
-    players: top10.map(p => p.id),
-    status: 'active',
-    createdAt: Date.now(),
-  }
-  await setDoc(finalsRef, finals)
+  await setDoc(finalsRef, { stage: 'finals', season: semi.season, players: top10.map(p => p.id), status: 'active', createdAt: Date.now() })
 
-  for (const p of top10) {
-    await updatePlayer(p.id, { leagueInstanceId: finalsRef.id })
-  }
-
+  for (const p of top10) await updatePlayer(p.id, { leagueInstanceId: finalsRef.id })
   for (const p of bottom5) {
     const phoenixLeague = await findOrCreateLeagueInstance(2)
     await joinLeague(phoenixLeague.id, p.id)
-    await updatePlayer(p.id, {
-      league: 2,
-      leagueInstanceId: phoenixLeague.id,
-    })
+    await updatePlayer(p.id, { league: 2, leagueInstanceId: phoenixLeague.id })
   }
 
-  const sRef = doc(db, TOURNAMENTS, semi.id)
-  await updateDoc(sRef, { status: 'completed', completedAt: Date.now() })
+  await updateDoc(doc(db, TOURNAMENTS, semi.id), { status: 'completed', completedAt: Date.now() })
 }
 
 export async function processFinalsReset() {
@@ -514,12 +442,11 @@ export async function processFinalsReset() {
 
   for (let i = 0; i < winners.length; i++) {
     const p = winners[i]
-    const isFirst = i === 0
     await updatePlayer(p.id, {
       league: 1,
       tournamentWins: increment(1),
       coins: increment(coinRewards[i]),
-      ...(isFirst ? { firstPlaceFinishes: increment(1) } : {}),
+      ...(i === 0 ? { firstPlaceFinishes: increment(1) } : {}),
     })
   }
 
@@ -527,121 +454,82 @@ export async function processFinalsReset() {
   for (const p of remaining) {
     const masterLeague = await findOrCreateLeagueInstance(2)
     await joinLeague(masterLeague.id, p.id)
-    await updatePlayer(p.id, {
-      league: 2,
-      leagueInstanceId: masterLeague.id,
-    })
+    await updatePlayer(p.id, { league: 2, leagueInstanceId: masterLeague.id })
   }
 
-  const fRef = doc(db, TOURNAMENTS, finals.id)
-  await updateDoc(fRef, { status: 'completed', completedAt: Date.now() })
+  const { doc, updateDoc } = await f()
+  const { db } = await f()
+  await updateDoc(doc(db, TOURNAMENTS, finals.id), { status: 'completed', completedAt: Date.now() })
 }
 
 export async function searchPlayersByName(searchTerm) {
   const term = searchTerm.trim()
   if (!term) return []
   const lower = term.toLowerCase()
+  const { collection, query, where, orderBy, getDocs, limit: firestoreLimit } = await f()
+  const { db } = await f()
   const playerIds = new Set()
 
   const [leagueResults, tournamentResults] = await Promise.all([
-    getDocs(query(collection(db, LEAGUES), where('status', '==', 'active'))).catch(e => { console.warn('League query failed:', e.message); return null }),
-    getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active'))).catch(e => { console.warn('Tournament query failed:', e.message); return null }),
+    getDocs(query(collection(db, LEAGUES), where('status', '==', 'active'))).catch(() => null),
+    getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active'))).catch(() => null),
   ])
 
-  if (leagueResults) {
-    for (const d of leagueResults.docs) {
-      const data = d.data()
-      if (Array.isArray(data.players)) data.players.forEach(id => playerIds.add(id))
-    }
-  }
-  if (tournamentResults) {
-    for (const d of tournamentResults.docs) {
-      const data = d.data()
-      if (Array.isArray(data.players)) data.players.forEach(id => playerIds.add(id))
-    }
-  }
+  if (leagueResults) leagueResults.docs.forEach(d => (d.data().players || []).forEach(id => playerIds.add(id)))
+  if (tournamentResults) tournamentResults.docs.forEach(d => (d.data().players || []).forEach(id => playerIds.add(id)))
 
   const col = collection(db, PLAYERS)
   const [usernameSnap, nameSnap] = await Promise.all([
-    getDocs(query(col, orderBy('username'), where('username', '>=', lower), where('username', '<=', lower + '\uf8ff'), firestoreLimit(20))).catch(e => { console.warn('Username query failed:', e.message); return null }),
-    getDocs(query(col, orderBy('name'), where('name', '>=', lower), where('name', '<=', lower + '\uf8ff'), firestoreLimit(20))).catch(e => { console.warn('Name query failed:', e.message); return null }),
+    getDocs(query(col, orderBy('username'), where('username', '>=', lower), where('username', '<=', lower + '\uf8ff'), firestoreLimit(20))).catch(() => null),
+    getDocs(query(col, orderBy('name'), where('name', '>=', lower), where('name', '<=', lower + '\uf8ff'), firestoreLimit(20))).catch(() => null),
   ])
 
   let firestoreResults = []
-  if (usernameSnap) {
-    firestoreResults = usernameSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+  if (usernameSnap) firestoreResults = usernameSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+  if (nameSnap) for (const d of nameSnap.docs) {
+    if (!firestoreResults.some(r => r.id === d.id)) firestoreResults.push({ id: d.id, ...d.data() })
   }
-  if (nameSnap) {
-    for (const d of nameSnap.docs) {
-      if (!firestoreResults.some(r => r.id === d.id)) {
-        firestoreResults.push({ id: d.id, ...d.data() })
-      }
-    }
-  }
-
-  for (const p of firestoreResults) {
-    playerIds.add(p.id)
-  }
+  for (const p of firestoreResults) playerIds.add(p.id)
 
   if (playerIds.size === 0) return []
   const ids = [...playerIds]
-  const results = []
+  const results = [...firestoreResults]
   const seen = new Set(firestoreResults.map(r => r.id))
-  for (const p of firestoreResults) {
-    if (results.length >= 20) break
-    results.push(p)
-  }
   const batchSize = 10
   for (let i = 0; i < ids.length && results.length < 20; i += batchSize) {
-    const batch = ids.slice(i, i + batchSize)
-    const fetched = await Promise.all(batch.map(id => getPlayer(id).catch(() => null)))
+    const fetched = await Promise.all(ids.slice(i, i + batchSize).map(id => getPlayer(id).catch(() => null)))
     for (const p of fetched) {
       if (results.length >= 20) break
       if (!p || seen.has(p.id)) continue
-      if ((p.username && p.username.toLowerCase().includes(lower)) || (p.name && p.name.toLowerCase().includes(lower))) {
-        results.push(p)
-      }
+      if ((p.username && p.username.toLowerCase().includes(lower)) || (p.name && p.name.toLowerCase().includes(lower))) results.push(p)
     }
   }
-  return results
+  return results.slice(0, 20)
 }
 
 export async function resetAllScores(adminUserId) {
+  const { collection, query, where, getDocs, doc, updateDoc } = await f()
+  const { db } = await f()
+
   const playersSnap = await getDocs(collection(db, PLAYERS))
   const leaguesSnap = await getDocs(query(collection(db, LEAGUES), where('status', '==', 'active')))
   const tournamentsSnap = await getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active')))
 
-  for (const d of leaguesSnap.docs) {
-    await updateDoc(d.ref, { status: 'completed', completedAt: Date.now() })
-  }
-  for (const d of tournamentsSnap.docs) {
-    await updateDoc(d.ref, { status: 'completed', completedAt: Date.now() })
-  }
+  for (const d of leaguesSnap.docs) await updateDoc(d.ref, { status: 'completed', completedAt: Date.now() })
+  for (const d of tournamentsSnap.docs) await updateDoc(d.ref, { status: 'completed', completedAt: Date.now() })
 
   for (const d of playersSnap.docs) {
     if (d.id === adminUserId) continue
     await updateDoc(d.ref, {
-      xp: 0,
-      wins: 0,
-      losses: 0,
-      streak: 0,
-      promotions: 0,
-      tournamentWins: 0,
-      firstPlaceFinishes: 0,
-      coins: 0,
-      title: null,
-    nameplate: null,
-    nameplateEffect: null,
-      ownedItems: [],
-      league: 10,
-      leagueInstanceId: null,
-      statsBlob: null,
-      lastActive: Date.now(),
+      xp: 0, wins: 0, losses: 0, streak: 0, promotions: 0, tournamentWins: 0, firstPlaceFinishes: 0, coins: 0,
+      title: null, nameplate: null, nameplateEffect: null, ownedItems: [], league: 10, leagueInstanceId: null, statsBlob: null, lastActive: Date.now(),
     })
   }
 }
 
 export async function getAllLeaguesForPlayer(userId) {
+  const { collection, query, where, getDocs } = await f()
+  const { db } = await f()
   const q = query(collection(db, LEAGUES), where('players', 'array-contains', userId))
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))

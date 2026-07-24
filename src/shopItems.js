@@ -1,4 +1,5 @@
 export const SHOP_CATEGORIES = {
+  seasonal: { id: 'seasonal', label: 'Seasonal', emoji: '🌸', desc: 'Limited-time items — grab them before they\'re gone!' },
   titles: { id: 'titles', label: 'Titles', emoji: '🏷️', desc: 'Show off below your name in leagues' },
   nameplates: { id: 'nameplates', label: 'Nameplates', emoji: '✨', desc: 'Style your name in league standings' },
   tickets: { id: 'tickets', label: 'Tickets', emoji: '🎫', desc: 'Entry passes for special events' },
@@ -185,6 +186,9 @@ export const ACHIEVEMENT_COIN_REWARDS = {
   'dodge-10': 25, 'dodge-50': 75,
   'mergeblitz-10': 25, 'mergeblitz-50': 75,
   'connect4-10': 25, 'connect4-50': 75,
+  'sudoku-10': 25, 'sudoku-50': 75,
+  'mathdash-10': 25, 'mathdash-50': 75,
+  'wordle-10': 25, 'wordle-50': 75,
 }
 
 export const TOURNAMENT_COIN_REWARDS = { first: 3000, second: 2000, third: 1500 }
@@ -220,4 +224,44 @@ export function canBuy(coins, ownedIds, item) {
   if (item.championOnly) return false
   if (item.adminOnly) return false
   return coins >= item.price
+}
+
+export const SEASONAL_ITEMS = {
+  titles: [
+    { id: 'title-spring-bloom', name: 'Spring Bloom', emoji: '🌸', price: 2000, rarity: 'uncommon', season: 'spring' },
+    { id: 'title-summer-blaze', name: 'Summer Blaze', emoji: '☀️', price: 2000, rarity: 'uncommon', season: 'summer' },
+    { id: 'title-autumn-harvest', name: 'Autumn Harvest', emoji: '🍂', price: 2000, rarity: 'uncommon', season: 'autumn' },
+    { id: 'title-winter-frost', name: 'Winter Frost', emoji: '❄️', price: 2000, rarity: 'uncommon', season: 'winter' },
+    { id: 'title-arcade-anniversary', name: 'Anniversary', emoji: '🎂', price: 3000, rarity: 'rare', season: 'anniversary' },
+    { id: 'title-new-year', name: 'New Year', emoji: '🎆', price: 2500, rarity: 'rare', season: 'newyear' },
+  ],
+  nameplates: [
+    { id: 'np-grad-spring', name: 'Spring', gradient: 'linear-gradient(90deg, #ff69b4, #ffb6c1, #98fb98)', price: 3000, type: 'gradient', season: 'spring' },
+    { id: 'np-grad-summer', name: 'Summer', gradient: 'linear-gradient(90deg, #ff6b2b, #ffd700, #ff6b2b)', price: 3000, type: 'gradient', season: 'summer' },
+    { id: 'np-grad-autumn', name: 'Autumn', gradient: 'linear-gradient(90deg, #d2691e, #ff8c00, #b22222)', price: 3000, type: 'gradient', season: 'autumn' },
+    { id: 'np-grad-winter', name: 'Winter', gradient: 'linear-gradient(90deg, #87ceeb, #e0f0ff, #b0e0e6)', price: 3000, type: 'gradient', season: 'winter' },
+    { id: 'np-fx-sparkle', name: 'Sparkle', price: 10000, type: 'effect', season: 'anniversary' },
+    { id: 'np-fx-confetti', name: 'Confetti', price: 12000, type: 'effect', season: 'newyear' },
+  ],
+}
+
+function getCurrentSeason() {
+  const m = new Date().getMonth()
+  if (m >= 2 && m <= 4) return 'spring'
+  if (m >= 5 && m <= 7) return 'summer'
+  if (m >= 8 && m <= 10) return 'autumn'
+  return 'winter'
+}
+
+export function getSeasonalItems() {
+  const season = getCurrentSeason()
+  const items = []
+  for (const [cat, catItems] of Object.entries(SEASONAL_ITEMS)) {
+    for (const item of catItems) {
+      if (item.season === season || item.season === 'anniversary' || item.season === 'newyear') {
+        items.push({ ...item, category: cat })
+      }
+    }
+  }
+  return items
 }

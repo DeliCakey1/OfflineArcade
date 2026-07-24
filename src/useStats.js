@@ -137,6 +137,7 @@ export const ALL_GAME_IDS = [
   'rps', 'ssg', 'gtn', 'gtn-hc', 'hol', 'dice', 'coin', 'memory', 'word', 'merge',
   'reaction', 'typing', 'simon', 'slots', 'blackjack', 'whack', 'snake', 'tetris',
   'breakout', 'flappy', 'minesweeper', 'lightsout', 'mastermind', 'dodge', 'mergeblitz', 'connect4',
+  'sudoku', 'mathdash', 'wordle',
 ]
 
 export const ACHIEVEMENTS = [
@@ -154,7 +155,7 @@ export const ACHIEVEMENTS = [
   { id: 'won-100', name: 'Champion', emoji: '🏅', desc: 'Win 100 games', category: 'general', rarity: 'rare', check: s => totalWon(s) >= 100, progress: s => ({ current: Math.min(totalWon(s), 100), max: 100 }) },
   { id: 'won-250', name: 'Conqueror', emoji: '⚔️', desc: 'Win 250 games', category: 'general', rarity: 'epic', check: s => totalWon(s) >= 250, progress: s => ({ current: Math.min(totalWon(s), 250), max: 250 }) },
   { id: 'won-500', name: 'Undefeated', emoji: '👑', desc: 'Win 500 games', category: 'general', rarity: 'legendary', check: s => totalWon(s) >= 500, progress: s => ({ current: Math.min(totalWon(s), 500), max: 500 }) },
-  { id: 'played-all', name: 'Completionist', emoji: '🎯', desc: 'Play all 21 games', category: 'general', rarity: 'rare', check: s => ALL_GAME_IDS.every(id => (s[id]?.played || 0) > 0), progress: s => ({ current: ALL_GAME_IDS.filter(id => (s[id]?.played || 0) > 0).length, max: ALL_GAME_IDS.length }) },
+  { id: 'played-all', name: 'Completionist', emoji: '🎯', desc: 'Play all 29 games', category: 'general', rarity: 'rare', check: s => ALL_GAME_IDS.every(id => (s[id]?.played || 0) > 0), progress: s => ({ current: ALL_GAME_IDS.filter(id => (s[id]?.played || 0) > 0).length, max: ALL_GAME_IDS.length }) },
   { id: 'won-all', name: 'Grandmaster', emoji: '🧔', desc: 'Win at least one game of every type', category: 'general', rarity: 'legendary', check: s => ALL_GAME_IDS.every(id => (s[id]?.won || 0) > 0), progress: s => ({ current: ALL_GAME_IDS.filter(id => (s[id]?.won || 0) > 0).length, max: ALL_GAME_IDS.length }) },
   { id: 'favorite-5', name: 'Picky', emoji: '⭐', desc: 'Favorite 5 games', category: 'general', rarity: 'common', check: s => (s._favorites?.length || 0) >= 5, progress: s => ({ current: Math.min(s._favorites?.length || 0, 5), max: 5 }) },
   { id: 'favorite-10', name: 'Collector', emoji: '💫', desc: 'Favorite 10 games', category: 'general', rarity: 'uncommon', check: s => (s._favorites?.length || 0) >= 10, progress: s => ({ current: Math.min(s._favorites?.length || 0, 10), max: 10 }) },
@@ -258,6 +259,12 @@ export const ACHIEVEMENTS = [
   { id: 'mergeblitz-50', name: 'Combo King', emoji: '⚡', desc: 'Win 50 Merge Blitz games', category: 'games', rarity: 'uncommon', check: s => (s.mergeblitz?.won || 0) >= 50, progress: s => ({ current: Math.min(s.mergeblitz?.won || 0, 50), max: 50 }) },
   { id: 'connect4-10', name: 'Connect Pro', emoji: '🔴', desc: 'Win 10 Connect Four games', category: 'games', rarity: 'common', check: s => (s.connect4?.won || 0) >= 10, progress: s => ({ current: Math.min(s.connect4?.won || 0, 10), max: 10 }) },
   { id: 'connect4-50', name: 'Four in a Row', emoji: '🔴', desc: 'Win 50 Connect Four games', category: 'games', rarity: 'uncommon', check: s => (s.connect4?.won || 0) >= 50, progress: s => ({ current: Math.min(s.connect4?.won || 0, 50), max: 50 }) },
+  { id: 'sudoku-10', name: 'Number Cruncher', emoji: '🔢', desc: 'Win 10 Sudoku games', category: 'games', rarity: 'common', check: s => (s.sudoku?.won || 0) >= 10, progress: s => ({ current: Math.min(s.sudoku?.won || 0, 10), max: 10 }) },
+  { id: 'sudoku-50', name: 'Grid Master', emoji: '🧩', desc: 'Win 50 Sudoku games', category: 'games', rarity: 'uncommon', check: s => (s.sudoku?.won || 0) >= 50, progress: s => ({ current: Math.min(s.sudoku?.won || 0, 50), max: 50 }) },
+  { id: 'mathdash-10', name: 'Math Whiz', emoji: '➕', desc: 'Win 10 Math Dash games', category: 'games', rarity: 'common', check: s => (s.mathdash?.won || 0) >= 10, progress: s => ({ current: Math.min(s.mathdash?.won || 0, 10), max: 10 }) },
+  { id: 'mathdash-50', name: 'Equation Engine', emoji: '🧮', desc: 'Win 50 Math Dash games', category: 'games', rarity: 'uncommon', check: s => (s.mathdash?.won || 0) >= 50, progress: s => ({ current: Math.min(s.mathdash?.won || 0, 50), max: 50 }) },
+  { id: 'wordle-10', name: 'Word Smith', emoji: '📝', desc: 'Win 10 Wordle games', category: 'games', rarity: 'common', check: s => (s.wordle?.won || 0) >= 10, progress: s => ({ current: Math.min(s.wordle?.won || 0, 10), max: 10 }) },
+  { id: 'wordle-50', name: 'Vocabulary King', emoji: '👑', desc: 'Win 50 Wordle games', category: 'games', rarity: 'uncommon', check: s => (s.wordle?.won || 0) >= 50, progress: s => ({ current: Math.min(s.wordle?.won || 0, 50), max: 50 }) },
 ]
 
 function maxStreak(s) {

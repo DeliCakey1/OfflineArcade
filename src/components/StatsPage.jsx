@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import AnalyticsDashboard from './AnalyticsDashboard'
 
 export default function StatsPage({ games, allStats, onClose, onClear, xp, totalPlayedCount, totalWonCount }) {
   const gameStats = useMemo(() => {
@@ -98,6 +99,10 @@ export default function StatsPage({ games, allStats, onClose, onClear, xp, total
             <div>No games played yet. Start playing to see your stats!</div>
           </div>
         )}
+
+        <div style={{ marginTop: 24 }}>
+          <AnalyticsDashboard stats={allStats} />
+        </div>
 
         <div className="stats-footer" style={{ marginTop: 24 }}>
           {totalPlayedCount > 0 && (

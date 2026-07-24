@@ -25,6 +25,10 @@ export function setVolume(val) {
   localStorage.setItem('arcade-volume', String(val))
 }
 
+export function haptic(pattern = 10) {
+  try { navigator.vibrate?.(pattern) } catch {}
+}
+
 export default function useSound() {
   const ctxRef = useRef(null)
   const getCtx = useCallback(() => {
@@ -74,6 +78,7 @@ export default function useSound() {
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
         osc.start(ctx.currentTime)
         osc.stop(ctx.currentTime + 0.4)
+        haptic([10, 30, 10])
       } else if (type === 'lose') {
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
@@ -86,6 +91,7 @@ export default function useSound() {
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35)
         osc.start(ctx.currentTime)
         osc.stop(ctx.currentTime + 0.35)
+        haptic(50)
       } else if (type === 'draw') {
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
@@ -217,6 +223,7 @@ export default function useSound() {
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
         osc.start(ctx.currentTime)
         osc.stop(ctx.currentTime + 0.15)
+        haptic(5)
       } else if (type === 'levelup') {
         const notes = [523, 659, 784]
         notes.forEach((freq, i) => {
@@ -243,6 +250,7 @@ export default function useSound() {
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55)
         osc.start(ctx.currentTime)
         osc.stop(ctx.currentTime + 0.55)
+        haptic([30, 50, 30, 50, 30])
       } else if (type === 'achievement') {
         const notes = [523, 659, 784, 1047, 1319]
         notes.forEach((freq, i) => {

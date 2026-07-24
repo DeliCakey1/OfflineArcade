@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import useSound from '../useSound'
-import { TITLES, ALL_NAMEPLATES, RARITY_COLORS, TOURNAMENT_TICKET } from '../shopItems'
+import { TITLES, ALL_NAMEPLATES, RARITY_COLORS, TOURNAMENT_TICKET, getSeasonalItems } from '../shopItems'
 
 const NAMEPLATE_TABS = [
   { id: 'colors', label: 'Colors', emoji: '🎨' },
@@ -203,6 +203,9 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
       </div>
 
       <div className="shop-tabs">
+        <button className={`shop-tab ${tab === 'seasonal' ? 'active' : ''}`} onClick={() => { setTab('seasonal'); sound('click') }}>
+          🌸 Seasonal
+        </button>
         <button className={`shop-tab ${tab === 'titles' ? 'active' : ''}`} onClick={() => { setTab('titles'); sound('click') }}>
           🏷️ Titles
         </button>
@@ -216,6 +219,39 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
 
       {showBought && (
         <div className="shop-bought-toast">Purchased!</div>
+      )}
+
+      {tab === 'seasonal' && (
+        <div className="full-page-content">
+          <p className="shop-section-desc">🌸 Limited-time seasonal items — available for a limited time only!</p>
+          <div className="shop-grid">
+            {getSeasonalItems().map(item => (
+              item.category === 'titles' ? (
+                <TitleCard
+                  key={item.id}
+                  item={item}
+                  owned={(ownedItems || []).includes(item.id)}
+                  equipped={activeTitle === item.id}
+                  coins={coins}
+                  onBuy={handleBuy}
+                  onEquip={onEquipTitle}
+                  isAdmin={isAdmin}
+                />
+              ) : (
+                <NameplateCard
+                  key={item.id}
+                  item={item}
+                  owned={(ownedItems || []).includes(item.id)}
+                  equipped={activeSlotFor(item) === item.id}
+                  coins={coins}
+                  onBuy={handleBuy}
+                  onEquip={equipHandler(item)}
+                  isAdmin={isAdmin}
+                />
+              )
+            ))}
+          </div>
+        </div>
       )}
 
       {tab === 'titles' && (

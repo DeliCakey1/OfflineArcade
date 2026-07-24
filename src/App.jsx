@@ -1,44 +1,53 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import RockPaperScissors from './components/RockPaperScissors'
-import SplitStealGiveAway from './components/SplitStealGiveAway'
-import GuessTheNumber from './components/GuessTheNumber'
-import GuessTheNumberHotCold from './components/GuessTheNumberHotCold'
-import HigherOrLower from './components/HigherOrLower'
-import DiceRoll from './components/DiceRoll'
-import CoinFlipStreak from './components/CoinFlipStreak'
-import MemoryMatch from './components/MemoryMatch'
-import WordScramble from './components/WordScramble'
-import NumberMerge from './components/NumberMerge'
-import ReactionTime from './components/ReactionTime'
-import TypingSpeed from './components/TypingSpeed'
-import SimonSays from './components/SimonSays'
-import Slots from './components/Slots'
-import Blackjack from './components/Blackjack'
-import WhackAMole from './components/WhackAMole'
-import SnakeGame from './components/SnakeGame'
-import Tetris from './components/Tetris'
-import Breakout from './components/Breakout'
-import FlappyBird from './components/FlappyBird'
-import Minesweeper from './components/Minesweeper'
-import LightsOut from './components/LightsOut'
-import Mastermind from './components/Mastermind'
-import Dodge from './components/Dodge'
-import MergeBlitz from './components/MergeBlitz'
-import ConnectFour from './components/ConnectFour'
-import AboutUs from './components/AboutUs'
-import LeagueScreen from './components/LeagueScreen'
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react'
 import Confetti from './components/Confetti'
-import AchievementsPage from './components/AchievementsPage'
-import StatsPage from './components/StatsPage'
-import ShopPage from './components/ShopPage'
-import AdminPanel from './components/AdminPanel'
-import { VolumeSlider } from './components/VolumeSlider'
-import SettingsPage from './components/SettingsPage'
-import DailyLeaderboard from './components/DailyLeaderboard'
-import FriendsPanel from './components/FriendsPanel'
 import AmbientParticles from './components/AmbientParticles'
-import ThemePicker from './components/ThemePicker'
-import SignInPage from './components/SignInPage'
+import ErrorBoundary from './components/ErrorBoundary'
+import InstallBanner from './components/InstallBanner'
+import OfflineIndicator from './components/OfflineIndicator'
+import GameTutorial from './components/GameTutorial'
+import DailyLoginModal, { checkAndClaimDailyLogin } from './components/DailyLoginModal'
+
+const RockPaperScissors = lazy(() => import('./components/RockPaperScissors'))
+const SplitStealGiveAway = lazy(() => import('./components/SplitStealGiveAway'))
+const GuessTheNumber = lazy(() => import('./components/GuessTheNumber'))
+const GuessTheNumberHotCold = lazy(() => import('./components/GuessTheNumberHotCold'))
+const HigherOrLower = lazy(() => import('./components/HigherOrLower'))
+const DiceRoll = lazy(() => import('./components/DiceRoll'))
+const CoinFlipStreak = lazy(() => import('./components/CoinFlipStreak'))
+const MemoryMatch = lazy(() => import('./components/MemoryMatch'))
+const WordScramble = lazy(() => import('./components/WordScramble'))
+const NumberMerge = lazy(() => import('./components/NumberMerge'))
+const ReactionTime = lazy(() => import('./components/ReactionTime'))
+const TypingSpeed = lazy(() => import('./components/TypingSpeed'))
+const SimonSays = lazy(() => import('./components/SimonSays'))
+const Slots = lazy(() => import('./components/Slots'))
+const Blackjack = lazy(() => import('./components/Blackjack'))
+const WhackAMole = lazy(() => import('./components/WhackAMole'))
+const SnakeGame = lazy(() => import('./components/SnakeGame'))
+const Tetris = lazy(() => import('./components/Tetris'))
+const Breakout = lazy(() => import('./components/Breakout'))
+const FlappyBird = lazy(() => import('./components/FlappyBird'))
+const Minesweeper = lazy(() => import('./components/Minesweeper'))
+const LightsOut = lazy(() => import('./components/LightsOut'))
+const Mastermind = lazy(() => import('./components/Mastermind'))
+const Dodge = lazy(() => import('./components/Dodge'))
+const MergeBlitz = lazy(() => import('./components/MergeBlitz'))
+const ConnectFour = lazy(() => import('./components/ConnectFour'))
+const Sudoku = lazy(() => import('./components/Sudoku'))
+const MathDash = lazy(() => import('./components/MathDash'))
+const Wordle = lazy(() => import('./components/Wordle'))
+const AboutUs = lazy(() => import('./components/AboutUs'))
+const LeagueScreen = lazy(() => import('./components/LeagueScreen'))
+const AchievementsPage = lazy(() => import('./components/AchievementsPage'))
+const StatsPage = lazy(() => import('./components/StatsPage'))
+const ShopPage = lazy(() => import('./components/ShopPage'))
+const AdminPanel = lazy(() => import('./components/AdminPanel'))
+const SettingsPage = lazy(() => import('./components/SettingsPage'))
+const DailyLeaderboard = lazy(() => import('./components/DailyLeaderboard'))
+const FriendsPanel = lazy(() => import('./components/FriendsPanel'))
+const SignInPage = lazy(() => import('./components/SignInPage'))
+const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial'))
+const ThemePicker = lazy(() => import('./components/ThemePicker'))
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow, setCurrentUserId, clearCurrentUserId } from './useStats'
@@ -46,6 +55,7 @@ import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS, GAME_
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
 import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor, getTitleName } from './nameplateUtils'
+import useSwipeBack from './useSwipeBack'
 import './index.css'
 
 const CATEGORIES = [
@@ -84,6 +94,9 @@ const GAMES = [
   { id: 'dodge', label: 'Dodge', emoji: '🎮', desc: 'Move your orb to dodge the falling obstacles!', color: '#00d4ff', component: Dodge, category: 'reflex' },
   { id: 'mergeblitz', label: 'Merge Blitz', emoji: '⚡', desc: 'Timed 2048! Chain merges for combo multipliers!', color: '#ffe600', component: MergeBlitz, category: 'brain' },
   { id: 'connect4', label: 'Connect Four', emoji: '🔴', desc: 'Drop discs to get four in a row against the AI!', color: '#1a47b8', component: ConnectFour, category: 'card' },
+  { id: 'sudoku', label: 'Sudoku', emoji: '🔢', desc: 'Fill the 9×9 grid with numbers 1-9!', color: '#22c55e', component: Sudoku, category: 'brain' },
+  { id: 'mathdash', label: 'Math Dash', emoji: '➕', desc: 'Solve as many math problems as you can before time runs out!', color: '#b946ff', component: MathDash, category: 'reflex' },
+  { id: 'wordle', label: 'Wordle', emoji: '📝', desc: 'Guess the hidden word in limited tries!', color: '#14b8a6', component: Wordle, category: 'brain' },
 ]
 
 function getSaved(key, fallback) {
@@ -133,7 +146,7 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
   const coinReward = GAME_COINS[game.id] || 0
   const isScoreBased = SCORE_BASED_GAMES.includes(game.id)
   return (
-    <div className="game-select-card" onClick={onClick} style={{ '--card-accent': game.color }} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}>
+    <div className="game-select-card" onClick={onClick} style={{ '--card-accent': game.color }} role="button" tabIndex={0} aria-label={`Play ${game.label}: ${game.desc}`} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}>
       <button
         className={`fav-btn ${isFav ? 'active' : ''}`}
         onClick={e => { e.stopPropagation(); onFavToggle(game.id) }}
@@ -740,6 +753,12 @@ function App() {
     purchaseItem, equipTitle, equipNameplate, equipNameplateEffect, addCoins, checkAchievementCoins,
   } = useStats('_global')
 
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return !localStorage.getItem('arcade-onboarded') && totalPlayedCount === 0 } catch { return false }
+  })
+  const [showDailyLogin, setShowDailyLogin] = useState(false)
+  const [dailyLoginResult, setDailyLoginResult] = useState(null)
+
   const dailyGame = useMemo(() => {
     const dg = getDailyGame(ALL_GAME_IDS)
     return { ...dg, game: GAMES.find(g => g.id === dg.gameId) }
@@ -753,6 +772,15 @@ function App() {
   useEffect(() => {
     const timer = setInterval(() => setDailyCountdown(getTimeUntilTomorrow()), 1000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (totalPlayedCount === 0) return
+    const result = checkAndClaimDailyLogin((coins) => addCoins(coins))
+    if (result) {
+      setDailyLoginResult(result)
+      setShowDailyLogin(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -772,7 +800,8 @@ function App() {
 
   useEffect(() => {
     handleRedirectResult().catch(() => {})
-    const unsub = onAuthChange((u) => {
+    let unsubFn = () => {}
+    onAuthChange((u) => {
       if (u) {
         const wasAnonymous = !user && u.metadata.creationTime === u.metadata.lastSignInTime
         setUser(u)
@@ -832,8 +861,8 @@ function App() {
           }).catch(() => {})
         }
       }
-    })
-    return () => unsub()
+    }).then(unsub => { if (unsub) unsubFn = unsub })
+    return () => unsubFn()
   }, [])
 
   useEffect(() => {
@@ -999,6 +1028,13 @@ function App() {
     return recent.map(id => GAMES.find(g => g.id === id)).filter(Boolean)
   }, [recent])
 
+  useSwipeBack(handleHome, 80)
+
+  function handleOnboardingClose() {
+    try { localStorage.setItem('arcade-onboarded', '1') } catch {}
+    setShowOnboarding(false)
+  }
+
   const settings = {
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
@@ -1070,12 +1106,13 @@ function App() {
     purchaseItem(itemId, price)
     if (userId) {
       import('./leagueService').then(({ updatePlayer, increment }) => {
+        const coinUpdate = { coins: increment(-price) }
         if (itemId === 'ticket-tournament') {
-          updatePlayer(userId, { tournamentTickets: increment(1) })
+          updatePlayer(userId, { ...coinUpdate, tournamentTickets: increment(1) })
         } else {
           const owned = new Set(ownedItems || [])
           owned.add(itemId)
-          updatePlayer(userId, { ownedItems: [...owned] })
+          updatePlayer(userId, { ...coinUpdate, ownedItems: [...owned] })
         }
       }).catch(() => {})
     }
@@ -1098,32 +1135,40 @@ function App() {
     import('./auth').then(({ signOut }) => signOut()).then(() => window.location.reload()).catch(() => {})
   }, [])
 
+  const loadingFallback = <div className="game-loading"><div className="game-loading-spinner" /><span>Loading...</span></div>
+
   if (currentPage === 'settings') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} />
-        {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} />
+          {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'signin') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SignInPage onBack={() => setCurrentPage('home')} />
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <SignInPage onBack={() => setCurrentPage('home')} />
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'leagues') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
-        {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
+          {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+        </div>
+      </Suspense>
     )
   }
 
@@ -1138,79 +1183,93 @@ function App() {
 
   if (currentPage === 'stats') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <StatsPage games={GAMES} allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setCurrentPage('home')} onClear={() => { setCurrentPage('home'); setShowConfirmClear(true) }} />
-        {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <StatsPage games={GAMES} allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setCurrentPage('home')} onClear={() => { setCurrentPage('home'); setShowConfirmClear(true) }} />
+          {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'achievements') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => setCurrentPage('home')} />
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => setCurrentPage('home')} />
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'admin') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <AdminPanel userId={user?.uid} />
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <AdminPanel userId={user?.uid} />
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'shop') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <ShopPage
-          onBack={() => setCurrentPage('home')}
-          coins={coins}
-          tournamentTickets={tournamentTickets}
-          ownedItems={ownedItems}
-          activeTitle={activeTitle}
-          activeNameplate={activeNameplate}
-          activeNameplateEffect={activeNameplateEffect}
-          onPurchase={handlePurchase}
-          onEquipTitle={handleEquipTitle}
-          onEquipNameplate={handleEquipNameplate}
-          onEquipNameplateEffect={handleEquipNameplateEffect}
-          isChampion={earnedAchievements.includes('reach-god')}
-          isAdmin={isAdminLoggedIn()}
-        />
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <ShopPage
+            onBack={() => setCurrentPage('home')}
+            coins={coins}
+            tournamentTickets={tournamentTickets}
+            ownedItems={ownedItems}
+            activeTitle={activeTitle}
+            activeNameplate={activeNameplate}
+            activeNameplateEffect={activeNameplateEffect}
+            onPurchase={handlePurchase}
+            onEquipTitle={handleEquipTitle}
+            onEquipNameplate={handleEquipNameplate}
+            onEquipNameplateEffect={handleEquipNameplateEffect}
+            isChampion={earnedAchievements.includes('reach-god')}
+            isAdmin={isAdminLoggedIn()}
+          />
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'about') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <AboutUs onBack={() => setCurrentPage('home')} />
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <AboutUs onBack={() => setCurrentPage('home')} />
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'leaderboard') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <DailyLeaderboard gameId={dailyGame.gameId} onClose={() => setCurrentPage('home')} />
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <DailyLeaderboard gameId={dailyGame.gameId} onClose={() => setCurrentPage('home')} />
+        </div>
+      </Suspense>
     )
   }
 
   if (currentPage === 'friends') {
     return (
-      <div>
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <FriendsPanel userId={user?.uid} onClose={() => setCurrentPage('home')} />
-      </div>
+      <Suspense fallback={loadingFallback}>
+        <div>
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <FriendsPanel userId={user?.uid} onClose={() => setCurrentPage('home')} />
+        </div>
+      </Suspense>
     )
   }
 
@@ -1234,7 +1293,12 @@ function App() {
           ))}
         </nav>
         <main className="game-container">
-          <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
+          <ErrorBoundary key={activeGame} onBack={handleHome} fallbackTitle="Game Failed to Load" fallbackMessage="This game encountered an error. You can try again or pick a different game.">
+            <Suspense fallback={<div className="game-loading"><div className="game-loading-spinner" /><span>Loading game...</span></div>}>
+              <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
+            </Suspense>
+          </ErrorBoundary>
+          <GameTutorial gameId={activeGame} />
         </main>
         <Confetti active={showConfetti} onDone={hideConfetti} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
@@ -1252,10 +1316,20 @@ function App() {
 
   return (
     <div>
+      <a href="#main-content" style={{
+        position: 'absolute', left: -9999, top: 0, zIndex: 10000,
+        background: 'var(--neon-purple)', color: '#fff', padding: '8px 16px',
+        borderRadius: '0 0 8px 0', fontSize: 14, fontWeight: 600,
+        textDecoration: 'none',
+      }} onFocus={(e) => e.target.style.left = '0'} onBlur={(e) => e.target.style.left = '-9999px'}>
+        Skip to games
+      </a>
       {bg && <AmbientParticles />}
+      <InstallBanner />
+      <OfflineIndicator />
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
       <SettingsBar {...settings} />
-      <header className="arcade-header">
+      <header className="arcade-header" role="banner">
         <h1 className="arcade-title">ARCADE GAMES</h1>
         <p className="arcade-subtitle">Pick a game and challenge the bot!</p>
         <div className="xp-bar">
@@ -1269,7 +1343,7 @@ function App() {
           </div>
         )}
       </header>
-      <main className="game-container">
+      <main className="game-container" id="main-content" role="main">
         {recentGames.length > 0 && (
           <div className="recent-section">
             <h3 className="section-title">🕐 Continue Playing</h3>
@@ -1358,6 +1432,16 @@ function App() {
           <span className="achievement-toast-icon">🏅</span>
           <span className="achievement-toast-text">{achievementToast.text}</span>
         </div>
+      )}
+      {showOnboarding && <OnboardingTutorial onClose={handleOnboardingClose} />}
+      {showDailyLogin && (
+        <DailyLoginModal
+          onClaim={() => {
+            if (dailyLoginResult) addCoins(dailyLoginResult.coins)
+            setShowDailyLogin(false)
+          }}
+          onClose={() => setShowDailyLogin(false)}
+        />
       )}
     </div>
   )

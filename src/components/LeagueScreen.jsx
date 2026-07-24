@@ -43,6 +43,9 @@ const LEAGUE_GAMES = [
   { id: 'dodge', label: 'Dodge', emoji: '🎮' },
   { id: 'mergeblitz', label: 'Merge Blitz', emoji: '⚡' },
   { id: 'connect4', label: 'Connect Four', emoji: '🔴' },
+  { id: 'sudoku', label: 'Sudoku', emoji: '🔢' },
+  { id: 'mathdash', label: 'Math Dash', emoji: '➕' },
+  { id: 'wordle', label: 'Wordle', emoji: '📝' },
 ]
 
 const TOURNAMENT_LABELS = {
