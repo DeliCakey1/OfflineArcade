@@ -1,10 +1,27 @@
 const { app, BrowserWindow, protocol } = require('electron')
 const path = require('path')
+const http = require('http')
+const fs = require('fs')
 const { autoUpdater } = require('electron-updater')
 
 const DIST = path.join(__dirname, '..', 'dist')
 
+const MIME = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+  '.ttf': 'font/ttf',
+}
+
 let mainWindow
+let server
+let PORT = 18234
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -23,7 +40,7 @@ function createWindow() {
     show: false,
   })
 
-  mainWindow.loadFile(path.join(DIST, 'index.html'))
+  mainWindow.loadURL(`http://localhost:${PORT}/index.html`)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
@@ -34,6 +51,39 @@ function createWindow() {
   })
 
   autoUpdater.checkForUpdatesAndNotify()
+}
+
+function startServer() {
+  return new Promise((resolve) => {
+    server = http.createServer((req, res) => {
+      let url = req.url.split('?')[0]
+      if (url === '/') url = '/index.html'
+
+      const filePath = path.join(DIST, url)
+
+      if (!filePath.startsWith(DIST)) {
+        res.writeHead(403)
+        res.end()
+        return
+      }
+
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          fs.readFile(path.join(DIST, 'index.html'), (e2, html) => {
+            if (e2) { res.writeHead(404); res.end(); return }
+            res.writeHead(200, { 'Content-Type': 'text/html' })
+            res.end(html)
+          })
+          return
+        }
+        const ext = path.extname(filePath)
+        res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' })
+        res.end(data)
+      })
+    })
+
+    server.listen(PORT, '127.0.0.1', () => resolve())
+  })
 }
 
 autoUpdater.on('update-available', () => {
@@ -48,12 +98,8 @@ autoUpdater.on('update-downloaded', () => {
   }
 })
 
-app.whenReady().then(() => {
-  protocol.registerFileProtocol('atom', (request, callback) => {
-    const filePath = path.join(DIST, request.url.slice('atom://'.length))
-    callback({ path: filePath })
-  })
-
+app.whenReady().then(async () => {
+  await startServer()
   createWindow()
 
   app.on('activate', () => {
@@ -62,5 +108,6 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  if (server) server.close()
   if (process.platform !== 'darwin') app.quit()
 })
