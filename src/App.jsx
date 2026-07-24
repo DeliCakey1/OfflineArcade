@@ -720,6 +720,8 @@ function App() {
     if (path === '/about-us') return 'about'
     if (path === '/download') return 'download'
     if (path === '/god-commands') return 'cloak'
+    if (path === '/friends') return 'friends'
+    if (path === '/leaderboard') return 'leaderboard'
     return 'home'
   })
   const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
@@ -731,12 +733,36 @@ function App() {
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
 
   useEffect(() => {
-    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands' }
+    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands', friends: '/friends', leaderboard: '/leaderboard' }
     const path = routes[currentPage] || '/'
     if (window.location.pathname !== path) {
       window.history.pushState({}, '', path)
     }
   }, [currentPage])
+
+  useEffect(() => {
+    function pathToPage(pathname) {
+      const path = pathname.replace(/\/+$/, '')
+      if (path === '/admin-panel') return 'admin'
+      if (path === '/about-us') return 'about'
+      if (path === '/download') return 'download'
+      if (path === '/god-commands') return 'cloak'
+      if (path === '/friends') return 'friends'
+      if (path === '/leaderboard') return 'leaderboard'
+      if (path === '/leagues') return 'leagues'
+      if (path === '/stats') return 'stats'
+      if (path === '/achievements') return 'achievements'
+      if (path === '/shop') return 'shop'
+      if (path === '/settings') return 'settings'
+      if (path === '/signin') return 'signin'
+      return 'home'
+    }
+    function onPopState() {
+      setCurrentPage(pathToPage(window.location.pathname))
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
   const [userId, setUserId] = useState(null)
   const adminSwitchingRef = useRef(false)
   const [playerName, setPlayerName] = useState(null)

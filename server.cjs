@@ -48,6 +48,8 @@ const VALID_ROUTES = [
   '/stats',
   '/achievements',
   '/shop',
+  '/friends',
+  '/leaderboard',
 ]
 
 const ABOUT_BLANK_HTML = `<!DOCTYPE html>
