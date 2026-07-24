@@ -1347,7 +1347,7 @@ function App() {
         Skip to games
       </a>
       {bg && <AmbientParticles />}
-      <InstallBanner />
+      <InstallBanner onNavigate={(page) => setCurrentPage(page)} />
       <OfflineIndicator />
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
       <SettingsBar {...settings} />

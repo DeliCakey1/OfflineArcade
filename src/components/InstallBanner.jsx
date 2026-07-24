@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export default function InstallBanner() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
+export default function InstallBanner({ onNavigate }) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -10,21 +9,17 @@ export default function InstallBanner() {
 
     function handler(e) {
       e.preventDefault()
-      setDeferredPrompt(e)
       setVisible(true)
     }
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
-  if (!visible || !deferredPrompt) return null
+  if (!visible) return null
 
-  async function install() {
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    setDeferredPrompt(null)
+  function goToDownload() {
     setVisible(false)
-    if (outcome === 'accepted') localStorage.setItem('arcade-install-dismissed', 'true')
+    if (onNavigate) onNavigate('download')
   }
 
   function dismiss() {
@@ -45,7 +40,7 @@ export default function InstallBanner() {
         <div style={{ fontWeight: 700, fontSize: 15 }}>Install Offline Arcade</div>
         <div style={{ fontSize: 13, opacity: 0.85 }}>Play 29 games offline anytime!</div>
       </div>
-      <button onClick={install} style={{
+      <button onClick={goToDownload} style={{
         background: '#fff', color: 'var(--accent, #8b5cf6)', border: 'none', borderRadius: 10,
         padding: '8px 18px', fontWeight: 700, fontSize: 14, cursor: 'pointer', whiteSpace: 'nowrap',
       }}>Install</button>
