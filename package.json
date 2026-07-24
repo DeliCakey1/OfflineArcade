@@ -1,13 +1,21 @@
 {
-  "name": "arcade-games",
+  "name": "offline-arcade",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "main": "electron/main.cjs",
   "type": "module",
+  "author": "Offline Arcade",
+  "description": "29 playable browser games with leagues, tournaments, and cosmetics",
+  "homepage": "./",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "vite build && electron .",
+    "electron:build": "vite build && electron-builder --win",
+    "electron:build:mac": "vite build && electron-builder --mac",
+    "electron:build:linux": "vite build && electron-builder --linux"
   },
   "dependencies": {
     "firebase": "^12.16.0",
@@ -18,7 +26,40 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
+    "electron": "^37.5.2",
+    "electron-builder": "^26.0.12",
     "oxlint": "^1.71.0",
     "vite": "^8.1.1"
+  },
+  "build": {
+    "appId": "com.offline-arcade.app",
+    "productName": "Offline Arcade",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "dist/favicon.svg"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Offline Arcade"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "dist/favicon.svg"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "dist/favicon.svg"
+    }
   }
 }
