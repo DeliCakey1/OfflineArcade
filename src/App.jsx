@@ -37,6 +37,7 @@ const Sudoku = lazy(() => import('./components/Sudoku'))
 const MathDash = lazy(() => import('./components/MathDash'))
 const Wordle = lazy(() => import('./components/Wordle'))
 const AboutUs = lazy(() => import('./components/AboutUs'))
+const DownloadPage = lazy(() => import('./components/DownloadPage'))
 const LeagueScreen = lazy(() => import('./components/LeagueScreen'))
 const AchievementsPage = lazy(() => import('./components/AchievementsPage'))
 const StatsPage = lazy(() => import('./components/StatsPage'))
@@ -717,6 +718,7 @@ function App() {
     const path = window.location.pathname.replace(/\/+$/, '')
     if (path === '/admin-panel') return 'admin'
     if (path === '/about-us') return 'about'
+    if (path === '/download') return 'download'
     if (path === '/god-commands') return 'cloak'
     return 'home'
   })
@@ -729,7 +731,7 @@ function App() {
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
 
   useEffect(() => {
-    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', cloak: '/god-commands' }
+    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands' }
     const path = routes[currentPage] || '/'
     if (window.location.pathname !== path) {
       window.history.pushState({}, '', path)
@@ -1259,6 +1261,17 @@ function App() {
     )
   }
 
+  if (currentPage === 'download') {
+    return (
+      <Suspense fallback={loadingFallback}>
+        <div className="page-enter">
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <DownloadPage onBack={() => setCurrentPage('home')} />
+        </div>
+      </Suspense>
+    )
+  }
+
   if (currentPage === 'leaderboard') {
     return (
       <Suspense fallback={loadingFallback}>
@@ -1424,6 +1437,7 @@ function App() {
         )}
         <div className="about-footer-link">
           <button className="about-link-btn" onClick={() => setCurrentPage('about')}>About Offline Arcade →</button>
+          <button className="about-link-btn" onClick={() => setCurrentPage('download')}>📥 Download App</button>
         </div>
       </main>
       <Confetti active={showConfetti} onDone={hideConfetti} />

@@ -39,6 +39,7 @@ function serveFile(res, filePath) {
 const VALID_ROUTES = [
   '/',
   '/about-us',
+  '/download',
   '/admin-panel',
   '/god-commands',
   '/settings',
