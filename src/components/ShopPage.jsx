@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import useSound from '../useSound'
 import { TITLES, ALL_NAMEPLATES, RARITY_COLORS, TOURNAMENT_TICKET, getSeasonalItems } from '../shopItems'
 
@@ -179,9 +179,9 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
     setTimeout(() => setShowBought(null), 1500)
   }
 
-  const filteredTitles = isAdmin ? TITLES : TITLES.filter(t => !t.championOnly || isChampion)
+  const filteredTitles = useMemo(() => isAdmin ? TITLES : TITLES.filter(t => !t.championOnly || isChampion), [isAdmin, isChampion])
 
-  const filteredNameplates = ALL_NAMEPLATES.filter(np => {
+  const filteredNameplates = useMemo(() => ALL_NAMEPLATES.filter(np => {
     if (!isAdmin && np.championOnly && !isChampion) return false
     if (!isAdmin && np.adminOnly) return false
     if (npTab === 'colors') return np.type === 'solid'
@@ -189,7 +189,7 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
     if (npTab === 'borders') return np.type === 'border'
     if (npTab === 'effects') return np.type === 'effect' && !np.id.startsWith('np-fx-neon') && np.id !== 'np-fx-gold-shimmer'
     return false
-  })
+  }), [isAdmin, isChampion, npTab])
 
   const equipHandler = (item) => item.type === 'effect' ? onEquipNameplateEffect : onEquipNameplate
   const activeSlotFor = (item) => item.type === 'effect' ? activeNameplateEffect : activeNameplate

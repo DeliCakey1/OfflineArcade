@@ -52,7 +52,6 @@ export default function OnboardingTutorial({ onClose }) {
 
   useEffect(() => {
     function handleKey(e) {
-      if (e.key === 'Escape') onClose()
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
         if (isLast) onClose()
@@ -69,7 +68,7 @@ export default function OnboardingTutorial({ onClose }) {
       background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 20,
-    }} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    }}>
       <div style={{
         background: 'linear-gradient(135deg, #2a1f4e, #1a1033)',
         border: '2px solid rgba(185, 70, 255, 0.3)',
@@ -98,18 +97,9 @@ export default function OnboardingTutorial({ onClose }) {
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={onClose}
-            style={{
-              flex: 1, padding: '10px 16px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-              color: 'var(--text-dim)', fontSize: 13, cursor: 'pointer',
-              fontFamily: "'Fredoka', sans-serif",
-            }}
-          >Skip</button>
-          <button
             onClick={() => isLast ? onClose() : setStep(s => s + 1)}
             style={{
-              flex: 2, padding: '10px 16px', borderRadius: 8,
+              width: '100%', padding: '10px 16px', borderRadius: 8,
               background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-blue))',
               border: 'none', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
               fontFamily: "'Fredoka', sans-serif",

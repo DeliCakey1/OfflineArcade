@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [editingUsername, setEditingUsername] = useState(false)
@@ -287,6 +287,14 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
       <div className="settings-section">
         <h3 className="settings-section-title">🎨 Theme</h3>
         <ThemePicker current={theme} onChange={onThemeChange} />
+      </div>
+
+      <div className="settings-section">
+        <h3 className="settings-section-title">❓ Help</h3>
+        <button className="settings-card-btn full-width" onClick={onRedoTutorial} aria-label="Redo tutorial">
+          <span className="settings-card-icon">📖</span>
+          <span className="settings-card-label">Redo Tutorial</span>
+        </button>
       </div>
 
       <div className="settings-section">

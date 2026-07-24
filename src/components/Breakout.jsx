@@ -3,6 +3,7 @@ import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
 import { createParticlePool, spawnParticles, updateParticles, drawParticles, screenShakeApply, screenShakeRestore } from '../canvasEffects'
+import { getAdaptiveDifficulty, getGameConfig } from '../difficulty'
 
 const W = 400, H = 500
 const BRICK_ROWS = 6, BRICK_COLS = 8, BRICK_W = 46, BRICK_H = 18, BRICK_PAD = 3, BRICK_TOP = 40
@@ -53,20 +54,28 @@ export default function Breakout({ onPlayingChange }) {
 
   const launchBall = useCallback((diffName) => {
     const d = DIFFICULTIES.find(x => x.name === diffName) || DIFFICULTIES[1]
+    const stats = JSON.parse(localStorage.getItem('arcade-stats') || '{}')
+    const adaptiveLevel = getAdaptiveDifficulty('breakout', stats)
+    const config = getGameConfig('breakout', adaptiveLevel)
+    const ballSpeed = config.ballSpeed || d.ballSpeed
     const g = gameRef.current
     const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.6
-    g.ballDX = Math.cos(angle) * d.ballSpeed
-    g.ballDY = Math.sin(angle) * d.ballSpeed
+    g.ballDX = Math.cos(angle) * ballSpeed
+    g.ballDY = Math.sin(angle) * ballSpeed
   }, [])
 
   const resetBall = useCallback((diffName) => {
     const g = gameRef.current
     const d = DIFFICULTIES.find(x => x.name === diffName) || DIFFICULTIES[1]
+    const stats = JSON.parse(localStorage.getItem('arcade-stats') || '{}')
+    const adaptiveLevel = getAdaptiveDifficulty('breakout', stats)
+    const config = getGameConfig('breakout', adaptiveLevel)
+    const ballSpeed = config.ballSpeed || d.ballSpeed
     g.ballX = g.paddleX
     g.ballY = PADDLE_Y - 15
     const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.6
-    g.ballDX = Math.cos(angle) * d.ballSpeed
-    g.ballDY = Math.sin(angle) * d.ballSpeed
+    g.ballDX = Math.cos(angle) * ballSpeed
+    g.ballDY = Math.sin(angle) * ballSpeed
   }, [])
 
   const gameLoop = useCallback(() => {
@@ -243,14 +252,18 @@ export default function Breakout({ onPlayingChange }) {
   function startGame(diffName) {
     setDifficulty(diffName)
     const d = DIFFICULTIES.find(x => x.name === diffName) || DIFFICULTIES[1]
+    const stats = JSON.parse(localStorage.getItem('arcade-stats') || '{}')
+    const adaptiveLevel = getAdaptiveDifficulty('breakout', stats)
+    const config = getGameConfig('breakout', adaptiveLevel)
+    const ballSpeed = config.ballSpeed || d.ballSpeed
     const g = gameRef.current
     g.paddleX = W / 2
     g.bricks = createBricks()
     g.ballX = W / 2
     g.ballY = PADDLE_Y - 15
     const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.6
-    g.ballDX = Math.cos(angle) * d.ballSpeed
-    g.ballDY = Math.sin(angle) * d.ballSpeed
+    g.ballDX = Math.cos(angle) * ballSpeed
+    g.ballDY = Math.sin(angle) * ballSpeed
     scoreRef.current = 0
     livesRef.current = d.lives
     gameOverRef.current = false

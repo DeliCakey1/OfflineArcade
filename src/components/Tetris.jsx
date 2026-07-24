@@ -3,6 +3,7 @@ import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
 import useEffects from '../useEffects.jsx'
+import { getAdaptiveDifficulty, getGameConfig } from '../difficulty'
 
 const COLS = 10
 const ROWS = 20
@@ -123,7 +124,10 @@ export default function Tetris({ onPlayingChange }) {
   const getInterval = useCallback(() => {
     if (!difficulty) return 800
     const spd = SPEEDS.find(s => s.name === difficulty) || SPEEDS[1]
-    return Math.max(50, spd.baseInterval - linesRef.current * spd.speedUp)
+    const stats = JSON.parse(localStorage.getItem('arcade-stats') || '{}')
+    const adaptiveLevel = getAdaptiveDifficulty('tetris', stats)
+    const config = getGameConfig('tetris', adaptiveLevel)
+    return Math.max(50, (config.dropInterval || spd.baseInterval) - linesRef.current * spd.speedUp)
   }, [difficulty])
 
   const fillNextQueue = useCallback(() => {

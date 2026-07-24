@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense, memo } from 'react'
 import Confetti from './components/Confetti'
 import AmbientParticles from './components/AmbientParticles'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -140,7 +140,7 @@ function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave'
   )
 }
 
-function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
+const GameCard = memo(function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
   const gameStats = stats[game.id]
   const xpReward = GAME_XP[game.id] || 0
   const coinReward = GAME_COINS[game.id] || 0
@@ -171,7 +171,7 @@ function GameCard({ game, stats, isFav, onFavToggle, onClick }) {
       <div className="game-select-play">Play Now →</div>
     </div>
   )
-}
+})
 
 function GamesDropdown({ onNavigate }) {
   const [open, setOpen] = useState(false)
@@ -744,6 +744,7 @@ function App() {
   const [showUsernameModal, setShowUsernameModal] = useState(false)
   const [achievementToast, setAchievementToast] = useState(null)
   const [pendingAchievementRedirect, setPendingAchievementRedirect] = useState(false)
+  const [showGameTutorial, setShowGameTutorial] = useState(false)
 
   const {
     allStats, clearStats, xp, recent, favorites, setFavorite, isFavorite,
@@ -992,17 +993,17 @@ function App() {
     setVolumeState(val)
   }
 
-  function handleHome() {
+  const handleHome = useCallback(() => {
     setShowConfetti(false)
     if (isPlaying) setConfirmNav({ type: 'home' })
     else { setActiveGame(null); setCurrentPage('home') }
-  }
+  }, [isPlaying])
 
-  function handleNavigateGame(gameId) {
+  const handleNavigateGame = useCallback((gameId) => {
     setShowConfetti(false)
     if (isPlaying && activeGame !== gameId) setConfirmNav({ type: 'game', gameId })
     else { setActiveGame(gameId); setCurrentPage('home') }
-  }
+  }, [isPlaying, activeGame])
 
   function confirmNavAction() {
     setShowConfetti(false)
@@ -1010,6 +1011,8 @@ function App() {
     else if (confirmNav.type === 'game') { setActiveGame(confirmNav.gameId); setIsPlaying(false); setCurrentPage('home') }
     setConfirmNav(null)
   }
+
+  useEffect(() => { setShowGameTutorial(false) }, [activeGame])
 
   const filteredGames = useMemo(() => {
     let list = [...GAMES]
@@ -1035,7 +1038,12 @@ function App() {
     setShowOnboarding(false)
   }
 
-  const settings = {
+  function handleRedoTutorial() {
+    try { localStorage.removeItem('arcade-onboarded') } catch {}
+    setShowOnboarding(true)
+  }
+
+  const settings = useMemo(() => ({
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
     onCloak: () => { setShowConfetti(false); setCurrentPage('cloak') },
@@ -1060,7 +1068,7 @@ function App() {
     nameplateStyle: getNameplateStyle(activeNameplate),
     nameplateBorderStyle: getNameplateBorderStyle(activeNameplateEffect),
     nameplateNeonColor: getNameplateNeonColor(activeNameplateEffect),
-  }
+  }), [handleHome, handleNavigateGame, user, playerName, userUsername, coins, tournamentTickets, xp, leaguePos, activeNameplateEffect, activeNameplate])
 
   const handleUpdatePlayerName = useCallback((newName) => {
     setPlayerName(newName)
@@ -1140,9 +1148,9 @@ function App() {
   if (currentPage === 'settings') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} />
+          <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} />
           {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         </div>
       </Suspense>
@@ -1152,7 +1160,7 @@ function App() {
   if (currentPage === 'signin') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <SignInPage onBack={() => setCurrentPage('home')} />
         </div>
@@ -1163,7 +1171,7 @@ function App() {
   if (currentPage === 'leagues') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
           {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
@@ -1174,7 +1182,7 @@ function App() {
 
   if (currentPage === 'cloak') {
     return (
-      <div>
+      <div className="page-enter">
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
         <CloakScreen onBack={() => setCurrentPage('home')} />
       </div>
@@ -1184,7 +1192,7 @@ function App() {
   if (currentPage === 'stats') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <StatsPage games={GAMES} allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setCurrentPage('home')} onClear={() => { setCurrentPage('home'); setShowConfirmClear(true) }} />
           {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
@@ -1196,7 +1204,7 @@ function App() {
   if (currentPage === 'achievements') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => setCurrentPage('home')} />
         </div>
@@ -1218,7 +1226,7 @@ function App() {
   if (currentPage === 'shop') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <ShopPage
             onBack={() => setCurrentPage('home')}
@@ -1243,7 +1251,7 @@ function App() {
   if (currentPage === 'about') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <AboutUs onBack={() => setCurrentPage('home')} />
         </div>
@@ -1254,7 +1262,7 @@ function App() {
   if (currentPage === 'leaderboard') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <DailyLeaderboard gameId={dailyGame.gameId} onClose={() => setCurrentPage('home')} />
         </div>
@@ -1265,7 +1273,7 @@ function App() {
   if (currentPage === 'friends') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <FriendsPanel userId={user?.uid} onClose={() => setCurrentPage('home')} />
         </div>
@@ -1292,13 +1300,14 @@ function App() {
             </button>
           ))}
         </nav>
-        <main className="game-container">
+        <main className="game-container page-enter">
+          <button className="how-to-play-btn" onClick={() => setShowGameTutorial(true)} title="How to Play">❓</button>
           <ErrorBoundary key={activeGame} onBack={handleHome} fallbackTitle="Game Failed to Load" fallbackMessage="This game encountered an error. You can try again or pick a different game.">
             <Suspense fallback={<div className="game-loading"><div className="game-loading-spinner" /><span>Loading game...</span></div>}>
               <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
             </Suspense>
           </ErrorBoundary>
-          <GameTutorial gameId={activeGame} />
+          {showGameTutorial && <GameTutorial gameId={activeGame} onClose={() => setShowGameTutorial(false)} />}
         </main>
         <Confetti active={showConfetti} onDone={hideConfetti} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}

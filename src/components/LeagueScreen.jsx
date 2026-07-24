@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import useSound from '../useSound'
 import {
   getRankInfo, getPromotionZone, getDemotionZone,
@@ -15,6 +15,7 @@ import {
 import { MAX_PER_LEAGUE } from '../leagues'
 import { TOURNAMENT_TICKET } from '../shopItems'
 import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor, getTitleName } from '../nameplateUtils'
+import TournamentBracket from './TournamentBracket'
 
 const LEAGUE_GAMES = [
   { id: 'rps', label: 'RPS', emoji: '✊' },
@@ -163,7 +164,7 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
     return () => clearInterval(interval)
   }, [])
 
-  const sortedPlayers = [...players].sort((a, b) => b.xp - a.xp)
+  const sortedPlayers = useMemo(() => [...players].sort((a, b) => b.xp - a.xp), [players])
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
 
   const isTournament = !!tournament
@@ -462,6 +463,14 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
           )}
         </div>
       </div>
+
+      {isTournament && (
+        <TournamentBracket
+          currentStage={tournament.stage}
+          allPlayers={sortedPlayers}
+          currentUserId={userId}
+        />
+      )}
 
       {seasonTime === 0 && (
         <button className="league-reset-btn" onClick={handleSeasonReset}>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { ACHIEVEMENT_COIN_REWARDS } from './shopItems'
 import { SCORE_BASED_GAMES, GAME_XP } from './leagues'
 
@@ -403,18 +403,18 @@ export default function useStats(gameId) {
     notifyListeners()
   }, [])
 
-  const allStats = currentUserId ? stats : {}
+  const allStats = useMemo(() => currentUserId ? stats : {}, [stats])
   const xp = currentUserId ? (stats._xp?.total || 0) : 0
-  const recent = currentUserId ? (stats._recent || []) : []
-  const favorites = currentUserId ? (stats._favorites || []) : []
+  const recent = useMemo(() => currentUserId ? (stats._recent || []) : [], [stats])
+  const favorites = useMemo(() => currentUserId ? (stats._favorites || []) : [], [stats])
   const coins = currentUserId ? (stats._coins || 0) : 0
-  const ownedItems = currentUserId ? (stats._ownedItems || []) : []
+  const ownedItems = useMemo(() => currentUserId ? (stats._ownedItems || []) : [], [stats])
   const tournamentTickets = currentUserId ? (stats._tournamentTickets || 0) : 0
   const activeTitle = currentUserId ? (stats._activeTitle || null) : null
   const activeNameplate = currentUserId ? (stats._activeNameplate || null) : null
   const activeNameplateEffect = currentUserId ? (stats._activeNameplateEffect || null) : null
-  const earnedAchievements = currentUserId ? ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id) : []
-  const newAchievements = currentUserId ? earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id)) : []
+  const earnedAchievements = useMemo(() => currentUserId ? ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id) : [], [stats])
+  const newAchievements = useMemo(() => currentUserId ? earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id)) : [], [earnedAchievements, stats._seenAchievements])
 
   const syncLeagueData = useCallback((playerData) => {
     if (!currentUserId) return
@@ -531,8 +531,8 @@ export default function useStats(gameId) {
     notifyListeners()
   }, [])
 
-  const totalPlayedCount = currentUserId ? totalPlayed(stats) : 0
-  const totalWonCount = currentUserId ? totalWon(stats) : 0
+  const totalPlayedCount = useMemo(() => currentUserId ? totalPlayed(stats) : 0, [stats])
+  const totalWonCount = useMemo(() => currentUserId ? totalWon(stats) : 0, [stats])
 
   return {
     gameStats, recordGame, clearStats, allStats,

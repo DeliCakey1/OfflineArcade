@@ -3,6 +3,7 @@ import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
 import useEffects from '../useEffects.jsx'
+import { getAdaptiveDifficulty, getGameConfig } from '../difficulty'
 
 const GRID_SIZE = 20
 const SPEED_DECREASE = 10
@@ -174,6 +175,9 @@ export default function SnakeGame({ onPlayingChange }) {
 
   function startGame(diffName) {
     const d = DIFFICULTIES.find(x => x.name === diffName) || DIFFICULTIES[1]
+    const stats = JSON.parse(localStorage.getItem('arcade-stats') || '{}')
+    const adaptiveLevel = getAdaptiveDifficulty('snake', stats)
+    const config = getGameConfig('snake', adaptiveLevel)
     setDifficulty(diffName)
     const g = gameRef.current
     if (g.intervalId) clearInterval(g.intervalId)
@@ -184,7 +188,7 @@ export default function SnakeGame({ onPlayingChange }) {
     g.nextDirection = { x: 1, y: 0 }
     g.score = 0
     g.foodEaten = 0
-    g.speed = d.initialSpeed
+    g.speed = config.speed || d.initialSpeed
     g.running = true
     g.paused = false
     g.food = spawnFood(g.snake)

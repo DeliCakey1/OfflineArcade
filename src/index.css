@@ -922,7 +922,18 @@ body::after {
 .back-btn { background: var(--bg-glass) !important; border-color: var(--border-glass) !important; backdrop-filter: blur(8px); }
 
 /* ===== GAME CONTAINER ===== */
-.game-container { max-width: 800px; margin: 0 auto; padding: 24px 20px 60px; animation: fadeSlideUp 0.4s ease-out; }
+.game-container { max-width: 800px; margin: 0 auto; padding: 24px 20px 60px; animation: fadeSlideUp 0.4s ease-out; position: relative; }
+.how-to-play-btn {
+  position: absolute; top: 8px; right: 8px; z-index: 10;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3);
+  color: var(--text-light, #fff); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.how-to-play-btn:hover {
+  background: rgba(139, 92, 246, 0.3); transform: scale(1.1);
+}
 
 /* ===== SLIDE IN ANIMATION ===== */
 .slide-in { animation: slideIn 0.35s ease-out; }
@@ -5893,4 +5904,111 @@ body::after {
     height: 32px !important;
     font-size: 14px !important;
   }
+}
+
+/* ===== PAGE TRANSITIONS ===== */
+.page-enter { animation: pageSlideIn 0.3s ease-out; }
+.page-exit { animation: pageSlideOut 0.2s ease-in; }
+
+@keyframes pageSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pageSlideOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+/* ===== MICRO-INTERACTIONS ===== */
+.game-select-card {
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+.game-select-card:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.25);
+}
+.game-select-card:active {
+  transform: scale(0.97);
+  transition-duration: 0.05s;
+}
+
+.settings-btn, .quit-btn, .home-action-btn, .shop-card-btn, .category-tab {
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+.settings-btn:hover, .quit-btn:hover, .home-action-btn:hover, .shop-card-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+.settings-btn:active, .quit-btn:active, .home-action-btn:active, .shop-card-btn:active, .category-tab:active {
+  transform: scale(0.92);
+  transition-duration: 0.05s;
+}
+
+.category-tab.active {
+  animation: tabPop 0.2s ease-out;
+}
+@keyframes tabPop {
+  0% { transform: scale(0.9); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.shop-card {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.shop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.recent-card {
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.recent-card:hover {
+  transform: scale(1.05);
+}
+
+.daily-challenge {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.daily-challenge:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 16px rgba(255, 230, 0, 0.15);
+}
+
+.nav-bar button {
+  transition: transform 0.12s ease, color 0.2s ease;
+}
+.nav-bar button:active {
+  transform: scale(0.85);
+}
+
+.stat-badge {
+  transition: transform 0.15s ease;
+}
+.stat-badge:hover {
+  transform: scale(1.1);
+}
+
+/* ===== STAGGERED GRID ANIMATION ===== */
+.game-select-card {
+  opacity: 0;
+  animation: cardStagger 0.3s ease-out forwards;
+}
+.game-select-card:nth-child(1) { animation-delay: 0.02s; }
+.game-select-card:nth-child(2) { animation-delay: 0.04s; }
+.game-select-card:nth-child(3) { animation-delay: 0.06s; }
+.game-select-card:nth-child(4) { animation-delay: 0.08s; }
+.game-select-card:nth-child(5) { animation-delay: 0.10s; }
+.game-select-card:nth-child(6) { animation-delay: 0.12s; }
+.game-select-card:nth-child(7) { animation-delay: 0.14s; }
+.game-select-card:nth-child(8) { animation-delay: 0.16s; }
+.game-select-card:nth-child(9) { animation-delay: 0.18s; }
+.game-select-card:nth-child(10) { animation-delay: 0.20s; }
+.game-select-card:nth-child(n+11) { animation-delay: 0.22s; }
+
+@keyframes cardStagger {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }

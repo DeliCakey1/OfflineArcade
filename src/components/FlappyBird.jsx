@@ -3,6 +3,7 @@ import useSound from '../useSound'
 import useStats from '../useStats'
 import QuitConfirmButton from './QuitConfirmButton'
 import { createParticlePool, spawnParticles, updateParticles, drawParticles, screenShakeApply, screenShakeRestore } from '../canvasEffects'
+import { getAdaptiveDifficulty, getGameConfig } from '../difficulty'
 
 const W = 360, H = 520
 const BIRD_SIZE = 20
@@ -60,6 +61,11 @@ export default function FlappyBird({ onPlayingChange }) {
     const ctx = canvas.getContext('2d')
     const g = gameRef.current
     const d = DIFFICULTIES.find(x => x.name === diffRef.current) || DIFFICULTIES[1]
+    const stats = JSON.parse(localStorage.getItem('arcade-stats') || '{}')
+    const adaptiveLevel = getAdaptiveDifficulty('flappy', stats)
+    const config = getGameConfig('flappy', adaptiveLevel)
+    const gap = config.gap || d.gap
+    const speed = config.speed || d.speed
 
     if (!startedRef.current) {
       animRef.current = requestAnimationFrame(gameLoop)
@@ -113,13 +119,13 @@ export default function FlappyBird({ onPlayingChange }) {
 
     g.pipeTimer++
     if (g.pipeTimer > 90) {
-      const gapTop = 60 + Math.random() * (H - d.gap - 120)
-      g.pipes.push({ x: W, gapTop, gapBot: gapTop + d.gap, passed: false })
+      const gapTop = 60 + Math.random() * (H - gap - 120)
+      g.pipes.push({ x: W, gapTop, gapBot: gapTop + gap, passed: false })
       g.pipeTimer = 0
     }
 
     for (const p of g.pipes) {
-      p.x -= d.speed
+      p.x -= speed
       if (!p.passed && p.x + PIPE_W < 30) {
         p.passed = true
         scoreRef.current++

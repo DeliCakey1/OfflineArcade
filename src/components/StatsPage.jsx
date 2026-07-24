@@ -14,12 +14,12 @@ export default function StatsPage({ games, allStats, onClose, onClear, xp, total
       .sort((a, b) => b.played - a.played)
   }, [games, allStats])
 
-  const topGames = gameStats.slice(0, 5)
-  const totalStreaks = gameStats.reduce((sum, g) => sum + (g.bestStreak || 0), 0)
-  const avgWinRate = totalPlayedCount > 0 ? Math.round((totalWonCount / totalPlayedCount) * 100) : 0
-  const totalLosses = totalPlayedCount - totalWonCount
-  const favoriteGame = gameStats.length > 0 ? gameStats[0] : null
-  const bestStreak = gameStats.reduce((max, g) => Math.max(max, g.bestStreak || 0), 0)
+  const topGames = useMemo(() => gameStats.slice(0, 5), [gameStats])
+  const totalStreaks = useMemo(() => gameStats.reduce((sum, g) => sum + (g.bestStreak || 0), 0), [gameStats])
+  const avgWinRate = useMemo(() => totalPlayedCount > 0 ? Math.round((totalWonCount / totalPlayedCount) * 100) : 0, [totalPlayedCount, totalWonCount])
+  const totalLosses = useMemo(() => totalPlayedCount - totalWonCount, [totalPlayedCount, totalWonCount])
+  const favoriteGame = useMemo(() => gameStats.length > 0 ? gameStats[0] : null, [gameStats])
+  const bestStreak = useMemo(() => gameStats.reduce((max, g) => Math.max(max, g.bestStreak || 0), 0), [gameStats])
   const highScores = allStats._highScores || {}
 
   return (
