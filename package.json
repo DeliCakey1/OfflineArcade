@@ -1,7 +1,7 @@
 {
   "name": "offline-arcade",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "electron/main.cjs",
   "type": "module",
   "author": "Offline Arcade",
@@ -18,6 +18,7 @@
     "electron:build:linux": "vite build && electron-builder --linux"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "firebase": "^12.16.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
@@ -33,6 +34,11 @@
   },
   "build": {
     "appId": "com.offline-arcade.app",
+    "publish": {
+      "provider": "github",
+      "owner": "DeliCakey1",
+      "repo": "OfflineArcade"
+    },
     "productName": "Offline Arcade",
     "directories": {
       "output": "release"

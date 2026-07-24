@@ -1,6 +1,6 @@
 const { app, BrowserWindow, protocol } = require('electron')
 const path = require('path')
-const fs = require('fs')
+const { autoUpdater } = require('electron-updater')
 
 const DIST = path.join(__dirname, '..', 'dist')
 
@@ -32,7 +32,21 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  autoUpdater.checkForUpdatesAndNotify()
 }
+
+autoUpdater.on('update-available', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-available')
+  }
+})
+
+autoUpdater.on('update-downloaded', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-downloaded')
+  }
+})
 
 app.whenReady().then(() => {
   protocol.registerFileProtocol('atom', (request, callback) => {
