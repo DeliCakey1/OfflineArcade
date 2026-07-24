@@ -337,10 +337,12 @@ export default function useStats(gameId) {
     try {
       const dailyGame = getDailyGame(ALL_GAME_IDS)
       if (gid === dailyGame.gameId) {
-        const submitScore = score || (isWin ? 1 : 0)
-        import('./socialService').then(({ submitDailyScore }) => {
-          submitDailyScore(gid, submitScore, Date.now()).catch(() => {})
-        }).catch(() => {})
+        const submitScore = isScoreBased ? (score > 0 ? score : 0) : (isWin ? 1 : 0)
+        if (submitScore > 0) {
+          import('./socialService').then(({ submitDailyScore }) => {
+            submitDailyScore(gid, submitScore, Date.now()).catch(() => {})
+          }).catch(() => {})
+        }
       }
     } catch {}
     if (!currentUserId) return
