@@ -1,0 +1,50 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Build Electron app
+        run: npx electron-builder --win
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          echo "tag=v$VER" >> "$GITHUB_OUTPUT"
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+
+      - name: Delete old release
+        run: gh release delete ${{ steps.version.outputs.tag }} --yes --cleanup-tag || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        shell: bash
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            "./release/Offline Arcade Setup ${{ steps.version.outputs.ver }}.exe" \
+            "./release/Offline Arcade Setup ${{ steps.version.outputs.ver }}.exe.blockmap" \
+            --title "Offline Arcade ${{ steps.version.outputs.tag }}" \
+            --notes "Auto-built from ${{ github.event.head_commit.message }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
