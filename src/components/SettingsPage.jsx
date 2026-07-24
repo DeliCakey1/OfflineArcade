@@ -251,7 +251,7 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
         <div className="settings-row">
           <button className="settings-card-btn" onClick={onMuteToggle} aria-label={muted ? 'Unmute sound' : 'Mute sound'}>
             <span className="settings-card-icon">{muted ? '🔇' : '🔊'}</span>
-            <span className="settings-card-label">{muted ? 'Unmuted' : 'Muted'}</span>
+            <span className="settings-card-label">{muted ? 'Muted' : 'Unmuted'}</span>
           </button>
           <div className="settings-slider-card">
             <span className="settings-card-icon">🔉</span>
