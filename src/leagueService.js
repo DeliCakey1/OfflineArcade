@@ -43,6 +43,8 @@ export async function getOrCreatePlayer(userId, name, username) {
     if (data.firstPlaceFinishes == null) updates.firstPlaceFinishes = 0
     if (data.tournamentTickets == null) updates.tournamentTickets = 0
     if (data.usernameSkipped === undefined) updates.usernameSkipped = false
+    if (data.username === undefined) updates.username = null
+    if (data.usernameChangedAt === undefined) updates.usernameChangedAt = null
     if (Object.keys(updates).length > 0) {
       updateDoc(ref, updates).catch(() => {})
       Object.assign(data, updates)
