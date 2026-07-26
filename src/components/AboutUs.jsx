@@ -33,7 +33,7 @@ export default function AboutUs({ onBack }) {
     <div className="about-page">
       <div className="about-container">
 
-        <button className="about-back" onClick={onBack}>← Back to Arcade</button>
+        <button className="quit-btn" onClick={onBack} style={{ marginBottom: 24 }}>← Back</button>
 
         <div className="about-header">
           <span className="about-logo">🕹️</span>

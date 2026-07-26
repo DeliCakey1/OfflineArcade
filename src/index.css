@@ -216,13 +216,17 @@ body::after {
   padding: 20px;
   animation: fadeSlideUp 0.3s ease-out;
 }
-.full-page-header {
+.full-page-header,
+.settings-page-header,
+.signin-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
 }
-.full-page-title {
+.full-page-title,
+.settings-page-header h2,
+.signin-header h2 {
   font-family: 'Press Start 2P', monospace;
   font-size: 20px;
   color: var(--text-light);
@@ -230,18 +234,6 @@ body::after {
 }
 .full-page-content {
   animation: fadeSlideUp 0.3s ease-out 0.1s backwards;
-}
-.settings-page-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.settings-page-header h2 {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 20px;
-  color: var(--text-light);
-  margin: 0;
 }
 .settings-section {
   margin-bottom: 24px;
@@ -354,18 +346,6 @@ body::after {
   margin: 0 auto;
   padding: 20px;
   animation: fadeSlideUp 0.3s ease-out;
-}
-.signin-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.signin-header h2 {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 20px;
-  color: var(--text-light);
-  margin: 0;
 }
 .signin-info {
   text-align: center;
@@ -3259,11 +3239,12 @@ body::after {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 .league-page-header h2 {
+  font-family: 'Press Start 2P', monospace;
   font-size: 20px;
+  color: var(--text-light);
   margin: 0;
 }
 .league-header-text {

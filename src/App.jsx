@@ -663,7 +663,7 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <GamesDropdown onNavigate={onNavigateGame} />
           <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
           <button className="settings-btn nav-btn" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
-          <button className="settings-btn nav-btn" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>
+          {user && !user.isAnonymous && <button className="settings-btn nav-btn" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>}
           <button className="settings-btn nav-btn" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
           <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
           <button className="settings-btn nav-btn" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
@@ -1243,7 +1243,7 @@ function App() {
   if (currentPage === 'admin') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div>
+        <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
           <AdminPanel userId={user?.uid} />
         </div>

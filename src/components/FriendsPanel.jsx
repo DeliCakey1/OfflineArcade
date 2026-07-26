@@ -45,9 +45,9 @@ export default function FriendsPanel({ userId, onClose }) {
 
   return (
     <div className="game-card slide-in" style={{ maxWidth: 400, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ margin: 0, fontSize: 16, color: 'var(--neon-cyan)' }}>👥 Friends</h3>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: 20, cursor: 'pointer' }}>✕</button>
+      <div className="full-page-header">
+        <button className="quit-btn" onClick={onClose}>← Back</button>
+        <h2 className="full-page-title">👥 Friends</h2>
       </div>
 
       <div style={{ background: 'rgba(0,212,255,0.08)', borderRadius: 8, padding: 12, marginBottom: 16, border: '1px solid rgba(0,212,255,0.2)' }}>
