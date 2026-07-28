@@ -82,7 +82,6 @@ export default function ChatPanel({ roomId, user }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (!input.trim() || sending) return
-    setError('')
     send(input, user)
     setInput('')
   }
