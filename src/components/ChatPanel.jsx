@@ -264,11 +264,6 @@ export default function ChatPanel({ roomId, user }) {
               showAvatar={showAvatar}
               myColor={myColor}
               onBubbleClick={handleBubbleClick}
-              editing={editing}
-              editInput={editInput}
-              onEditInputChange={setEditInput}
-              onSaveEdit={handleSaveEdit}
-              onCancelEdit={() => { setEditing(null); setEditInput('') }}
               onShowHistory={setShowHistory}
             />
           )
@@ -418,15 +413,9 @@ export default function ChatPanel({ roomId, user }) {
   )
 }
 
-function HoverBubble({ msg, isMe, showAvatar, myColor, onBubbleClick, editing, editInput, onEditInputChange, onSaveEdit, onCancelEdit, onShowHistory }) {
-  const [hover, setHover] = useState(false)
-
+function HoverBubble({ msg, isMe, showAvatar, myColor, onBubbleClick, onShowHistory }) {
   return (
-    <div
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6, marginBottom: 4 }}
-    >
+    <div style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 4, marginBottom: 6 }}>
       {!isMe && (
         <span style={{
           width: 24, height: 24, borderRadius: '50%',
@@ -436,41 +425,43 @@ function HoverBubble({ msg, isMe, showAvatar, myColor, onBubbleClick, editing, e
           fontSize: 10, fontWeight: 700, flexShrink: 0, color: 'var(--text-dim)',
         }}>{(msg.username || '?')[0].toUpperCase()}</span>
       )}
-      <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
         {!isMe && showAvatar && (
           <span style={{ fontSize: 10, color: 'var(--text-dim)', opacity: 0.5, marginLeft: 4, marginBottom: 2 }}>
             {msg.username}
           </span>
         )}
-        <div
-          onClick={() => onBubbleClick(msg)}
-          style={{
-            background: isMe ? myColor : 'rgba(255,255,255,0.08)',
-            color: isMe ? '#fff' : 'var(--text)',
-            padding: '8px 12px', borderRadius: 16,
-            borderBottomRightRadius: isMe ? 4 : 16,
-            borderBottomLeftRadius: isMe ? 16 : 4,
-            fontSize: 13, lineHeight: 1.4, wordBreak: 'break-word',
-            cursor: isMe ? 'pointer' : 'default',
-            position: 'relative',
-          }}
-        >
-          {msg.text}
-          {msg.editedAt && (
-            <span
-              onClick={(e) => { e.stopPropagation(); onShowHistory(msg) }}
-              style={{ fontSize: 10, opacity: 0.6, display: 'block', marginTop: 2, cursor: 'pointer' }}
-            >
-              (edited)
-            </span>
-          )}
-        </div>
-        {(hover || msg.editedAt) && (
-          <span style={{ fontSize: 9, color: 'var(--text-dim)', opacity: 0.35, marginTop: 2, marginLeft: 4 }}>
+        <div style={{ display: 'flex', flexDirection: isMe ? 'row' : 'row-reverse', alignItems: 'flex-end', gap: 4 }}>
+          <span style={{
+            fontSize: 9, color: 'var(--text-dim)', opacity: 0.35,
+            paddingBottom: 2, whiteSpace: 'nowrap', flexShrink: 0,
+            lineHeight: 1,
+          }}>
             {formatTime(msg.createdAt)}
-            {hover && msg.editedAt && <> · edited {formatTime(msg.editedAt)}</>}
           </span>
-        )}
+          <div
+            onClick={() => onBubbleClick(msg)}
+            style={{
+              background: isMe ? myColor : 'rgba(255,255,255,0.08)',
+              color: isMe ? '#fff' : 'var(--text)',
+              padding: '8px 12px', borderRadius: 16,
+              borderBottomRightRadius: isMe ? 4 : 16,
+              borderBottomLeftRadius: isMe ? 16 : 4,
+              fontSize: 13, lineHeight: 1.4, wordBreak: 'break-word',
+              cursor: isMe ? 'pointer' : 'default',
+            }}
+          >
+            {msg.text}
+            {msg.editedAt && (
+              <span
+                onClick={(e) => { e.stopPropagation(); onShowHistory(msg) }}
+                style={{ fontSize: 10, opacity: 0.6, display: 'block', marginTop: 2, cursor: 'pointer' }}
+              >
+                (edited)
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
