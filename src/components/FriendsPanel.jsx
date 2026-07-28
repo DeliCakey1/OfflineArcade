@@ -12,7 +12,6 @@ export default function FriendsPanel({ userId, user, onClose }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [selected, setSelected] = useState(null)
-  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -142,24 +141,12 @@ export default function FriendsPanel({ userId, user, onClose }) {
           </div>
         )}
 
-          <button
-            onClick={() => setShowChat(!showChat)}
-            style={{
-              marginTop: 16, width: '100%', padding: '10px 14px',
-              background: showChat ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, cursor: 'pointer',
-              textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)',
-              fontFamily: 'Fredoka, sans-serif', fontSize: 14, fontWeight: 600,
-            }}
-          >
-            💬 Friends Chat {showChat ? '▲' : '▼'}
-          </button>
-
-          {showChat && (
-            <div style={{ marginTop: 12 }}>
-              <ChatPanel roomId="friends" user={user} />
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+              💬 Friends Chat
             </div>
-          )}
+            <ChatPanel roomId="friends" user={user} />
+          </div>
         </>
       ) : (
         <div className="user-profile-card">
