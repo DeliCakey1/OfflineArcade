@@ -143,9 +143,9 @@ export default function FriendsPanel({ userId, user, onClose }) {
 
           <div style={{ marginTop: 16 }}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              💬 Friends Chat
+              💬 Global Chat
             </div>
-            <ChatPanel roomId="friends" user={user} />
+            <ChatPanel roomId="global" user={user} />
           </div>
         </>
       ) : (
@@ -195,6 +195,14 @@ export default function FriendsPanel({ userId, user, onClose }) {
               <span className="user-profile-stat-label">Tournament Wins</span>
             </div>
           </div>
+          {userId && selected && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                💬 Chat with @{selected.username || selected.name || 'friend'}
+              </div>
+              <ChatPanel roomId={[userId, selected.id].sort().join('_')} user={user} />
+            </div>
+          )}
           <button className="quit-btn" style={{ marginTop: 8 }} onClick={() => handleRemove(selected.id)}>Remove Friend</button>
         </div>
       )}
