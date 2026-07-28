@@ -338,7 +338,277 @@ export default function useSound() {
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
         osc.start(ctx.currentTime)
         osc.stop(ctx.currentTime + 0.15)
+      } else if (type === 'brick') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.12 * vol
+        osc.type = 'square'
+        osc.frequency.value = 520
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.06)
+      } else if (type === 'wall') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.08 * vol
+        osc.type = 'square'
+        osc.frequency.value = 220
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.08)
+      } else if (type === 'paddle') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.1 * vol
+        osc.type = 'square'
+        osc.frequency.value = 380
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.07)
+      } else if (type === 'eat') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.1 * vol
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(400, ctx.currentTime)
+        osc.frequency.setValueAtTime(700, ctx.currentTime + 0.04)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.12)
+      } else if (type === 'grow') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.07 * vol
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(600, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.1)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.12)
+      } else if (type === 'place') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.1 * vol
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(300, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.1)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.12)
+      } else if (type === 'clear') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.1 * vol
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(300, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.3)
+      } else if (type === 'wing') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.09 * vol
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(500, ctx.currentTime)
+        osc.frequency.setValueAtTime(800, ctx.currentTime + 0.03)
+        osc.frequency.setValueAtTime(500, ctx.currentTime + 0.06)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.09)
+      } else if (type === 'pipe') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.07 * vol
+        osc.type = 'square'
+        osc.frequency.value = 180
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.07)
+      } else if (type === 'dig') {
+        const bufferSize = ctx.sampleRate * 0.08
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+        const data = buffer.getChannelData(0)
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize)
+        }
+        const noise = ctx.createBufferSource()
+        noise.buffer = buffer
+        const bandpass = ctx.createBiquadFilter()
+        bandpass.type = 'bandpass'
+        bandpass.frequency.value = 2000
+        bandpass.Q.value = 2
+        const g = ctx.createGain()
+        g.gain.value = 0.08 * vol
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+        noise.connect(bandpass)
+        bandpass.connect(g)
+        g.connect(ctx.destination)
+        noise.start(ctx.currentTime)
+        noise.stop(ctx.currentTime + 0.08)
+      } else if (type === 'flag') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.1 * vol
+        osc.type = 'square'
+        osc.frequency.value = 1200
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.03)
+      } else if (type === 'flip') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.09 * vol
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(800, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.06)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.08)
+      } else if (type === 'match') {
+        const notes = [523, 659, 784]
+        notes.forEach((freq, i) => {
+          const o = ctx.createOscillator()
+          const g = ctx.createGain()
+          o.connect(g)
+          g.connect(ctx.destination)
+          o.frequency.value = freq
+          o.type = 'sine'
+          g.gain.value = 0.08 * vol
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.2)
+          o.start(ctx.currentTime + i * 0.06)
+          o.stop(ctx.currentTime + i * 0.06 + 0.2)
+        })
+      } else if (type === 'place-piece') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.08 * vol
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(250, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.12)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.15)
+      } else if (type === 'select') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.04 * vol
+        osc.type = 'sine'
+        osc.frequency.value = 660
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.05)
+      } else if (type === 'navigate') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.02 * vol
+        osc.type = 'sine'
+        osc.frequency.value = 900
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.03)
+      } else if (type === 'powerup') {
+        const notes = [440, 554, 659, 880]
+        notes.forEach((freq, i) => {
+          const o = ctx.createOscillator()
+          const g = ctx.createGain()
+          o.connect(g)
+          g.connect(ctx.destination)
+          o.frequency.value = freq
+          o.type = 'sine'
+          g.gain.value = 0.07 * vol
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.2)
+          o.start(ctx.currentTime + i * 0.06)
+          o.stop(ctx.currentTime + i * 0.06 + 0.2)
+        })
+      } else if (type === 'countdown') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        gain.gain.value = 0.1 * vol
+        osc.type = 'sine'
+        osc.frequency.value = 1000
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.05)
       }
     } catch (e) {}
   }, [getCtx])
+}
+
+let musicNodes = null
+
+export function playMusic() {
+  if (musicNodes) return
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const masterGain = ctx.createGain()
+    masterGain.gain.value = 0.03
+    masterGain.connect(ctx.destination)
+
+    const oscs = [220, 221.5, 329.5, 440, 442]
+    const nodes = oscs.map((freq) => {
+      const osc = ctx.createOscillator()
+      const g = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      g.gain.value = 0.25
+      osc.connect(g)
+      g.connect(masterGain)
+      osc.start()
+      return { osc, gain: g }
+    })
+
+    const lfo = ctx.createOscillator()
+    const lfoGain = ctx.createGain()
+    lfo.type = 'sine'
+    lfo.frequency.value = 0.15
+    lfoGain.gain.value = 0.008
+    lfo.connect(lfoGain)
+    lfoGain.connect(masterGain.gain)
+    lfo.start()
+
+    musicNodes = { ctx, masterGain, nodes, lfo, lfoGain }
+  } catch (e) {}
+}
+
+export function stopMusic() {
+  if (!musicNodes) return
+  try {
+    const { ctx, nodes, lfo, masterGain } = musicNodes
+    masterGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
+    nodes.forEach(({ osc }) => { try { osc.stop(ctx.currentTime + 0.5) } catch {} })
+    try { lfo.stop(ctx.currentTime + 0.5) } catch {}
+    setTimeout(() => { try { ctx.close() } catch {} }, 600)
+  } catch (e) {}
+  musicNodes = null
 }

@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAccessibility, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [editingUsername, setEditingUsername] = useState(false)
@@ -280,6 +280,12 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           <button className={`settings-card-btn ${waveBar ? 'active' : ''}`} onClick={onWaveBarToggle} aria-label={waveBar ? 'Disable wave bar' : 'Enable wave bar'}>
             <span className="settings-card-icon">{waveBar ? '🌊' : '🫧'}</span>
             <span className="settings-card-label">Wave Bar {waveBar ? 'On' : 'Off'}</span>
+          </button>
+        </div>
+        <div className="settings-row">
+          <button className="settings-card-btn full-width" onClick={onAccessibility} aria-label="Accessibility settings">
+            <span className="settings-card-icon">♿</span>
+            <span className="settings-card-label">Accessibility Settings</span>
           </button>
         </div>
       </div>

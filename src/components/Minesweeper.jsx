@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import { isPracticeMode } from '../practiceMode'
 import QuitConfirmButton from './QuitConfirmButton'
 
 const DIFFICULTIES = [
@@ -80,6 +81,25 @@ function countAdjacentFlags(board, r, c, rows, cols) {
   return count
 }
 
+function findSafeCells(board, rows, cols) {
+  const safe = Array.from({ length: rows }, () => Array(cols).fill(false))
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (!board[r][c].revealed || board[r][c].adjacent === 0) continue
+      const adjFlags = countAdjacentFlags(board, r, c, rows, cols)
+      if (adjFlags === board[r][c].adjacent) {
+        for (let dr = -1; dr <= 1; dr++)
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = r + dr, nc = c + dc
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !board[nr][nc].revealed && !board[nr][nc].flagged)
+              safe[nr][nc] = true
+          }
+      }
+    }
+  }
+  return safe
+}
+
 export default function Minesweeper({ onPlayingChange }) {
   const [difficulty, setDifficulty] = useState(null)
   const [board, setBoard] = useState(null)
@@ -95,6 +115,7 @@ export default function Minesweeper({ onPlayingChange }) {
   const sound = useSound()
   const { recordGame, getHighScore, setHighScore: saveHighScore } = useStats('minesweeper')
   const isPlaying = difficulty && !gameOver
+  const practice = isPracticeMode()
 
   useEffect(() => { onPlayingChange?.(isPlaying); return () => onPlayingChange?.(false) }, [isPlaying, onPlayingChange])
 
@@ -264,6 +285,7 @@ export default function Minesweeper({ onPlayingChange }) {
 
   const d = DIFFICULTIES.find(x => x.name === difficulty)
   const cellSize = difficulty === 'Insane' ? 24 : difficulty === 'Hard' ? 28 : 34
+  const safeCells = practice && board && started && !gameOver ? findSafeCells(board, d.rows, d.cols) : null
 
   return (
     <div className="game-card slide-in">
@@ -279,7 +301,9 @@ export default function Minesweeper({ onPlayingChange }) {
       )}
       <div style={{ display: 'flex', justifyContent: 'center', overflow: 'auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${d.cols}, ${cellSize}px)`, gap: 2, border: '2px solid var(--border-glass)', borderRadius: 8, padding: 4, background: 'rgba(0,0,0,0.3)' }}>
-          {board && board.map((row, r) => row.map((cell, c) => (
+          {board && board.map((row, r) => row.map((cell, c) => {
+            const isSafe = safeCells && safeCells[r][c]
+            return (
             <button
               key={`${r}-${c}`}
               onClick={() => handleReveal(r, c)}
@@ -291,22 +315,24 @@ export default function Minesweeper({ onPlayingChange }) {
                 fontSize: cellSize < 28 ? 10 : 13,
                 fontWeight: 700,
                 fontFamily: "'Press Start 2P', monospace",
-                border: 'none',
+                border: isSafe ? '2px solid rgba(57, 255, 20, 0.5)' : 'none',
                 borderRadius: 4,
                 cursor: cell.revealed ? (cell.revealed && cell.adjacent > 0 ? 'pointer' : 'default') : 'pointer',
                 transition: 'all 0.1s ease',
                 animationDelay: cell.revealDelay ? `${cell.revealDelay}ms` : '0ms',
                 background: cell.revealed
                   ? cell.mine ? 'rgba(255, 45, 123, 0.3)' : 'rgba(255,255,255,0.06)'
+                  : isSafe ? 'rgba(57, 255, 20, 0.12)'
                   : cell.flagged ? 'rgba(255, 230, 0, 0.15)' : 'rgba(255,255,255,0.1)',
                 color: cell.revealed && cell.mine ? '#ff2d7b' : cell.revealed ? NUM_COLORS[cell.adjacent] : cell.flagged ? '#ffe600' : 'transparent',
-                boxShadow: cell.revealed ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.2)',
+                boxShadow: cell.revealed ? 'inset 0 1px 2px rgba(0,0,0,0.2)' : isSafe ? '0 0 8px rgba(57, 255, 20, 0.25)' : '0 2px 4px rgba(0,0,0,0.2)',
               }}
-              aria-label={cell.revealed ? (cell.mine ? 'mine' : `${cell.adjacent} adjacent`) : cell.flagged ? 'flagged' : 'hidden'}
+              aria-label={cell.revealed ? (cell.mine ? 'mine' : `${cell.adjacent} adjacent`) : cell.flagged ? 'flagged' : isSafe ? 'safe' : 'hidden'}
             >
               {cell.revealed ? (cell.mine ? '💣' : cell.adjacent > 0 ? cell.adjacent : '') : cell.flagged ? '🚩' : ''}
             </button>
-          )))}
+            )
+          }))}
         </div>
       </div>
       {gameOver && (

@@ -49,6 +49,7 @@ const FriendsPanel = lazy(() => import('./components/FriendsPanel'))
 const SignInPage = lazy(() => import('./components/SignInPage'))
 const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial'))
 const ThemePicker = lazy(() => import('./components/ThemePicker'))
+const AccessibilityPanel = lazy(() => import('./components/AccessibilityPanel'))
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow, setCurrentUserId, clearCurrentUserId } from './useStats'
@@ -57,16 +58,40 @@ import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
 import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor, getTitleName } from './nameplateUtils'
 import useSwipeBack from './useSwipeBack'
+import { useNotifications } from './notifications'
+import NotificationRenderer from './components/NotificationRenderer'
+import PracticeModeToggle from './components/PracticeModeToggle'
 import './index.css'
 
-const CATEGORIES = [
-  { id: 'all', label: 'All', emoji: '🎮' },
-  { id: 'chance', label: 'Chance', emoji: '🎲' },
-  { id: 'brain', label: 'Brain', emoji: '🧠' },
-  { id: 'reflex', label: 'Reflex', emoji: '⚡' },
-  { id: 'card', label: 'Card', emoji: '🃏' },
-  { id: 'classic', label: 'Classic', emoji: '🕹️' },
+const FILTER_CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'canvas', label: 'Canvas' },
+  { id: 'card', label: 'Card' },
+  { id: 'puzzle', label: 'Puzzle' },
+  { id: 'reflex', label: 'Reflex' },
+  { id: 'strategy', label: 'Strategy' },
+  { id: 'word', label: 'Word' },
+  { id: 'number', label: 'Number' },
+  { id: 'dice', label: 'Dice' },
+  { id: 'social', label: 'Social' },
 ]
+
+const GAME_CATEGORIES = {
+  breakout: ['canvas', 'reflex'], flappy: ['canvas', 'reflex'],
+  snake: ['canvas', 'reflex'], tetris: ['puzzle', 'reflex'],
+  memory: ['puzzle'], minesweeper: ['puzzle', 'strategy'],
+  whack: ['reflex'], simon: ['reflex', 'memory'],
+  reaction: ['reflex'], typing: ['reflex', 'word'],
+  number: ['number', 'puzzle'], higherlower: ['card', 'strategy'],
+  rock: ['strategy'], dice: ['dice'], coinflip: ['dice'],
+  word: ['word', 'puzzle'], guessnumber: ['number', 'strategy'],
+  guess_hotcold: ['number', 'strategy'], wordscramble: ['word', 'puzzle'],
+  mathdash: ['number', 'reflex'], sudoku: ['number', 'puzzle'],
+  lightsout: ['puzzle'], mastermind: ['strategy', 'puzzle'],
+  dodge: ['canvas', 'reflex'], mergeblitz: ['puzzle', 'reflex'],
+  connect4: ['strategy', 'social'], slots: ['card', 'dice'],
+  blackjack: ['card', 'strategy'], splitsteal: ['social', 'strategy'],
+}
 
 const GAMES = [
   { id: 'rps', label: 'Rock Paper Scissors', emoji: '✊', desc: 'Classic showdown against the bot!', color: '#3b82f6', component: RockPaperScissors, category: 'chance' },
@@ -728,12 +753,13 @@ function App() {
   const [volume, setVolumeState] = useState(() => getVolume())
   const [category, setCategory] = useState('all')
   const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('default')
   const [showConfetti, setShowConfetti] = useState(false)
   const hideConfetti = useCallback(() => setShowConfetti(false), [])
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
 
   useEffect(() => {
-    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands', friends: '/friends', leaderboard: '/leaderboard' }
+    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands', friends: '/friends', leaderboard: '/leaderboard', accessibility: '/accessibility' }
     const path = routes[currentPage] || '/'
     if (window.location.pathname !== path) {
       window.history.pushState({}, '', path)
@@ -755,6 +781,7 @@ function App() {
       if (path === '/shop') return 'shop'
       if (path === '/settings') return 'settings'
       if (path === '/signin') return 'signin'
+      if (path === '/accessibility') return 'accessibility'
       return 'home'
     }
     function onPopState() {
@@ -781,6 +808,8 @@ function App() {
     coins, ownedItems, tournamentTickets, activeTitle, activeNameplate, activeNameplateEffect,
     purchaseItem, equipTitle, equipNameplate, equipNameplateEffect, addCoins, checkAchievementCoins,
   } = useStats('_global')
+
+  const { notifications, dismiss: dismissNotification } = useNotifications()
 
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return !localStorage.getItem('arcade-onboarded') && totalPlayedCount === 0 } catch { return false }
@@ -824,6 +853,16 @@ function App() {
   useEffect(() => { document.documentElement.classList.toggle('no-glass', !glass); try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {} }, [glass])
   useEffect(() => { document.documentElement.classList.toggle('no-bg', !bg); try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {} }, [bg])
   useEffect(() => { document.documentElement.classList.toggle('has-wave-bar', waveBar); try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {} }, [waveBar])
+
+  useEffect(() => {
+    if (getSaved('arcade-high-contrast', 'off') === 'on') document.body.classList.add('high-contrast')
+    const cb = getSaved('arcade-colorblind', 'normal')
+    if (cb !== 'normal') document.body.classList.add('colorblind-' + cb)
+    if (getSaved('arcade-reduced-motion', 'off') === 'on') document.body.classList.add('reduced-motion')
+    const ts = parseInt(getSaved('arcade-text-size', '16'), 10)
+    if (ts && ts !== 16) document.documentElement.style.fontSize = ts + 'px'
+    if (getSaved('arcade-bold-text', 'off') === 'on') document.body.classList.add('bold-text')
+  }, [])
 
   const [user, setUser] = useState(null)
 
@@ -1044,20 +1083,52 @@ function App() {
 
   const filteredGames = useMemo(() => {
     let list = [...GAMES]
-    if (category !== 'all') list = list.filter(g => g.category === category)
+    if (category !== 'all') list = list.filter(g => {
+      const cats = GAME_CATEGORIES[g.id]
+      return cats && cats.includes(category)
+    })
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(g => g.label.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q))
     }
-    const favIds = new Set(favorites)
-    const favs = list.filter(g => favIds.has(g.id))
-    const rest = list.filter(g => !favIds.has(g.id))
-    return [...favs, ...rest]
-  }, [category, search, favorites])
+    switch (sort) {
+      case 'az': list.sort((a, b) => a.label.localeCompare(b.label)); break
+      case 'most-played': list.sort((a, b) => (allStats[b.id]?.played || 0) - (allStats[a.id]?.played || 0)); break
+      case 'recently-played': {
+        const recentOrder = {}
+        recent.forEach((id, i) => { recentOrder[id] = i })
+        list.sort((a, b) => {
+          const ra = recentOrder[a.id]
+          const rb = recentOrder[b.id]
+          if (ra != null && rb != null) return ra - rb
+          if (ra != null) return -1
+          if (rb != null) return 1
+          return 0
+        })
+        break
+      }
+      case 'favorites-first': {
+        const favSet = new Set(favorites)
+        list.sort((a, b) => (favSet.has(b.id) ? 1 : 0) - (favSet.has(a.id) ? 1 : 0))
+        break
+      }
+      default: {
+        const favIds = new Set(favorites)
+        const favs = list.filter(g => favIds.has(g.id))
+        const rest = list.filter(g => !favIds.has(g.id))
+        list = [...favs, ...rest]
+      }
+    }
+    return list
+  }, [category, search, sort, favorites, recent, allStats])
 
   const recentGames = useMemo(() => {
     return recent.map(id => GAMES.find(g => g.id === id)).filter(Boolean)
   }, [recent])
+
+  const favoriteGames = useMemo(() => {
+    return GAMES.filter(g => (allStats[g.id]?.played || 0) >= 10)
+  }, [allStats])
 
   useSwipeBack(handleHome, 80)
 
@@ -1178,8 +1249,19 @@ function App() {
       <Suspense fallback={loadingFallback}>
         <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} />
+          <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} onAccessibility={() => setCurrentPage('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} />
           {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+        </div>
+      </Suspense>
+    )
+  }
+
+  if (currentPage === 'accessibility') {
+    return (
+      <Suspense fallback={loadingFallback}>
+        <div className="page-enter">
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <AccessibilityPanel onBack={() => setCurrentPage('settings')} />
         </div>
       </Suspense>
     )
@@ -1348,6 +1430,7 @@ function App() {
           </ErrorBoundary>
           {showGameTutorial && <GameTutorial gameId={activeGame} onClose={() => setShowGameTutorial(false)} />}
         </main>
+        <PracticeModeToggle visible={!!activeGame} />
         <Confetti active={showConfetti} onDone={hideConfetti} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
@@ -1373,6 +1456,7 @@ function App() {
         Skip to games
       </a>
       {bg && <AmbientParticles />}
+      <NotificationRenderer notifications={notifications} onDismiss={dismissNotification} />
       <InstallBanner onNavigate={(page) => setCurrentPage(page)} />
       <OfflineIndicator />
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
@@ -1392,19 +1476,6 @@ function App() {
         )}
       </header>
       <main className="game-container" id="main-content" role="main">
-        {recentGames.length > 0 && (
-          <div className="recent-section">
-            <h3 className="section-title">🕐 Continue Playing</h3>
-            <div className="recent-row">
-              {recentGames.map(g => (
-                <button key={g.id} className="recent-card" onClick={() => setActiveGame(g.id)} style={{ '--card-accent': g.color }}>
-                  <span className="recent-emoji">{g.emoji}</span>
-                  <span className="recent-label">{g.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         {dailyGame.game && (
           <div className="daily-challenge" onClick={playDaily}>
             <div className="daily-left">
@@ -1420,20 +1491,34 @@ function App() {
             </div>
           </div>
         )}
-        <div className="search-bar">
-          <span className="search-icon">🔍</span>
-          <input
-            className="search-input"
-            type="text"
-            placeholder="Search games..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            aria-label="Search games"
-          />
-          {search && <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">×</button>}
+        <div className="search-sort-row">
+          <div className="search-bar">
+            <span className="search-icon">🔍</span>
+            <input
+              className="search-input"
+              type="text"
+              placeholder="Search games..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              aria-label="Search games"
+            />
+            {search && <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">×</button>}
+          </div>
+          <select
+            className="sort-select"
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            aria-label="Sort games"
+          >
+            <option value="default">Default</option>
+            <option value="az">A-Z</option>
+            <option value="most-played">Most Played</option>
+            <option value="recently-played">Recently Played</option>
+            <option value="favorites-first">Favorites First</option>
+          </select>
         </div>
         <div className="category-tabs" role="tablist">
-          {CATEGORIES.map(c => (
+          {FILTER_CATEGORIES.map(c => (
             <button
               key={c.id}
               className={`category-tab ${category === c.id ? 'active' : ''}`}
@@ -1441,10 +1526,36 @@ function App() {
               role="tab"
               aria-selected={category === c.id}
             >
-              {c.emoji} {c.label}
+              {c.label}
             </button>
           ))}
         </div>
+        {favoriteGames.length > 0 && (
+          <div className="favorites-section">
+            <h3 className="section-title">⭐ Favorites</h3>
+            <div className="favorites-grid">
+              {favoriteGames.map(game => (
+                <button key={game.id} className="fav-card" onClick={() => setActiveGame(game.id)} style={{ '--card-accent': game.color }}>
+                  <span className="fav-card-emoji">{game.emoji}</span>
+                  <span className="fav-card-label">{game.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {recentGames.length > 0 && (
+          <div className="recent-section">
+            <h3 className="section-title">🕐 Recently Played</h3>
+            <div className="recent-row">
+              {recentGames.slice(0, 5).map(g => (
+                <button key={g.id} className="recent-card" onClick={() => setActiveGame(g.id)} style={{ '--card-accent': g.color }}>
+                  <span className="recent-emoji">{g.emoji}</span>
+                  <span className="recent-label">{g.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {filteredGames.length === 0 ? (
           <div className="no-results">No games found</div>
         ) : (

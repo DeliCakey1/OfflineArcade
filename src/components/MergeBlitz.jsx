@@ -49,15 +49,21 @@ function slideRow(row) {
   return { row: filtered, merged, score }
 }
 
-function rotateCW(grid) {
+function transpose(grid) {
   const n = grid.length
-  return Array.from({ length: n }, (_, r) => Array.from({ length: n }, (_, c) => grid[n - 1 - c][r]))
+  return Array.from({ length: n }, (_, r) => Array.from({ length: n }, (_, c) => grid[c][r]))
+}
+
+function reverseRows(grid) {
+  return grid.map(r => [...r].reverse())
 }
 
 function move(grid, dir) {
   let g = grid.map(r => [...r])
   let score = 0, moved = false, merges = 0
-  for (let i = 0; i < dir; i++) g = rotateCW(g)
+  if (dir === 1) g = transpose(g)
+  else if (dir === 2) g = reverseRows(g)
+  else if (dir === 3) { g = transpose(g); g = reverseRows(g) }
   for (let r = 0; r < GRID; r++) {
     const { row, merged, score: s } = slideRow(g[r])
     if (JSON.stringify(row) !== JSON.stringify(g[r])) moved = true
@@ -65,7 +71,9 @@ function move(grid, dir) {
     score += s
     merges += merged
   }
-  for (let i = 0; i < (4 - dir) % 4; i++) g = rotateCW(g)
+  if (dir === 1) g = transpose(g)
+  else if (dir === 2) g = reverseRows(g)
+  else if (dir === 3) { g = reverseRows(g); g = transpose(g) }
   return { grid: g, moved, score, merges }
 }
 

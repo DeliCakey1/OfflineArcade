@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import { isPracticeMode } from '../practiceMode'
 import QuitConfirmButton from './QuitConfirmButton'
 
 const DIFFICULTIES = [
@@ -130,6 +131,7 @@ export default function Sudoku({ onPlayingChange }) {
   const sound = useSound()
   const { recordGame } = useStats('sudoku')
   const isPlaying = difficulty && !gameOver
+  const practice = isPracticeMode()
 
   useEffect(() => { onPlayingChange?.(isPlaying); return () => onPlayingChange?.(false) }, [isPlaying, onPlayingChange])
 
@@ -196,6 +198,33 @@ export default function Sudoku({ onPlayingChange }) {
       recordGame(true, 0)
     }
   }, [selected, gameOver, board, givens, started, solution, sound, recordGame])
+
+  const showHint = useCallback(() => {
+    if (!board || !solution || !givens || gameOver) return
+    const emptyCells = []
+    for (let r = 0; r < 9; r++)
+      for (let c = 0; c < 9; c++)
+        if (!givens[r][c] && board[r][c] === 0) emptyCells.push([r, c])
+    if (emptyCells.length === 0) return
+    const [hr, hc] = emptyCells[Math.floor(Math.random() * emptyCells.length)]
+    const newBoard = board.map(row => [...row])
+    newBoard[hr][hc] = solution[hr][hc]
+    setBoard(newBoard)
+    if (!started) setStarted(true)
+    sound('score')
+    const conflicts = findConflicts(newBoard)
+    const filled = newBoard.every(row => row.every(cell => cell !== 0))
+    const hasConflicts = conflicts.some(row => row.some(c => c))
+    if (filled && !hasConflicts) {
+      setGameOver(true)
+      setWon(true)
+      clearInterval(timerRef.current)
+      const finalTime = Math.floor((Date.now() - startTimeRef.current) / 1000)
+      setTimer(finalTime)
+      sound('win')
+      recordGame(true, 0)
+    }
+  }, [board, solution, givens, gameOver, started, sound, recordGame])
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -300,14 +329,14 @@ export default function Sudoku({ onPlayingChange }) {
                   background: isSelected
                     ? 'rgba(0, 212, 255, 0.25)'
                     : isConflict
-                      ? 'rgba(255, 45, 123, 0.2)'
+                      ? (practice ? 'rgba(255, 45, 123, 0.35)' : 'rgba(255, 45, 123, 0.2)')
                       : isHighlighted
                         ? 'rgba(0, 212, 255, 0.1)'
                         : sameRow || sameCol || sameBox
                           ? 'rgba(255,255,255,0.03)'
                           : 'rgba(0,0,0,0.1)',
                   color: isConflict
-                    ? 'var(--neon-red)'
+                    ? (practice ? 'var(--neon-pink)' : 'var(--neon-red)')
                     : isGiven
                       ? '#fff'
                       : 'var(--neon-cyan)',
@@ -344,8 +373,8 @@ export default function Sudoku({ onPlayingChange }) {
             }}
           >
             {num}
-          </button>
-        ))}
+        </button>
+      ))}
         <button
           onClick={() => handleNumberInput(0)}
           style={{
@@ -368,6 +397,27 @@ export default function Sudoku({ onPlayingChange }) {
           ✖
         </button>
       </div>
+      {practice && !gameOver && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+          <button
+            onClick={showHint}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 20,
+              border: '1px solid rgba(57, 255, 20, 0.3)',
+              background: 'rgba(57, 255, 20, 0.1)',
+              color: '#4ade80',
+              fontFamily: "'Fredoka', sans-serif",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            💡 Reveal a cell
+          </button>
+        </div>
+      )}
       {gameOver && (
         <div className="confirm-area" style={{ marginTop: 16 }}>
           <div className="confirm-text" style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 20, color: won ? 'var(--neon-green)' : 'var(--neon-red)', marginBottom: 8 }}>

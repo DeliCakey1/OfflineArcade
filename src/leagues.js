@@ -144,7 +144,7 @@ export const GAME_COINS = {
   wordle: 8,
 }
 
-export const SCORE_BASED_GAMES = ['snake', 'tetris', 'breakout', 'flappy', 'minesweeper', 'mathdash', 'typing']
+export const SCORE_BASED_GAMES = ['snake', 'tetris', 'breakout', 'flappy', 'minesweeper', 'mathdash', 'typing', 'mergeblitz']
 
 export function calculateWinXP(gameId, streak = 0, score = 0) {
   if (SCORE_BASED_GAMES.includes(gameId)) {

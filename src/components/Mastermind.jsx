@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import useSound from '../useSound'
 import useStats from '../useStats'
+import { isPracticeMode } from '../practiceMode'
 import QuitConfirmButton from './QuitConfirmButton'
 
 const COLORS = ['#ff2d7b', '#ff6b2b', '#ffe600', '#39ff14', '#00d4ff', '#b946ff']
@@ -50,11 +51,13 @@ export default function Mastermind({ onPlayingChange }) {
   const sound = useSound()
   const { recordGame } = useStats('mastermind')
   const isPlaying = difficulty && !gameOver
+  const practice = isPracticeMode()
 
   const startGame = useCallback((diffName) => {
     const d = DIFFICULTIES.find(x => x.name === diffName) || DIFFICULTIES[1]
+    const numColors = practice ? Math.max(3, d.numColors - 2) : d.numColors
     setDifficulty(diffName)
-    const newCode = generateCode(d.codeLen, d.numColors)
+    const newCode = generateCode(d.codeLen, numColors)
     setCode(newCode)
     setGuesses([])
     setCurrentGuess([])
@@ -62,7 +65,7 @@ export default function Mastermind({ onPlayingChange }) {
     setWon(false)
     setCopied(false)
     sound('click')
-  }, [sound])
+  }, [sound, practice])
 
   const selectColor = useCallback((colorIdx) => {
     if (gameOver) return
@@ -126,7 +129,8 @@ export default function Mastermind({ onPlayingChange }) {
   }
 
   const d = DIFFICULTIES.find(x => x.name === difficulty) || DIFFICULTIES[1]
-  const usedColors = COLORS.slice(0, d.numColors)
+  const numColors = practice ? Math.max(3, d.numColors - 2) : d.numColors
+  const usedColors = COLORS.slice(0, numColors)
   const emptySlots = d.codeLen - currentGuess.length
 
   return (
