@@ -14,24 +14,35 @@ const COLLECTION = 'chatMessages'
 export function useChatRoom(roomId) {
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     if (!roomId) return
     let unsub = null
     let cancelled = false
+    setLoadError('')
 
     async function subscribe() {
-      const { collection, query, orderBy, limit, onSnapshot } = await f()
-      const { db } = await f()
-      const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'), limit(50))
-      unsub = onSnapshot(q, snap => {
-        if (cancelled) return
-        const msgs = snap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter(m => m.roomId === roomId)
-          .reverse()
-        setMessages(msgs)
-      })
+      try {
+        const { collection, query, orderBy, limit, onSnapshot } = await f()
+        const { db } = await f()
+        const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'), limit(50))
+        unsub = onSnapshot(q, snap => {
+          if (cancelled) return
+          const msgs = snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(m => m.roomId === roomId)
+            .reverse()
+          setMessages(msgs)
+          setLoadError('')
+        }, err => {
+          console.warn('Chat snapshot error:', err)
+          if (!cancelled) setLoadError('Chat unavailable: ' + err.message)
+        })
+      } catch (e) {
+        console.warn('Chat subscribe error:', e)
+        if (!cancelled) setLoadError('Chat unavailable: ' + e.message)
+      }
     }
     subscribe()
     return () => { cancelled = true; unsub?.() }
@@ -50,15 +61,17 @@ export function useChatRoom(roomId) {
         text: text.trim().slice(0, 200),
         createdAt: Date.now(),
       })
-    } catch {}
+    } catch (e) {
+      console.warn('Chat send error:', e)
+    }
     setSending(false)
   }
 
-  return { messages, send, sending }
+  return { messages, send, sending, loadError }
 }
 
 export default function ChatPanel({ roomId, user }) {
-  const { messages, send, sending } = useChatRoom(roomId)
+  const { messages, send, sending, loadError } = useChatRoom(roomId)
   const [input, setInput] = useState('')
   const bottomRef = useRef(null)
 
@@ -69,6 +82,7 @@ export default function ChatPanel({ roomId, user }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (!input.trim() || sending) return
+    setError('')
     send(input, user)
     setInput('')
   }
@@ -84,7 +98,12 @@ export default function ChatPanel({ roomId, user }) {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', minHeight: 100 }}>
-        {messages.length === 0 && (
+        {loadError && (
+          <div style={{ textAlign: 'center', padding: 16, fontSize: 11, color: '#ef4444', opacity: 0.8 }}>
+            ⚠️ {loadError}
+          </div>
+        )}
+        {!loadError && messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: 20, fontSize: 12, opacity: 0.4 }}>No messages yet. Say hi!</div>
         )}
         {messages.map(msg => (

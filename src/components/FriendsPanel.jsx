@@ -139,14 +139,7 @@ export default function FriendsPanel({ userId, user, onClose }) {
               )
             })}
           </div>
-        )}
-
-          <div style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              💬 Global Chat
-            </div>
-            <ChatPanel roomId="global" user={user} />
-          </div>
+          )}
         </>
       ) : (
         <div className="user-profile-card">
