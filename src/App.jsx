@@ -62,6 +62,7 @@ import useSwipeBack from './useSwipeBack'
 import { useNotifications } from './notifications'
 import NotificationRenderer from './components/NotificationRenderer'
 import PracticeModeToggle from './components/PracticeModeToggle'
+import FriendsChatPopup from './components/FriendsChatPopup'
 
 import './index.css'
 
@@ -1461,6 +1462,7 @@ function App() {
           {showGameTutorial && <GameTutorial gameId={activeGame} onClose={() => setShowGameTutorial(false)} />}
         </main>
         <PracticeModeToggle visible={!!activeGame} />
+        {user && !user.isAnonymous && <FriendsChatPopup userId={user.uid} user={user} />}
         <Confetti active={showConfetti} onDone={hideConfetti} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
