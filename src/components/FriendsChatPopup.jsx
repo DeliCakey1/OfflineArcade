@@ -44,7 +44,7 @@ export default function FriendsChatPopup({ userId, user }) {
         {open && (
           <div style={{
             position: 'absolute', bottom: 56, right: 0,
-            width: 340, maxHeight: 480,
+            width: 360, maxHeight: 500,
             background: 'var(--card, #1a1033)',
             border: '1px solid var(--border, rgba(255,255,255,0.08))',
             borderRadius: 16, overflow: 'hidden',
