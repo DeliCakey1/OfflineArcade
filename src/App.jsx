@@ -1626,6 +1626,7 @@ function App() {
         </div>
       )}
       {showOnboarding && <OnboardingTutorial onClose={handleOnboardingClose} />}
+      {user && !user.isAnonymous && <FriendsChatPopup userId={user.uid} user={user} />}
       {showDailyLogin && (
         <DailyLoginModal
           onClaim={() => {
