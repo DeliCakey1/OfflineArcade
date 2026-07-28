@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { getFriendCode, addFriendByCode, removeFriend, getFriends } from '../socialService'
 import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor } from '../nameplateUtils'
 import { LEAGUE_RANKS } from '../leagues'
+import ChatPanel from './ChatPanel'
 
-export default function FriendsPanel({ userId, onClose }) {
+export default function FriendsPanel({ userId, user, onClose }) {
   const [friends, setFriends] = useState([])
   const [myCode, setMyCode] = useState('')
   const [addCode, setAddCode] = useState('')
@@ -11,6 +12,7 @@ export default function FriendsPanel({ userId, onClose }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [selected, setSelected] = useState(null)
+  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -103,7 +105,8 @@ export default function FriendsPanel({ userId, onClose }) {
       {loading ? (
         <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-dim)' }}>Loading friends...</div>
       ) : !selected ? (
-        friends.length === 0 ? (
+        <>
+          {friends.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-dim)' }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>🤝</div>
             <div style={{ fontSize: 13 }}>No friends yet. Add someone with their code!</div>
@@ -137,7 +140,27 @@ export default function FriendsPanel({ userId, onClose }) {
               )
             })}
           </div>
-        )
+        )}
+
+          <button
+            onClick={() => setShowChat(!showChat)}
+            style={{
+              marginTop: 16, width: '100%', padding: '10px 14px',
+              background: showChat ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, cursor: 'pointer',
+              textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)',
+              fontFamily: 'Fredoka, sans-serif', fontSize: 14, fontWeight: 600,
+            }}
+          >
+            💬 Friends Chat {showChat ? '▲' : '▼'}
+          </button>
+
+          {showChat && (
+            <div style={{ marginTop: 12 }}>
+              <ChatPanel roomId="friends" user={user} />
+            </div>
+          )}
+        </>
       ) : (
         <div className="user-profile-card">
           <div className="user-profile-header">

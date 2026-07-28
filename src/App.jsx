@@ -62,7 +62,7 @@ import useSwipeBack from './useSwipeBack'
 import { useNotifications } from './notifications'
 import NotificationRenderer from './components/NotificationRenderer'
 import PracticeModeToggle from './components/PracticeModeToggle'
-import ChatPanel from './components/ChatPanel'
+
 import './index.css'
 
 const FILTER_CATEGORIES = [
@@ -1426,7 +1426,7 @@ function App() {
       <Suspense fallback={loadingFallback}>
         <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <FriendsPanel userId={user?.uid} onClose={() => setCurrentPage('home')} />
+          <FriendsPanel userId={user?.uid} user={user} onClose={() => setCurrentPage('home')} />
         </div>
       </Suspense>
     )
@@ -1461,11 +1461,6 @@ function App() {
           {showGameTutorial && <GameTutorial gameId={activeGame} onClose={() => setShowGameTutorial(false)} />}
         </main>
         <PracticeModeToggle visible={!!activeGame} />
-        {user && !user.isAnonymous && (
-          <div style={{ marginTop: 16, marginLeft: 'auto', marginRight: 'auto', maxWidth: 480, padding: '0 16px' }}>
-            <ChatPanel roomId={activeGame} user={user} />
-          </div>
-        )}
         <Confetti active={showConfetti} onDone={hideConfetti} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
