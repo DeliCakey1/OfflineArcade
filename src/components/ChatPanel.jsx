@@ -26,6 +26,7 @@ function setBubbleColor(c) {
 }
 
 function formatTime(ts) {
+  if (!ts) return ''
   const d = new Date(ts)
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
@@ -96,14 +97,48 @@ export function useChatRoom(roomId) {
     setSending(false)
   }, [roomId])
 
-  return { messages, send, sending, loadError, rateLimited }
+  const editMessage = useCallback(async (msgId, newText) => {
+    if (!msgId || !newText.trim()) return
+    try {
+      const { doc, updateDoc, arrayUnion } = await f()
+      const { db } = await f()
+      await updateDoc(doc(db, COLLECTION, msgId), {
+        text: newText.trim().slice(0, MAX_LEN),
+        editedAt: Date.now(),
+        editHistory: arrayUnion(newText.trim().slice(0, MAX_LEN)),
+      })
+    } catch (e) {
+      console.warn('Chat edit error:', e)
+    }
+  }, [])
+
+  const deleteMessage = useCallback(async (msgId) => {
+    if (!msgId) return
+    try {
+      const { doc, updateDoc } = await f()
+      const { db } = await f()
+      await updateDoc(doc(db, COLLECTION, msgId), {
+        deleted: true,
+        text: '',
+        deletedAt: Date.now(),
+      })
+    } catch (e) {
+      console.warn('Chat delete error:', e)
+    }
+  }, [])
+
+  return { messages, send, sending, loadError, rateLimited, editMessage, deleteMessage }
 }
 
 export default function ChatPanel({ roomId, user }) {
-  const { messages, send, sending, loadError, rateLimited } = useChatRoom(roomId)
+  const { messages, send, sending, loadError, rateLimited, editMessage, deleteMessage } = useChatRoom(roomId)
   const [input, setInput] = useState('')
   const [showColors, setShowColors] = useState(false)
   const [myColor, setMyColorState] = useState(getBubbleColor)
+  const [selectedMsg, setSelectedMsg] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [editInput, setEditInput] = useState('')
+  const [showHistory, setShowHistory] = useState(null)
   const bottomRef = useRef(null)
 
   useEffect(() => {
@@ -122,13 +157,38 @@ export default function ChatPanel({ roomId, user }) {
     setBubbleColor(c)
   }
 
+  function handleBubbleClick(msg) {
+    if (!user || msg.userId !== user.uid || msg.deleted) return
+    setSelectedMsg(msg)
+  }
+
+  function handleEdit() {
+    if (!selectedMsg) return
+    setEditInput(selectedMsg.text)
+    setEditing(selectedMsg.id)
+    setSelectedMsg(null)
+  }
+
+  function handleSaveEdit() {
+    if (!editing || !editInput.trim()) return
+    editMessage(editing, editInput)
+    setEditing(null)
+    setEditInput('')
+  }
+
+  function handleDelete() {
+    if (!selectedMsg) return
+    deleteMessage(selectedMsg.id)
+    setSelectedMsg(null)
+  }
+
   const remaining = MAX_LEN - input.length
   const uid = user?.uid || ''
 
   return (
     <div style={{
       background: 'var(--card, #241845)', border: '1px solid var(--border, rgba(255,255,255,0.08))',
-      borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 320,
+      borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 420,
     }}>
       <div style={{
         padding: '10px 14px', fontSize: 13, fontWeight: 600,
@@ -168,7 +228,7 @@ export default function ChatPanel({ roomId, user }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px', minHeight: 100 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px', minHeight: 180 }}>
         {loadError && (
           <div style={{ textAlign: 'center', padding: 16, fontSize: 11, color: '#ef4444', opacity: 0.8 }}>
             ⚠️ {loadError}
@@ -180,48 +240,37 @@ export default function ChatPanel({ roomId, user }) {
           </div>
         )}
         {!loadError && messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 30, fontSize: 12, opacity: 0.4 }}>
+          <div style={{ textAlign: 'center', padding: 40, fontSize: 12, opacity: 0.4 }}>
             No messages yet. Say hi!
           </div>
         )}
         {messages.map((msg, i) => {
           const isMe = msg.userId === uid
           const showAvatar = !isMe && (i === 0 || messages[i - 1]?.userId !== msg.userId)
-          return (
-            <div key={msg.id} style={{
-              display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row',
-              alignItems: 'flex-end', gap: 6, marginBottom: 4,
-            }}>
-              {!isMe && (
-                <span style={{
-                  width: 24, height: 24, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.08)',
-                  display: showAvatar ? 'flex' : 'none',
-                  alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 700, flexShrink: 0, color: 'var(--text-dim)',
-                }}>{(msg.username || '?')[0].toUpperCase()}</span>
-              )}
-              <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                {!isMe && showAvatar && (
-                  <span style={{ fontSize: 10, color: 'var(--text-dim)', opacity: 0.5, marginLeft: 4, marginBottom: 2 }}>
-                    {msg.username}
-                  </span>
-                )}
-                <div style={{
-                  background: isMe ? myColor : 'rgba(255,255,255,0.08)',
-                  color: isMe ? '#fff' : 'var(--text)',
-                  padding: '8px 12px', borderRadius: 16,
-                  borderBottomRightRadius: isMe ? 4 : 16,
-                  borderBottomLeftRadius: isMe ? 16 : 4,
-                  fontSize: 13, lineHeight: 1.4, wordBreak: 'break-word',
-                }}>
-                  {msg.text}
+          if (msg.deleted) {
+            return (
+              <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: 4, opacity: 0.4 }}>
+                <div style={{ fontSize: 11, fontStyle: 'italic', padding: '4px 8px', color: 'var(--text-dim)' }}>
+                  (message deleted by author)
                 </div>
-                <span style={{ fontSize: 9, color: 'var(--text-dim)', opacity: 0.35, marginTop: 2, marginLeft: 4 }}>
-                  {formatTime(msg.createdAt)}
-                </span>
               </div>
-            </div>
+            )
+          }
+          return (
+            <HoverBubble
+              key={msg.id}
+              msg={msg}
+              isMe={isMe}
+              showAvatar={showAvatar}
+              myColor={myColor}
+              onBubbleClick={handleBubbleClick}
+              editing={editing}
+              editInput={editInput}
+              onEditInputChange={setEditInput}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={() => { setEditing(null); setEditInput('') }}
+              onShowHistory={setShowHistory}
+            />
           )
         })}
         <div ref={bottomRef} />
@@ -251,6 +300,178 @@ export default function ChatPanel({ roomId, user }) {
           {remaining}/{MAX_LEN}
         </div>
       </form>
+
+      {selectedMsg && (
+        <div onClick={() => setSelectedMsg(null)} style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--card, #1a1033)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 16, padding: 20, minWidth: 240,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Message Options</div>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 16, padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 8 }}>
+              {selectedMsg.text}
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+              <button onClick={handleEdit} style={{
+                padding: '10px 16px', borderRadius: 8, border: 'none',
+                background: 'rgba(59,130,246,0.15)', color: '#3b82f6',
+                cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'Fredoka, sans-serif',
+              }}>✏️ Edit Message</button>
+              <button onClick={handleDelete} style={{
+                padding: '10px 16px', borderRadius: 8, border: 'none',
+                background: 'rgba(239,68,68,0.15)', color: '#ef4444',
+                cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'Fredoka, sans-serif',
+              }}>🗑️ Delete Message</button>
+              <button onClick={() => setSelectedMsg(null)} style={{
+                padding: '10px 16px', borderRadius: 8, border: 'none',
+                background: 'rgba(255,255,255,0.05)', color: 'var(--text-dim)',
+                cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'Fredoka, sans-serif',
+              }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editing && (
+        <div onClick={() => { setEditing(null); setEditInput('') }} style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--card, #1a1033)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 16, padding: 20, minWidth: 300,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>✏️ Edit Message</div>
+            <textarea
+              value={editInput}
+              onChange={e => { if (e.target.value.length <= MAX_LEN) setEditInput(e.target.value) }}
+              maxLength={MAX_LEN}
+              style={{
+                width: '100%', boxSizing: 'border-box', minHeight: 60, resize: 'none',
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, padding: '8px 10px', color: 'var(--text)', fontSize: 13,
+                outline: 'none', fontFamily: 'Fredoka, sans-serif', marginBottom: 8,
+              }}
+            />
+            <div style={{ fontSize: 10, color: 'var(--text-dim)', textAlign: 'right', marginBottom: 12, opacity: 0.5 }}>
+              {editInput.length}/{MAX_LEN}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={handleSaveEdit} disabled={!editInput.trim()} style={{
+                flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none',
+                background: !editInput.trim() ? 'rgba(255,255,255,0.05)' : 'rgba(59,130,246,0.15)',
+                color: !editInput.trim() ? 'var(--text-dim)' : '#3b82f6',
+                cursor: !editInput.trim() ? 'default' : 'pointer',
+                fontSize: 13, fontWeight: 600, fontFamily: 'Fredoka, sans-serif',
+              }}>Save</button>
+              <button onClick={() => { setEditing(null); setEditInput('') }} style={{
+                flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none',
+                background: 'rgba(255,255,255,0.05)', color: 'var(--text-dim)',
+                cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'Fredoka, sans-serif',
+              }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showHistory && (
+        <div onClick={() => setShowHistory(null)} style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--card, #1a1033)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 16, padding: 20, minWidth: 280, maxHeight: 300, overflowY: 'auto',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>📝 Edit History</div>
+            {showHistory.editHistory && showHistory.editHistory.length > 0 ? (
+              [...showHistory.editHistory].reverse().map((t, idx) => (
+                <div key={idx} style={{
+                  padding: '8px 10px', background: 'rgba(255,255,255,0.03)',
+                  borderRadius: 8, marginBottom: 6, fontSize: 12, color: 'var(--text-dim)',
+                }}>
+                  <div style={{ opacity: 0.5, fontSize: 10, marginBottom: 2 }}>Version {showHistory.editHistory.length - idx}</div>
+                  {t}
+                </div>
+              ))
+            ) : (
+              <div style={{ fontSize: 12, opacity: 0.4, textAlign: 'center', padding: 16 }}>No edit history available.</div>
+            )}
+            <button onClick={() => setShowHistory(null)} style={{
+              width: '100%', marginTop: 8, padding: '8px 16px', borderRadius: 8, border: 'none',
+              background: 'rgba(255,255,255,0.05)', color: 'var(--text-dim)',
+              cursor: 'pointer', fontSize: 13, fontFamily: 'Fredoka, sans-serif',
+            }}>Close</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function HoverBubble({ msg, isMe, showAvatar, myColor, onBubbleClick, editing, editInput, onEditInputChange, onSaveEdit, onCancelEdit, onShowHistory }) {
+  const [hover, setHover] = useState(false)
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6, marginBottom: 4 }}
+    >
+      {!isMe && (
+        <span style={{
+          width: 24, height: 24, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.08)',
+          display: showAvatar ? 'flex' : 'none',
+          alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, fontWeight: 700, flexShrink: 0, color: 'var(--text-dim)',
+        }}>{(msg.username || '?')[0].toUpperCase()}</span>
+      )}
+      <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+        {!isMe && showAvatar && (
+          <span style={{ fontSize: 10, color: 'var(--text-dim)', opacity: 0.5, marginLeft: 4, marginBottom: 2 }}>
+            {msg.username}
+          </span>
+        )}
+        <div
+          onClick={() => onBubbleClick(msg)}
+          style={{
+            background: isMe ? myColor : 'rgba(255,255,255,0.08)',
+            color: isMe ? '#fff' : 'var(--text)',
+            padding: '8px 12px', borderRadius: 16,
+            borderBottomRightRadius: isMe ? 4 : 16,
+            borderBottomLeftRadius: isMe ? 16 : 4,
+            fontSize: 13, lineHeight: 1.4, wordBreak: 'break-word',
+            cursor: isMe ? 'pointer' : 'default',
+            position: 'relative',
+          }}
+        >
+          {msg.text}
+          {msg.editedAt && (
+            <span
+              onClick={(e) => { e.stopPropagation(); onShowHistory(msg) }}
+              style={{ fontSize: 10, opacity: 0.6, display: 'block', marginTop: 2, cursor: 'pointer' }}
+            >
+              (edited)
+            </span>
+          )}
+        </div>
+        {(hover || msg.editedAt) && (
+          <span style={{ fontSize: 9, color: 'var(--text-dim)', opacity: 0.35, marginTop: 2, marginLeft: 4 }}>
+            {formatTime(msg.createdAt)}
+            {hover && msg.editedAt && <> · edited {formatTime(msg.editedAt)}</>}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
