@@ -6,6 +6,7 @@ import InstallBanner from './components/InstallBanner'
 import OfflineIndicator from './components/OfflineIndicator'
 import GameTutorial from './components/GameTutorial'
 import DailyLoginModal, { checkAndClaimDailyLogin } from './components/DailyLoginModal'
+import UpdateModal from './components/UpdateModal'
 
 const RockPaperScissors = lazy(() => import('./components/RockPaperScissors'))
 const SplitStealGiveAway = lazy(() => import('./components/SplitStealGiveAway'))
@@ -61,6 +62,7 @@ import useSwipeBack from './useSwipeBack'
 import { useNotifications } from './notifications'
 import NotificationRenderer from './components/NotificationRenderer'
 import PracticeModeToggle from './components/PracticeModeToggle'
+import ChatPanel from './components/ChatPanel'
 import './index.css'
 
 const FILTER_CATEGORIES = [
@@ -815,6 +817,8 @@ function App() {
     try { return !localStorage.getItem('arcade-onboarded') && totalPlayedCount === 0 } catch { return false }
   })
   const [showDailyLogin, setShowDailyLogin] = useState(false)
+  const [updateStatus, setUpdateStatus] = useState(null)
+  const [updateError, setUpdateError] = useState('')
   const [dailyLoginResult, setDailyLoginResult] = useState(null)
 
   const dailyGame = useMemo(() => {
@@ -977,6 +981,32 @@ function App() {
     window.addEventListener('arcade-game-complete', handleGameComplete)
     return () => window.removeEventListener('arcade-game-complete', handleGameComplete)
   }, [userId, syncLeagueData])
+
+  useEffect(() => {
+    if (!window.electronAPI) return
+    window.electronAPI.onUpdateAvailable(() => setUpdateStatus('available'))
+    window.electronAPI.onUpdateDownloaded(() => setUpdateStatus('downloaded'))
+    return () => {
+      window.electronAPI.removeUpdateListeners()
+    }
+  }, [])
+
+  function handleCheckUpdates() {
+    if (!window.electronAPI) return
+    setUpdateStatus('checking')
+    window.electronAPI.checkForUpdates()
+    setTimeout(() => {
+      setUpdateStatus(prev => {
+        if (prev === 'checking') return 'uptodate'
+        return prev
+      })
+      setTimeout(() => setUpdateStatus(null), 3000)
+    }, 15000)
+  }
+
+  function handleInstallUpdate() {
+    window.electronAPI?.installUpdate()
+  }
 
   useEffect(() => {
     if (newAchievements.length > 0) {
@@ -1249,7 +1279,7 @@ function App() {
       <Suspense fallback={loadingFallback}>
         <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} onAccessibility={() => setCurrentPage('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} />
+           <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} onAccessibility={() => setCurrentPage('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
           {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         </div>
       </Suspense>
@@ -1374,7 +1404,7 @@ function App() {
       <Suspense fallback={loadingFallback}>
         <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <DownloadPage onBack={() => setCurrentPage('home')} />
+          <DownloadPage onBack={() => setCurrentPage('home')} onCheckUpdates={handleCheckUpdates} />
         </div>
       </Suspense>
     )
@@ -1431,6 +1461,11 @@ function App() {
           {showGameTutorial && <GameTutorial gameId={activeGame} onClose={() => setShowGameTutorial(false)} />}
         </main>
         <PracticeModeToggle visible={!!activeGame} />
+        {user && !user.isAnonymous && (
+          <div style={{ marginTop: 16, marginLeft: 'auto', marginRight: 'auto', maxWidth: 480, padding: '0 16px' }}>
+            <ChatPanel roomId={activeGame} user={user} />
+          </div>
+        )}
         <Confetti active={showConfetti} onDone={hideConfetti} />
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
@@ -1601,6 +1636,13 @@ function App() {
             setShowDailyLogin(false)
           }}
           onClose={() => setShowDailyLogin(false)}
+        />
+      )}
+      {updateStatus && (
+        <UpdateModal
+          status={updateStatus}
+          onInstall={handleInstallUpdate}
+          onClose={() => setUpdateStatus(null)}
         />
       )}
     </div>
