@@ -29,6 +29,7 @@ export default function FriendsPanel({ userId, user, onClose }) {
 
   async function handleAdd() {
     if (!addCode.trim()) return
+    if (friends.length >= 25) { setError('Max 25 friends reached. Remove one first.'); return }
     setError('')
     setSuccess('')
     const result = await addFriendByCode(addCode.trim())

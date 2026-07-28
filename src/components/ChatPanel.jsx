@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
-import { ensureAuth } from '../firebase'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 let _f = null
 async function f() {
@@ -10,11 +9,16 @@ async function f() {
 }
 
 const COLLECTION = 'chatMessages'
+const RATE_LIMIT = 5
+const RATE_WINDOW = 60000
+const MAX_LEN = 100
 
 export function useChatRoom(roomId) {
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const [rateLimited, setRateLimited] = useState(false)
+  const sentTimestamps = useRef([])
 
   useEffect(() => {
     if (!roomId) return
@@ -48,8 +52,16 @@ export function useChatRoom(roomId) {
     return () => { cancelled = true; unsub?.() }
   }, [roomId])
 
-  async function send(text, user) {
+  const send = useCallback(async (text, user) => {
     if (!text.trim() || !user) return
+    const now = Date.now()
+    sentTimestamps.current = sentTimestamps.current.filter(t => now - t < RATE_WINDOW)
+    if (sentTimestamps.current.length >= RATE_LIMIT) {
+      setRateLimited(true)
+      setTimeout(() => setRateLimited(false), RATE_WINDOW)
+      return
+    }
+    sentTimestamps.current.push(now)
     setSending(true)
     try {
       const { collection, addDoc } = await f()
@@ -58,20 +70,20 @@ export function useChatRoom(roomId) {
         roomId,
         userId: user.uid,
         username: user.displayName || user.email?.split('@')[0] || 'Anon',
-        text: text.trim().slice(0, 200),
+        text: text.trim().slice(0, MAX_LEN),
         createdAt: Date.now(),
       })
     } catch (e) {
       console.warn('Chat send error:', e)
     }
     setSending(false)
-  }
+  }, [roomId])
 
-  return { messages, send, sending, loadError }
+  return { messages, send, sending, loadError, rateLimited }
 }
 
 export default function ChatPanel({ roomId, user }) {
-  const { messages, send, sending, loadError } = useChatRoom(roomId)
+  const { messages, send, sending, loadError, rateLimited } = useChatRoom(roomId)
   const [input, setInput] = useState('')
   const bottomRef = useRef(null)
 
@@ -81,10 +93,12 @@ export default function ChatPanel({ roomId, user }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!input.trim() || sending) return
+    if (!input.trim() || sending || rateLimited) return
     send(input, user)
     setInput('')
   }
+
+  const remaining = MAX_LEN - input.length
 
   return (
     <div style={{
@@ -102,6 +116,11 @@ export default function ChatPanel({ roomId, user }) {
             ⚠️ {loadError}
           </div>
         )}
+        {rateLimited && (
+          <div style={{ textAlign: 'center', padding: 8, fontSize: 11, color: '#f59e0b', opacity: 0.9 }}>
+            ⏳ Slow down! Max 5 messages per minute.
+          </div>
+        )}
         {!loadError && messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: 20, fontSize: 12, opacity: 0.4 }}>No messages yet. Say hi!</div>
         )}
@@ -114,23 +133,29 @@ export default function ChatPanel({ roomId, user }) {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 6, padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Type a message..."
-          maxLength={200}
-          style={{
-            flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 8, padding: '8px 10px', color: 'var(--text, #e8e0ff)', fontSize: 13,
-            outline: 'none', fontFamily: 'Fredoka, sans-serif',
-          }}
-        />
-        <button type="submit" disabled={sending || !input.trim()} style={{
-          background: 'var(--accent, #8b5cf6)', color: '#fff', border: 'none', borderRadius: 8,
-          padding: '8px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'Fredoka, sans-serif',
-          opacity: sending || !input.trim() ? 0.5 : 1,
-        }}>Send</button>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 6, padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input
+            value={input}
+            onChange={e => { if (e.target.value.length <= MAX_LEN) setInput(e.target.value) }}
+            placeholder="Type a message..."
+            maxLength={MAX_LEN}
+            style={{
+              flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8, padding: '8px 10px', color: 'var(--text, #e8e0ff)', fontSize: 13,
+              outline: 'none', fontFamily: 'Fredoka, sans-serif',
+            }}
+          />
+          <button type="submit" disabled={sending || !input.trim() || rateLimited} style={{
+            background: rateLimited ? 'rgba(245,158,11,0.2)' : 'var(--accent, #8b5cf6)',
+            color: '#fff', border: 'none', borderRadius: 8,
+            padding: '8px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'Fredoka, sans-serif',
+            opacity: sending || !input.trim() || rateLimited ? 0.5 : 1,
+          }}>{rateLimited ? '⏳' : 'Send'}</button>
+        </div>
+        <div style={{ fontSize: 10, color: remaining < 20 ? '#ef4444' : 'var(--text-dim)', textAlign: 'right', opacity: 0.6 }}>
+          {remaining}/{MAX_LEN}
+        </div>
       </form>
     </div>
   )
