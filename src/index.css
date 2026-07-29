@@ -905,14 +905,58 @@ body::after {
 .game-container { max-width: 800px; margin: 0 auto; padding: 24px 20px 60px; animation: fadeSlideUp 0.4s ease-out; position: relative; }
 .how-to-play-btn {
   position: absolute; top: 8px; right: 8px; z-index: 10;
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 48px; height: 48px; border-radius: 50%;
   background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3);
-  color: var(--text-light, #fff); font-size: 16px; cursor: pointer;
+  color: var(--text-light, #fff); font-size: 22px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
 }
 .how-to-play-btn:hover {
   background: rgba(139, 92, 246, 0.3); transform: scale(1.1);
+}
+.how-to-play-btn.hint-active {
+  animation: helpBtnPulse 2s ease-in-out infinite;
+}
+@keyframes helpBtnPulse {
+  0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5); }
+  70% { box-shadow: 0 0 0 14px rgba(139, 92, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+}
+
+.guest-banner {
+  background: #16a34a; color: #fff; text-align: center;
+  padding: 8px 16px; font-size: 13px; font-weight: 500;
+}
+.guest-banner-link {
+  color: #fff; text-decoration: underline; cursor: pointer; font-weight: 700;
+}
+.guest-banner-link:hover { opacity: 0.85; }
+
+.help-hint-tooltip {
+  position: absolute; top: 60px; right: 8px; z-index: 20;
+  background: var(--accent, #8b5cf6); color: #fff;
+  padding: 10px 14px; border-radius: 12px; font-size: 13px;
+  white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  animation: helpHintFloat 2s ease-in-out infinite;
+  pointer-events: auto; display: flex; align-items: center; gap: 10px;
+  font-weight: 500;
+}
+.help-hint-tooltip::before {
+  content: ''; position: absolute; top: -6px; right: 18px;
+  border-left: 6px solid transparent; border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--accent, #8b5cf6);
+}
+.help-hint-close {
+  background: rgba(0,0,0,0.2); border: none; color: #fff;
+  cursor: pointer; border-radius: 50%; width: 20px; height: 20px;
+  font-size: 12px; display: flex; align-items: center; justify-content: center;
+  padding: 0; line-height: 1; flex-shrink: 0;
+  transition: background 0.2s;
+}
+.help-hint-close:hover { background: rgba(0,0,0,0.4); }
+@keyframes helpHintFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 /* ===== SLIDE IN ANIMATION ===== */

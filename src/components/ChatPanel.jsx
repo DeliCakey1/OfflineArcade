@@ -17,12 +17,28 @@ const BUBBLE_COLORS = [
   '#8b5cf6', '#3b82f6', '#22c55e', '#f59e0b',
   '#ef4444', '#ec4899', '#14b8a6', '#f97316',
 ]
+const FRIEND_COLORS_DEFAULT = '#3b82f6'
 
 function getBubbleColor() {
   try { return localStorage.getItem('chat-bubble-color') || BUBBLE_COLORS[0] } catch { return BUBBLE_COLORS[0] }
 }
 function setBubbleColor(c) {
   try { localStorage.setItem('chat-bubble-color', c) } catch {}
+}
+function getFriendColors() {
+  try { return JSON.parse(localStorage.getItem('chat-friend-colors') || '{}') } catch { return {} }
+}
+function setFriendColorStore(friendId, color) {
+  try {
+    const map = getFriendColors()
+    map[friendId] = color
+    localStorage.setItem('chat-friend-colors', JSON.stringify(map))
+  } catch {}
+}
+function getFriendIdFromRoom(roomId, uid) {
+  if (!roomId || !uid) return null
+  const parts = roomId.split('_')
+  return parts.find(id => id !== uid) || null
 }
 
 function formatTime(ts) {
@@ -135,11 +151,16 @@ export default function ChatPanel({ roomId, user }) {
   const [input, setInput] = useState('')
   const [showColors, setShowColors] = useState(false)
   const [myColor, setMyColorState] = useState(getBubbleColor)
+  const [friendColors, setFriendColorsState] = useState(getFriendColors)
   const [selectedMsg, setSelectedMsg] = useState(null)
   const [editing, setEditing] = useState(null)
   const [editInput, setEditInput] = useState('')
   const [showHistory, setShowHistory] = useState(null)
   const bottomRef = useRef(null)
+
+  const uid = user?.uid || ''
+  const friendId = getFriendIdFromRoom(roomId, uid)
+  const otherColor = friendColors[friendId] || FRIEND_COLORS_DEFAULT
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -155,6 +176,12 @@ export default function ChatPanel({ roomId, user }) {
   function setColor(c) {
     setMyColorState(c)
     setBubbleColor(c)
+  }
+
+  function setFriendColor(c) {
+    if (!friendId) return
+    setFriendColorStore(friendId, c)
+    setFriendColorsState(prev => ({ ...prev, [friendId]: c }))
   }
 
   function handleBubbleClick(msg) {
@@ -183,7 +210,6 @@ export default function ChatPanel({ roomId, user }) {
   }
 
   const remaining = MAX_LEN - input.length
-  const uid = user?.uid || ''
 
   return (
     <div style={{
@@ -204,26 +230,49 @@ export default function ChatPanel({ roomId, user }) {
             <div style={{
               position: 'absolute', top: 28, right: 0, zIndex: 10,
               background: '#1a1033', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 10, padding: 6, display: 'flex', gap: 4,
+              borderRadius: 10, padding: 8, minWidth: 180,
               boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
             }}>
-              {BUBBLE_COLORS.map(c => (
-                <button key={c} onClick={() => setColor(c)} style={{
-                  width: 20, height: 20, borderRadius: '50%', background: c,
-                  border: c === myColor ? '2px solid #fff' : '2px solid transparent',
-                  cursor: 'pointer', padding: 0,
-                }} />
-              ))}
+              <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 4 }}>Your bubbles</div>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+                {BUBBLE_COLORS.map(c => (
+                  <button key={c} onClick={() => setColor(c)} style={{
+                    width: 20, height: 20, borderRadius: '50%', background: c,
+                    border: c === myColor ? '2px solid #fff' : '2px solid transparent',
+                    cursor: 'pointer', padding: 0,
+                  }} />
+                ))}
+              </div>
+              {friendId && (
+                <>
+                  <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 4 }}>Their bubbles</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {BUBBLE_COLORS.map(c => (
+                      <button key={c} onClick={() => setFriendColor(c)} style={{
+                        width: 20, height: 20, borderRadius: '50%', background: c,
+                        border: c === otherColor ? '2px solid #fff' : '2px solid transparent',
+                        cursor: 'pointer', padding: 0,
+                      }} />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
           <button onClick={() => setShowColors(!showColors)} style={{
             background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-            fontSize: 16, lineHeight: 1, display: 'flex',
-          }} title="Change bubble color">
+            fontSize: 16, lineHeight: 1, display: 'flex', gap: 2,
+          }} title="Change bubble colors">
             <span style={{
-              display: 'inline-block', width: 14, height: 14, borderRadius: '50%',
+              display: 'inline-block', width: 12, height: 12, borderRadius: '50%',
               background: myColor, border: '2px solid rgba(255,255,255,0.3)',
             }} />
+            {friendId && (
+              <span style={{
+                display: 'inline-block', width: 12, height: 12, borderRadius: '50%',
+                background: otherColor, border: '2px solid rgba(255,255,255,0.3)',
+              }} />
+            )}
           </button>
         </div>
       </div>
@@ -247,6 +296,7 @@ export default function ChatPanel({ roomId, user }) {
         {messages.map((msg, i) => {
           const isMe = msg.userId === uid
           const showAvatar = !isMe && (i === 0 || messages[i - 1]?.userId !== msg.userId)
+          const bubbleColor = isMe ? myColor : otherColor
           if (msg.deleted) {
             return (
               <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: 4, opacity: 0.4 }}>
@@ -262,7 +312,7 @@ export default function ChatPanel({ roomId, user }) {
               msg={msg}
               isMe={isMe}
               showAvatar={showAvatar}
-              myColor={myColor}
+              bubbleColor={bubbleColor}
               onBubbleClick={handleBubbleClick}
               onShowHistory={setShowHistory}
             />
@@ -413,7 +463,7 @@ export default function ChatPanel({ roomId, user }) {
   )
 }
 
-function HoverBubble({ msg, isMe, showAvatar, myColor, onBubbleClick, onShowHistory }) {
+function HoverBubble({ msg, isMe, showAvatar, bubbleColor, onBubbleClick, onShowHistory }) {
   return (
     <div style={{ display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 4, marginBottom: 6 }}>
       {!isMe && (
@@ -442,8 +492,8 @@ function HoverBubble({ msg, isMe, showAvatar, myColor, onBubbleClick, onShowHist
           <div
             onClick={() => onBubbleClick(msg)}
             style={{
-              background: isMe ? myColor : 'rgba(255,255,255,0.08)',
-              color: isMe ? '#fff' : 'var(--text)',
+              background: bubbleColor,
+              color: isMe ? '#fff' : '#fff',
               padding: '8px 12px', borderRadius: 16,
               borderBottomRightRadius: isMe ? 4 : 16,
               borderBottomLeftRadius: isMe ? 16 : 4,

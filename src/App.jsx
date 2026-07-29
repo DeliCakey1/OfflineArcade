@@ -817,6 +817,9 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return !localStorage.getItem('arcade-onboarded') && totalPlayedCount === 0 } catch { return false }
   })
+  const [showHelpHint, setShowHelpHint] = useState(() => {
+    try { return !localStorage.getItem('arcade-help-hint') && totalPlayedCount === 0 } catch { return false }
+  })
   const [showDailyLogin, setShowDailyLogin] = useState(false)
   const [updateStatus, setUpdateStatus] = useState(null)
   const [updateError, setUpdateError] = useState('')
@@ -1112,6 +1115,12 @@ function App() {
 
   useEffect(() => { setShowGameTutorial(false) }, [activeGame])
 
+  useEffect(() => {
+    if (!showHelpHint || !activeGame) return
+    const timer = setTimeout(dismissHelpHint, 10000)
+    return () => clearTimeout(timer)
+  }, [showHelpHint, activeGame])
+
   const filteredGames = useMemo(() => {
     let list = [...GAMES]
     if (category !== 'all') list = list.filter(g => {
@@ -1166,6 +1175,11 @@ function App() {
   function handleOnboardingClose() {
     try { localStorage.setItem('arcade-onboarded', '1') } catch {}
     setShowOnboarding(false)
+  }
+
+  function dismissHelpHint() {
+    try { localStorage.setItem('arcade-help-hint', 'done') } catch {}
+    setShowHelpHint(false)
   }
 
   function handleRedoTutorial() {
@@ -1441,6 +1455,11 @@ function App() {
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
         <SettingsBar {...settings} />
+        {user && user.isAnonymous && (
+          <div className="guest-banner">
+            You are not signed in. <span className="guest-banner-link" onClick={() => setCurrentPage('signin')}>Sign In</span> to save your data across devices!
+          </div>
+        )}
         <header className="arcade-header">
           <h1 className="arcade-title">ARCADE GAMES</h1>
         </header>
@@ -1453,7 +1472,13 @@ function App() {
           ))}
         </nav>
         <main className="game-container page-enter">
-          <button className="how-to-play-btn" onClick={() => setShowGameTutorial(true)} title="How to Play">❓</button>
+          <button className={`how-to-play-btn${showHelpHint && activeGame ? ' hint-active' : ''}`} onClick={() => { setShowGameTutorial(true); if (showHelpHint) dismissHelpHint() }} title="How to Play">❓</button>
+          {showHelpHint && activeGame && (
+            <div className="help-hint-tooltip">
+              Need help? Click ❓ for game rules!
+              <button className="help-hint-close" onClick={(e) => { e.stopPropagation(); dismissHelpHint() }}>×</button>
+            </div>
+          )}
           <ErrorBoundary key={activeGame} onBack={handleHome} fallbackTitle="Game Failed to Load" fallbackMessage="This game encountered an error. You can try again or pick a different game.">
             <Suspense fallback={<div className="game-loading"><div className="game-loading-spinner" /><span>Loading game...</span></div>}>
               <ActiveComponent key={activeGame} onPlayingChange={setIsPlaying} />
@@ -1493,6 +1518,11 @@ function App() {
       <OfflineIndicator />
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
       <SettingsBar {...settings} />
+      {user && user.isAnonymous && (
+        <div className="guest-banner">
+          You are not signed in. <span className="guest-banner-link" onClick={() => setCurrentPage('signin')}>Sign In</span> to save your data across devices!
+        </div>
+      )}
       <header className="arcade-header" role="banner">
         <h1 className="arcade-title">ARCADE GAMES</h1>
         <p className="arcade-subtitle">Pick a game and challenge the bot!</p>
