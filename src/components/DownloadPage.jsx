@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 const GITHUB_RELEASE_URL = 'https://github.com/DeliCakey1/OfflineArcade/releases/latest'
 
-export default function DownloadPage({ onBack }) {
+export default function DownloadPage({ onBack, onCheckUpdates }) {
   useEffect(() => { window.scrollTo(0, 0) }, [])
 
   return (
@@ -49,6 +49,16 @@ export default function DownloadPage({ onBack }) {
             </div>
           </div>
         </section>
+
+        {window.electronAPI && (
+          <section className="about-section">
+            <h2>🔄 App Updates</h2>
+            <p>Check if a newer version of the desktop app is available.</p>
+            <button className="download-btn" onClick={onCheckUpdates} style={{ marginTop: 8 }}>
+              Check for Updates
+            </button>
+          </section>
+        )}
 
         <section className="about-section">
           <h2>🌐 Install as an App (PWA)</h2>

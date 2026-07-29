@@ -1,4 +1,4 @@
-const { app, BrowserWindow, protocol } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 const http = require('http')
 const fs = require('fs')
@@ -35,6 +35,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.cjs'),
     },
     autoHideMenuBar: true,
     show: false,
@@ -96,6 +97,16 @@ autoUpdater.on('update-downloaded', () => {
   if (mainWindow) {
     mainWindow.webContents.send('update-downloaded')
   }
+})
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    await autoUpdater.checkForUpdates()
+  } catch {}
+})
+
+ipcMain.on('install-update', () => {
+  autoUpdater.quitAndInstall()
 })
 
 app.whenReady().then(async () => {
