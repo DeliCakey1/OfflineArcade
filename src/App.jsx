@@ -739,6 +739,7 @@ function App() {
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
   const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
   const [bg, setBg] = useState(() => getSaved('arcade-bg', 'on') === 'on')
+  const [bgUrl, setBgUrl] = useState(() => { try { return localStorage.getItem('arcade-bg-url') || '' } catch { return '' } })
   const [confirmNav, setConfirmNav] = useState(null)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -860,6 +861,20 @@ function App() {
   useEffect(() => { document.documentElement.classList.toggle('no-animations', !animations); try { localStorage.setItem('arcade-animations', animations ? 'on' : 'off') } catch {} }, [animations])
   useEffect(() => { document.documentElement.classList.toggle('no-glass', !glass); try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {} }, [glass])
   useEffect(() => { document.documentElement.classList.toggle('no-bg', !bg); try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {} }, [bg])
+  useEffect(() => {
+    if (bgUrl) {
+      document.body.style.backgroundImage = `url('${bgUrl.replace(/'/g, '%27')}')`
+    } else {
+      document.body.style.backgroundImage = ''
+    }
+    try { localStorage.setItem('arcade-bg-url', bgUrl) } catch {}
+  }, [bgUrl])
+  useEffect(() => {
+    if (!userId) return
+    import('./leagueService').then(({ updatePlayer }) => {
+      updatePlayer(userId, { bgUrl: bgUrl || '' })
+    }).catch(() => {})
+  }, [userId, bgUrl])
   useEffect(() => { document.documentElement.classList.toggle('has-wave-bar', waveBar); try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {} }, [waveBar])
 
   useEffect(() => {
@@ -893,6 +908,10 @@ function App() {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
               setUserUsername(p.username || null)
+              if (p.bgUrl) {
+                setBgUrl(p.bgUrl)
+                try { localStorage.setItem('arcade-bg-url', p.bgUrl) } catch {}
+              }
               if (!p.username && !p.usernameSkipped && !u.isAnonymous) {
                 setShowUsernameModal(true)
               }
@@ -1227,6 +1246,10 @@ function App() {
     setUserUsername(newUsername)
   }, [])
 
+  const handleBgUrlChange = useCallback((url) => {
+    setBgUrl(url)
+  }, [])
+
   const handleEquipTitle = useCallback((titleId) => {
     equipTitle(titleId)
     if (userId) {
@@ -1294,7 +1317,7 @@ function App() {
       <Suspense fallback={loadingFallback}>
         <div className="page-enter">
           {waveBar && <div className="wave-bar" aria-hidden="true" />}
-           <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} onAccessibility={() => setCurrentPage('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
+           <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} bgUrl={bgUrl} onBgUrlChange={handleBgUrlChange} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} onAccessibility={() => setCurrentPage('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
           {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         </div>
       </Suspense>

@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAccessibility, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, bgUrl, onBgUrlChange, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAccessibility, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial, onCheckUpdates }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [editingUsername, setEditingUsername] = useState(false)
@@ -282,6 +282,12 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
             <span className="settings-card-label">Wave Bar {waveBar ? 'On' : 'Off'}</span>
           </button>
         </div>
+        <div className="settings-row bg-url-row">
+          <input className="bg-url-input" type="text" value={bgUrl} onChange={e => onBgUrlChange(e.target.value)} placeholder="Custom background image URL..." />
+          {bgUrl && (
+            <button className="bg-url-clear" onClick={() => onBgUrlChange('')} aria-label="Reset background">✕</button>
+          )}
+        </div>
         <div className="settings-row">
           <button className="settings-card-btn full-width" onClick={onAccessibility} aria-label="Accessibility settings">
             <span className="settings-card-icon">♿</span>
@@ -301,6 +307,12 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           <span className="settings-card-icon">📖</span>
           <span className="settings-card-label">Redo Tutorial</span>
         </button>
+        {window.electronAPI && (
+          <button className="settings-card-btn full-width" onClick={onCheckUpdates} aria-label="Check for updates">
+            <span className="settings-card-icon">🔄</span>
+            <span className="settings-card-label">Check for Updates</span>
+          </button>
+        )}
       </div>
 
       <div className="settings-section">

@@ -251,6 +251,37 @@ body::after {
   gap: 10px;
   margin-bottom: 10px;
 }
+.bg-url-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.bg-url-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  color: var(--text-light);
+  font-size: 13px;
+  font-family: Fredoka, sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.bg-url-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+.bg-url-input:focus { border-color: var(--accent, #8b5cf6); }
+.bg-url-clear {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  color: var(--text-dim);
+  cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.2s;
+}
+.bg-url-clear:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
 .settings-card-btn {
   flex: 1;
   display: flex;
