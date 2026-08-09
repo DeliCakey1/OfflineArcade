@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1033"/>
+      <stop offset="0.5" stop-color="#3b0f5e"/>
+      <stop offset="1" stop-color="#0f2a66"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <circle cx="100" cy="100" r="220" fill="#8b5cf6" opacity="0.25"/>
+  <circle cx="1100" cy="530" r="260" fill="#3b82f6" opacity="0.25"/>
+  <text x="600" y="230" text-anchor="middle" font-size="150">🕹️</text>
+  <text x="600" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="84" font-weight="bold" fill="#ffffff" letter-spacing="4">OFFLINE ARCADE</text>
+  <text x="600" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#c9b8ff">Play 29 free browser games — no downloads, works offline</text>
+  <rect x="430" y="500" width="340" height="58" rx="29" fill="url(#glow)"/>
+  <text x="600" y="539" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">Play Free Now</text>
+</svg>

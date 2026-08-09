@@ -63,8 +63,31 @@ import { useNotifications } from './notifications'
 import NotificationRenderer from './components/NotificationRenderer'
 import PracticeModeToggle from './components/PracticeModeToggle'
 import FriendsChatPopup from './components/FriendsChatPopup'
+import ShareScoreButton from './components/ShareScoreButton'
 
 import './index.css'
+import { GAMES as GAME_META } from './games'
+
+try {
+  const ref = new URLSearchParams(window.location.search).get('ref')
+  if (ref && /^[A-Za-z0-9]{4,12}$/.test(ref)) {
+    localStorage.setItem('arcade-ref', ref.toUpperCase())
+  }
+} catch {}
+
+const GAME_COMPONENTS = {
+  rps: RockPaperScissors, ssg: SplitStealGiveAway, gtn: GuessTheNumber,
+  'gtn-hc': GuessTheNumberHotCold, hol: HigherOrLower, dice: DiceRoll,
+  coin: CoinFlipStreak, memory: MemoryMatch, word: WordScramble,
+  merge: NumberMerge, reaction: ReactionTime, typing: TypingSpeed,
+  simon: SimonSays, slots: Slots, blackjack: Blackjack, whack: WhackAMole,
+  snake: SnakeGame, tetris: Tetris, breakout: Breakout, flappy: FlappyBird,
+  minesweeper: Minesweeper, lightsout: LightsOut, mastermind: Mastermind,
+  dodge: Dodge, mergeblitz: MergeBlitz, connect4: ConnectFour,
+  sudoku: Sudoku, mathdash: MathDash, wordle: Wordle,
+}
+
+const GAMES = GAME_META.map(g => ({ ...g, component: GAME_COMPONENTS[g.id] }))
 
 const FILTER_CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -95,38 +118,6 @@ const GAME_CATEGORIES = {
   connect4: ['strategy', 'social'], slots: ['card', 'dice'],
   blackjack: ['card', 'strategy'], splitsteal: ['social', 'strategy'],
 }
-
-const GAMES = [
-  { id: 'rps', label: 'Rock Paper Scissors', emoji: '✊', desc: 'Classic showdown against the bot!', color: '#3b82f6', component: RockPaperScissors, category: 'chance' },
-  { id: 'ssg', label: 'Split Steal Give Away', emoji: '💰', desc: 'Your custom game! Outsmart the bot to win the prize.', color: '#f59e0b', component: SplitStealGiveAway, category: 'card' },
-  { id: 'gtn', label: 'Guess The Number', emoji: '🔢', desc: "Crack the bot's number! Choose your difficulty!", color: '#22c55e', component: GuessTheNumber, category: 'brain' },
-  { id: 'gtn-hc', label: 'Hot or Cold', emoji: '🌡️', desc: 'Getting warmer or colder? Use the clues!', color: '#ef4444', component: GuessTheNumberHotCold, category: 'brain' },
-  { id: 'hol', label: 'Higher or Lower', emoji: '🃏', desc: 'Guess if the next card is higher or lower!', color: '#8b5cf6', component: HigherOrLower, category: 'card' },
-  { id: 'dice', label: 'Dice Roll', emoji: '🎲', desc: 'Bet on the dice! Exact, Range, or Parity.', color: '#06b6d4', component: DiceRoll, category: 'chance' },
-  { id: 'coin', label: 'Coin Flip Streak', emoji: '🪙', desc: 'Call Heads or Tails. Build a streak to win!', color: '#f97316', component: CoinFlipStreak, category: 'chance' },
-  { id: 'memory', label: 'Memory Match', emoji: '🧠', desc: 'Find all matching pairs! Fewest moves wins.', color: '#ec4899', component: MemoryMatch, category: 'brain' },
-  { id: 'word', label: 'Word Scramble', emoji: '📚', desc: 'Unscramble the letters to guess the word!', color: '#14b8a6', component: WordScramble, category: 'brain' },
-  { id: 'merge', label: 'Number Merge', emoji: '🔢', desc: 'Slide tiles to merge same numbers. Reach the goal!', color: '#f59e0b', component: NumberMerge, category: 'classic' },
-  { id: 'reaction', label: 'Reaction Time', emoji: '⚡', desc: 'Click as fast as you can when it turns green!', color: '#eab308', component: ReactionTime, category: 'reflex' },
-  { id: 'typing', label: 'Typing Speed', emoji: '⌨️', desc: 'Type each word as fast as you can!', color: '#8b5cf6', component: TypingSpeed, category: 'reflex' },
-  { id: 'simon', label: 'Simon Says', emoji: '🎵', desc: 'Watch the sequence, then repeat it!', color: '#ef4444', component: SimonSays, category: 'reflex' },
-  { id: 'slots', label: 'Slots', emoji: '🎰', desc: 'Spin the reels! Match symbols to win big!', color: '#f59e0b', component: Slots, category: 'chance' },
-  { id: 'blackjack', label: 'Blackjack', emoji: '🃏', desc: 'Get as close to 21 as you can without going over!', color: '#22c55e', component: Blackjack, category: 'card' },
-  { id: 'whack', label: 'Whack-a-Mole', emoji: '🔨', desc: 'Whack the moles as fast as you can!', color: '#8b5cf6', component: WhackAMole, category: 'reflex' },
-  { id: 'snake', label: 'Snake', emoji: '🐍', desc: "Eat food, grow longer, don't hit yourself!", color: '#22c55e', component: SnakeGame, category: 'classic' },
-  { id: 'tetris', label: 'Tetris', emoji: '🧱', desc: 'Stack blocks, clear lines, rack up points!', color: '#00d4ff', component: Tetris, category: 'classic' },
-  { id: 'breakout', label: 'Breakout', emoji: '🏓', desc: 'Smash all the bricks with the ball!', color: '#ff2d7b', component: Breakout, category: 'classic' },
-  { id: 'flappy', label: 'Flappy Bird', emoji: '🐦', desc: 'Tap to flap, dodge the pipes!', color: '#ffe600', component: FlappyBird, category: 'classic' },
-  { id: 'minesweeper', label: 'Minesweeper', emoji: '💣', desc: 'Clear the field without hitting a mine!', color: '#f97316', component: Minesweeper, category: 'brain' },
-  { id: 'lightsout', label: 'Lights Out', emoji: '💡', desc: 'Toggle lights to turn them all off!', color: '#ffe600', component: LightsOut, category: 'brain' },
-  { id: 'mastermind', label: 'Mastermind', emoji: '🧠', desc: 'Crack the hidden code using logic and deduction!', color: '#b946ff', component: Mastermind, category: 'brain' },
-  { id: 'dodge', label: 'Dodge', emoji: '🎮', desc: 'Move your orb to dodge the falling obstacles!', color: '#00d4ff', component: Dodge, category: 'reflex' },
-  { id: 'mergeblitz', label: 'Merge Blitz', emoji: '⚡', desc: 'Timed 2048! Chain merges for combo multipliers!', color: '#ffe600', component: MergeBlitz, category: 'brain' },
-  { id: 'connect4', label: 'Connect Four', emoji: '🔴', desc: 'Drop discs to get four in a row against the AI!', color: '#1a47b8', component: ConnectFour, category: 'card' },
-  { id: 'sudoku', label: 'Sudoku', emoji: '🔢', desc: 'Fill the 9×9 grid with numbers 1-9!', color: '#22c55e', component: Sudoku, category: 'brain' },
-  { id: 'mathdash', label: 'Math Dash', emoji: '➕', desc: 'Solve as many math problems as you can before time runs out!', color: '#b946ff', component: MathDash, category: 'reflex' },
-  { id: 'wordle', label: 'Wordle', emoji: '📝', desc: 'Guess the hidden word in limited tries!', color: '#14b8a6', component: Wordle, category: 'brain' },
-]
 
 function getSaved(key, fallback) {
   try { return localStorage.getItem(key) ?? fallback } catch { return fallback }
@@ -741,7 +732,10 @@ function PageBoundary({ onBack, children }) {
 }
 
 function App() {
-  const [activeGame, setActiveGame] = useState(null)
+  const [activeGame, setActiveGame] = useState(() => {
+    const m = window.location.pathname.match(/^\/play\/([^/]+)\/?$/)
+    return m ? m[1] : null
+  })
   const [muted, setMuted] = useState(isMuted())
   const [theme, setTheme] = useState(() => getSaved('arcade-theme', 'neon'))
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
@@ -753,6 +747,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentPage, setCurrentPage] = useState(() => {
     const path = window.location.pathname.replace(/\/+$/, '')
+    if (/^\/play\/[^/]+$/.test(path)) return 'home'
     if (path === '/admin-panel') return 'admin'
     if (path === '/about-us') return 'about'
     if (path === '/download') return 'download'
@@ -775,19 +770,21 @@ function App() {
   const [sort, setSort] = useState('default')
   const [showConfetti, setShowConfetti] = useState(false)
   const hideConfetti = useCallback(() => setShowConfetti(false), [])
+  const [lastGameResult, setLastGameResult] = useState(null)
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
 
   useEffect(() => {
     const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands', friends: '/friends', leaderboard: '/leaderboard', accessibility: '/accessibility' }
-    const path = routes[currentPage] || '/'
+    const path = activeGame ? `/play/${activeGame}` : (routes[currentPage] || '/')
     if (window.location.pathname !== path) {
       window.history.pushState({}, '', path)
     }
-  }, [currentPage])
+  }, [currentPage, activeGame])
 
   useEffect(() => {
     function pathToPage(pathname) {
       const path = pathname.replace(/\/+$/, '')
+      if (/^\/play\/[^/]+$/.test(path)) return 'home'
       if (path === '/admin-panel') return 'admin'
       if (path === '/about-us') return 'about'
       if (path === '/download') return 'download'
@@ -804,6 +801,13 @@ function App() {
       return 'home'
     }
     function onPopState() {
+      const playMatch = window.location.pathname.match(/^\/play\/([^/]+)\/?$/)
+      if (playMatch) {
+        setActiveGame(playMatch[1])
+        setIsPlaying(false)
+        setCurrentPage('home')
+        return
+      }
       const page = pathToPage(window.location.pathname)
       if (page === 'home') {
         setActiveGame(null)
@@ -818,6 +822,7 @@ function App() {
   const adminSwitchingRef = useRef(false)
   const [playerName, setPlayerName] = useState(null)
   const [userUsername, setUserUsername] = useState(null)
+  const [inviteCode, setInviteCode] = useState(null)
   const [leaguePos, setLeaguePos] = useState(null)
   const [showUserSearch, setShowUserSearch] = useState(false)
   const [showUsernameModal, setShowUsernameModal] = useState(false)
@@ -860,6 +865,54 @@ function App() {
     const timer = setInterval(() => setDailyCountdown(getTimeUntilTomorrow()), 1000)
     return () => clearInterval(timer)
   }, [])
+
+  const pageMeta = useMemo(() => {
+    const playGame = activeGame ? GAMES.find(g => g.id === activeGame) : null
+    if (playGame) {
+      return {
+        title: `Play ${playGame.label} Online — Free`, 
+        description: `${playGame.emoji} Play ${playGame.label} free at Offline Arcade. ${playGame.desc} No downloads, works offline.`,
+      }
+    }
+    const map = {
+      home: { title: 'Offline Arcade — Play 29 Free Browser Games', description: 'Play 29 free browser games instantly — Snake, Tetris, Flappy Bird, Minesweeper, Wordle, Blackjack and more. No downloads, works offline. Daily challenges, leagues and tournaments.' },
+      settings: { title: 'Settings — Offline Arcade', description: 'Customize your Offline Arcade experience: theme, audio, accessibility, privacy and more.' },
+      leagues: { title: 'Leagues & Tournaments — Offline Arcade', description: 'Compete in ranked leagues and tournaments. Climb from Microbe to God rank and win coins.' },
+      stats: { title: 'Your Stats — Offline Arcade', description: 'Track your play counts, wins, streaks and XP across all 29 games.' },
+      achievements: { title: 'Achievements — Offline Arcade', description: 'Unlock achievements and earn coin rewards as you play.' },
+      shop: { title: 'Shop — Offline Arcade', description: 'Spend your coins on titles, nameplates and tournament tickets.' },
+      about: { title: 'About — Offline Arcade', description: 'Learn about Offline Arcade, an open-source collection of free browser games.' },
+      download: { title: 'Download — Offline Arcade', description: 'Install Offline Arcade as a desktop app for Windows, Mac and Linux.' },
+      friends: { title: 'Friends — Offline Arcade', description: 'Add friends, challenge each other and climb the leaderboard together.' },
+      leaderboard: { title: 'Leaderboard — Offline Arcade', description: 'See the top players and daily challenge winners.' },
+      signin: { title: 'Sign In — Offline Arcade', description: 'Sign in to save your stats, coins and progress across devices.' },
+      admin: { title: 'Admin — Offline Arcade', description: 'Admin panel.' },
+      cloak: { title: 'Cloak Settings — Offline Arcade', description: 'Cloak mode settings.' },
+      accessibility: { title: 'Accessibility — Offline Arcade', description: 'Accessibility settings for Offline Arcade.' },
+    }
+    return map[currentPage] || { title: 'Offline Arcade', description: 'Play 29 free browser games instantly. No downloads, works offline.' }
+  }, [activeGame, currentPage])
+
+  useEffect(() => {
+    const origin = window.location.origin
+    const url = activeGame ? `${origin}/play/${activeGame}` : `${origin}/`
+    document.title = pageMeta.title
+    const setMeta = (selector, attr, value) => {
+      let el = document.head.querySelector(selector)
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, ''); document.head.appendChild(el) }
+      el.setAttribute(attr, value)
+    }
+    setMeta('meta[name="description"]', 'content', pageMeta.description)
+    setMeta('meta[property="og:title"]', 'content', pageMeta.title)
+    setMeta('meta[property="og:description"]', 'content', pageMeta.description)
+    setMeta('meta[property="og:url"]', 'content', url)
+    setMeta('meta[property="og:type"]', 'content', 'website')
+    setMeta('meta[property="og:image"]', 'content', `${origin}/og-image.png`)
+    setMeta('meta[property="og:site_name"]', 'content', 'Offline Arcade')
+    let canon = document.head.querySelector('link[rel="canonical"]')
+    if (!canon) { canon = document.createElement('link'); canon.rel = 'canonical'; document.head.appendChild(canon) }
+    canon.href = url
+  }, [pageMeta, activeGame])
 
   useEffect(() => {
     if (totalPlayedCount === 0) return
@@ -928,6 +981,7 @@ function App() {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
               setUserUsername(p.username || null)
+              if (p.inviteCode) setInviteCode(p.inviteCode)
               if (p.bgUrl) {
                 setBgUrl(p.bgUrl)
                 try { localStorage.setItem('arcade-bg-url', p.bgUrl) } catch {}
@@ -1005,6 +1059,16 @@ function App() {
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
   }, [userId, syncLeagueData])
+
+  useEffect(() => {
+    function handleResult(e) {
+      const { gameId, won, score } = e.detail || {}
+      if (!gameId) return
+      setLastGameResult({ gameId, won: !!won, score: typeof score === 'number' ? score : 0 })
+    }
+    window.addEventListener('arcade-win', handleResult)
+    return () => window.removeEventListener('arcade-win', handleResult)
+  }, [])
 
   useEffect(() => {
     function handleGameComplete(e) {
@@ -1352,7 +1416,7 @@ function App() {
         <PageBoundary onBack={() => navigateTo('home')}>
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
-            <SettingsPage onBack={() => navigateTo('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} bgUrl={bgUrl} onBgUrlChange={handleBgUrlChange} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => navigateTo('cloak')} onAccessibility={() => navigateTo('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => navigateTo('signin')} onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
+            <SettingsPage onBack={() => navigateTo('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} bgUrl={bgUrl} onBgUrlChange={handleBgUrlChange} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => navigateTo('cloak')} onAccessibility={() => navigateTo('accessibility')} user={user} playerName={playerName} userUsername={userUsername} inviteCode={inviteCode} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => navigateTo('signin')} onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
             {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
           </div>
         </PageBoundary>
@@ -1556,6 +1620,7 @@ function App() {
         </nav>
         <main className="game-container page-enter">
           <button className={`how-to-play-btn${showHelpHint && activeGame ? ' hint-active' : ''}`} onClick={() => { setShowGameTutorial(true); if (showHelpHint) dismissHelpHint() }} title="How to Play">❓</button>
+          <ShareScoreButton game={game} result={lastGameResult && lastGameResult.gameId === activeGame ? lastGameResult : null} />
           {showHelpHint && activeGame && (
             <div className="help-hint-tooltip">
               Need help? Click ❓ for game rules!

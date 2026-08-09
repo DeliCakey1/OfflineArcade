@@ -1,19 +1,34 @@
 {
   "name": "Offline Arcade",
   "short_name": "Arcade",
-  "description": "29 playable browser games with themes, stats, and more",
+  "description": "Play 29 free browser games instantly — Snake, Tetris, Flappy Bird, Minesweeper, Wordle and more. No downloads, works offline.",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#1a1033",
   "theme_color": "#b946ff",
   "orientation": "any",
   "categories": ["games", "entertainment"],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

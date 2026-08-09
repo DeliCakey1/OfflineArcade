@@ -6292,3 +6292,28 @@ body::after {
 .bold-text .game-card h2 {
   font-weight: 900 !important;
 }
+
+/* ===== SHARE SCORE BUTTON ===== */
+.share-score-btn {
+  position: absolute; top: 64px; right: 8px; z-index: 10;
+  padding: 10px 16px; border-radius: 24px;
+  background: linear-gradient(135deg, var(--neon-purple, #8b5cf6), var(--neon-blue, #3b82f6));
+  border: none; color: #fff; font-family: 'Fredoka', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.share-score-btn:hover {
+  transform: translateY(-2px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+}
+@media (max-width: 480px) {
+  .share-score-btn { top: 58px; right: 6px; font-size: 12px; padding: 8px 12px; }
+}
+
+/* ===== INVITE REWARD HINT ===== */
+.invite-reward-hint {
+  margin-top: 10px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.25);
+  color: var(--text-light, #e8e0f5); font-size: 13px; line-height: 1.5;
+}
+

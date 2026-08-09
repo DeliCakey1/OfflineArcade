@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, bgUrl, onBgUrlChange, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAccessibility, user, playerName, userUsername, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial, onCheckUpdates }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, bgUrl, onBgUrlChange, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAccessibility, user, playerName, userUsername, inviteCode, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial, onCheckUpdates }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [editingUsername, setEditingUsername] = useState(false)
@@ -25,7 +25,28 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
   const [adminCooldown, setAdminCooldown] = useState(0)
   const [adminLoading, setAdminLoading] = useState(false)
   const [adminActive, setAdminActive] = useState(isAdminLoggedIn())
+  const [inviteCopied, setInviteCopied] = useState(false)
   const adminInputRef = useRef(null)
+
+  const inviteLink = inviteCode ? `${window.location.origin}/?ref=${inviteCode}` : null
+
+  function copyInvite() {
+    if (!inviteLink) return
+    try {
+      navigator.clipboard.writeText(inviteLink)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = inviteLink
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch {}
+      ta.remove()
+    }
+    setInviteCopied(true)
+    setTimeout(() => setInviteCopied(false), 2000)
+  }
 
   useEffect(() => {
     if (showAdminModal && adminInputRef.current) {
@@ -229,6 +250,23 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           </>
         )}
       </div>
+
+      {inviteCode && (
+        <div className="settings-section">
+          <h3 className="settings-section-title">📣 Invite Friends</h3>
+          <div className="settings-row">
+            <div className="settings-card-btn active" style={{ cursor: 'default', flex: 1, overflow: 'hidden' }}>
+              <span className="settings-card-icon">🔗</span>
+              <span className="settings-card-label" style={{ wordBreak: 'break-all', fontSize: 13 }}>{inviteLink}</span>
+            </div>
+            <button className="settings-card-btn" onClick={copyInvite}>
+              <span className="settings-card-icon">{inviteCopied ? '✅' : '📋'}</span>
+              <span className="settings-card-label">{inviteCopied ? 'Copied!' : 'Copy Link'}</span>
+            </button>
+          </div>
+          <div className="invite-reward-hint">When a friend joins through your link, you both earn rewards — <strong>you get 200 coins + 50 XP</strong> per invite!</div>
+        </div>
+      )}
 
       {adminActive && (
         <div className="settings-section admin-active-section">

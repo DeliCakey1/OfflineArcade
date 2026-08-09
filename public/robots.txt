@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin-panel
+Disallow: /god-commands
+
+Sitemap: https://offline-arcade.onrender.com/sitemap.xml

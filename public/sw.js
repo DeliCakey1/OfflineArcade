@@ -1,8 +1,12 @@
-const CACHE_NAME = 'arcade-v2'
+const CACHE_NAME = 'arcade-v3'
 const PRECACHE = [
   '/',
   '/index.html',
   '/favicon.svg',
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/og-image.png',
   '/Alpine-Amnesia.png',
   '/manifest.json',
 ]

@@ -45,6 +45,9 @@ export async function getOrCreatePlayer(userId, name, username) {
     if (data.usernameSkipped === undefined) updates.usernameSkipped = false
     if (data.username === undefined) updates.username = null
     if (data.usernameChangedAt === undefined) updates.usernameChangedAt = null
+    if (data.inviteCode === undefined) updates.inviteCode = makeInviteCode()
+    if (data.referrals == null) updates.referrals = 0
+    if (data.referredBy === undefined) updates.referredBy = null
     if (Object.keys(updates).length > 0) {
       updateDoc(ref, updates).catch(() => {})
       Object.assign(data, updates)
@@ -77,12 +80,56 @@ export async function getOrCreatePlayer(userId, name, username) {
     ownedItems: [],
     isAdmin: false,
     usernameSkipped: false,
+    inviteCode: makeInviteCode(),
+    referrals: 0,
+    referredBy: null,
     createdAt: Date.now(),
     lastActive: Date.now(),
     statsBlob: null,
   }
   await setDoc(ref, player)
-  return { id: userId, ...player }
+  processReferralFromStorage(userId).catch(() => {})
+  return { id: userId, ...player, _created: true }
+}
+
+export function makeInviteCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)]
+  return code
+}
+
+async function processReferralFromStorage(userId) {
+  let code = ''
+  try { code = localStorage.getItem('arcade-ref') || '' } catch {}
+  if (!code) return
+  try { localStorage.removeItem('arcade-ref') } catch {}
+  const trimmed = String(code).trim().toUpperCase()
+  if (!/^[A-Z0-9]{4,12}$/.test(trimmed)) return
+  await applyReferral(userId, trimmed)
+}
+
+export async function getPlayerByInviteCode(inviteCode) {
+  if (!inviteCode) return null
+  const { collection, query, where, limit: firestoreLimit, getDocs } = await f()
+  const { db } = await f()
+  const q = query(collection(db, PLAYERS), where('inviteCode', '==', String(inviteCode).trim().toUpperCase()), firestoreLimit(1))
+  const snap = await getDocs(q)
+  return snap.docs.length ? { id: snap.docs[0].id, ...snap.docs[0].data() } : null
+}
+
+export async function applyReferral(inviteeId, inviteCode) {
+  const inviter = await getPlayerByInviteCode(inviteCode)
+  if (!inviter || inviter.id === inviteeId) return
+  const { doc, getDoc, updateDoc } = await f()
+  const { db } = await f()
+  const inviteeRef = doc(db, PLAYERS, inviteeId)
+  const inviteeSnap = await getDoc(inviteeRef)
+  if (!inviteeSnap.exists()) return
+  const invitee = inviteeSnap.data()
+  if (invitee.referredBy) return
+  await updateDoc(doc(db, PLAYERS, inviter.id), { coins: increment(200), xp: increment(50), referrals: increment(1) }).catch(() => {})
+  await updateDoc(inviteeRef, { referredBy: inviter.id }).catch(() => {})
 }
 
 export async function loadPlayerStats(userId) {

@@ -96,7 +96,7 @@ const server = http.createServer((req, res) => {
 
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       serveFile(res, filePath)
-    } else if (VALID_ROUTES.includes(pathname)) {
+    } else if (VALID_ROUTES.includes(pathname) || /^\/play\/[^/]+$/.test(pathname)) {
       serveFile(res, path.join(DIST, 'index.html'))
     } else {
       res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' })
