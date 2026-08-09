@@ -1385,7 +1385,7 @@ function App() {
         <PageBoundary onBack={() => navigateTo('home')}>
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
-            <LeagueScreen onBack={() => navigateTo('home')} userId={userId} onPlayGame={(id) => { setActiveGame(id); setCurrentPage('home') }} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
+            <LeagueScreen onBack={() => navigateTo('home')} userId={userId} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
             {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
           </div>
         </PageBoundary>

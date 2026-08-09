@@ -17,45 +17,13 @@ import { TOURNAMENT_TICKET } from '../shopItems'
 import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor, getTitleName } from '../nameplateUtils'
 import TournamentBracket from './TournamentBracket'
 
-const LEAGUE_GAMES = [
-  { id: 'rps', label: 'RPS', emoji: '✊' },
-  { id: 'ssg', label: 'Split Steal', emoji: '💰' },
-  { id: 'gtn', label: 'Guess #', emoji: '🔢' },
-  { id: 'gtn-hc', label: 'Hot/Cold', emoji: '🌡️' },
-  { id: 'hol', label: 'Hi/Lo', emoji: '🃏' },
-  { id: 'dice', label: 'Dice', emoji: '🎲' },
-  { id: 'coin', label: 'Coin Flip', emoji: '🪙' },
-  { id: 'memory', label: 'Memory', emoji: '🧠' },
-  { id: 'word', label: 'Word Scramble', emoji: '📚' },
-  { id: 'minesweeper', label: 'Minesweeper', emoji: '💣' },
-  { id: 'merge', label: 'Number Merge', emoji: '🔢' },
-  { id: 'simon', label: 'Simon', emoji: '🎵' },
-  { id: 'typing', label: 'Typing', emoji: '⌨️' },
-  { id: 'reaction', label: 'Reaction', emoji: '⚡' },
-  { id: 'whack', label: 'Whack-a-Mole', emoji: '🔨' },
-  { id: 'slots', label: 'Slots', emoji: '🎰' },
-  { id: 'blackjack', label: 'Blackjack', emoji: '🃏' },
-  { id: 'snake', label: 'Snake', emoji: '🐍' },
-  { id: 'tetris', label: 'Tetris', emoji: '🧱' },
-  { id: 'breakout', label: 'Breakout', emoji: '🏓' },
-  { id: 'flappy', label: 'Flappy Bird', emoji: '🐦' },
-  { id: 'lightsout', label: 'Lights Out', emoji: '💡' },
-  { id: 'mastermind', label: 'Mastermind', emoji: '🧠' },
-  { id: 'dodge', label: 'Dodge', emoji: '🎮' },
-  { id: 'mergeblitz', label: 'Merge Blitz', emoji: '⚡' },
-  { id: 'connect4', label: 'Connect Four', emoji: '🔴' },
-  { id: 'sudoku', label: 'Sudoku', emoji: '🔢' },
-  { id: 'mathdash', label: 'Math Dash', emoji: '➕' },
-  { id: 'wordle', label: 'Wordle', emoji: '📝' },
-]
-
 const TOURNAMENT_LABELS = {
   tournament: { name: 'God Tournament', emoji: '🏟️', size: 20 },
   semiFinals: { name: 'Semi-Finals', emoji: '⚔️', size: 15 },
   finals: { name: 'Finals', emoji: '🏆', size: 10 },
 }
 
-export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTickets, coins, onBuyTicket }) {
+export default function LeagueScreen({ onBack, userId, tournamentTickets, coins, onBuyTicket }) {
   const [player, setPlayer] = useState(null)
   const [league, setLeague] = useState(null)
   const [tournament, setTournament] = useState(null)
@@ -414,19 +382,6 @@ export default function LeagueScreen({ onBack, userId, onPlayGame, tournamentTic
           </div>
         </div>
       )}
-
-      <div className="league-play-section">
-        <h3>Play for League XP</h3>
-        <p className="league-play-hint">Win games to earn league XP and climb the standings</p>
-        <div className="league-play-grid">
-          {LEAGUE_GAMES.map(g => (
-            <button key={g.id} className="league-game-btn" onClick={() => { sound('click'); onPlayGame(g.id) }}>
-              <span className="league-game-emoji">{g.emoji}</span>
-              <span className="league-game-label">{g.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
 
       <div className="league-standings">
         <h3>{isTournament ? `${tournamentInfo.name} Standings` : 'Standings'}</h3>
