@@ -82,6 +82,11 @@ const server = http.createServer((req, res) => {
     const parsed = url.parse(req.url)
     const pathname = decodeURIComponent(parsed.pathname).replace(/\/+$/, '') || '/'
 
+    if (pathname === '/health') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+      res.end('ok')
+      return
+    }
     if (pathname === '/god-commands/about-blank') {
       res.writeHead(200, {
         'Content-Type': 'text/html; charset=utf-8',

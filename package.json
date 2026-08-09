@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/generate-seo.mjs",
+    "start": "node server.cjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "electron:dev": "vite build && electron .",

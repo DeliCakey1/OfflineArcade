@@ -2,8 +2,11 @@ services:
   - type: web_service
     name: offline-arcade
     runtime: node
-    buildCommand: npm install && npm run build
-    startCommand: node server.cjs
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: ELECTRON_SKIP_BINARY_DOWNLOAD
+        value: "1"
