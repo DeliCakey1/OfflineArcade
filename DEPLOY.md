@@ -6,6 +6,9 @@ It can run on any Node host. This repo ships configs for Render and Railway.
 ## How it runs
 
 - **Build**: `npm install --include=dev && npm run build`
+  - **Node 22+ is required** (`engines` in `package.json` + `.nvmrc`). Vite 8 /
+    rolldown and the Firebase SDK need `>=22.12.0`; Nixpacks and Render both read
+    `engines`/`.nvmrc` to select the runtime, so they no longer default to Node 18.
   - `--include=dev` is required: Render sets `NODE_ENV=production`, which makes a
     plain `npm install` skip devDependencies, and Vite is a devDependency.
   - The build runs `vite build`, then `node scripts/generate-seo.mjs`, which writes

@@ -7,6 +7,9 @@
   "author": "Offline Arcade",
   "description": "29 playable browser games with leagues, tournaments, and cosmetics",
   "homepage": "./",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/generate-seo.mjs",
