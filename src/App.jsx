@@ -1073,7 +1073,7 @@ function App() {
       setPendingAchievementRedirect(false)
       navigateTo('achievements')
     }
-  }, [isPlaying, pendingAchievementRedirect, navigateTo])
+  }, [isPlaying, pendingAchievementRedirect])
 
   useEffect(() => {
     if (!achievementToast) return
@@ -1160,6 +1160,13 @@ function App() {
   }
 
   useEffect(() => { setShowGameTutorial(false) }, [activeGame])
+
+  useEffect(() => {
+    if (activeGame && !GAMES.some(g => g.id === activeGame)) {
+      setActiveGame(null)
+      setIsPlaying(false)
+    }
+  }, [activeGame])
 
   useEffect(() => {
     if (!showHelpHint || !activeGame) return
@@ -1522,13 +1529,6 @@ function App() {
       </Suspense>
     )
   }
-
-  useEffect(() => {
-    if (activeGame && !GAMES.some(g => g.id === activeGame)) {
-      setActiveGame(null)
-      setIsPlaying(false)
-    }
-  }, [activeGame])
 
   if (activeGame) {
     const game = GAMES.find(g => g.id === activeGame)
