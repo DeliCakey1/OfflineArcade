@@ -732,6 +732,14 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
   )
 }
 
+function PageBoundary({ onBack, children }) {
+  return (
+    <ErrorBoundary onBack={onBack} fallbackTitle="Page Failed to Load" fallbackMessage="This page hit an unexpected error. You can try again or head back to the games.">
+      {children}
+    </ErrorBoundary>
+  )
+}
+
 function App() {
   const [activeGame, setActiveGame] = useState(null)
   const [muted, setMuted] = useState(isMuted())
@@ -751,6 +759,13 @@ function App() {
     if (path === '/god-commands') return 'cloak'
     if (path === '/friends') return 'friends'
     if (path === '/leaderboard') return 'leaderboard'
+    if (path === '/leagues') return 'leagues'
+    if (path === '/stats') return 'stats'
+    if (path === '/achievements') return 'achievements'
+    if (path === '/shop') return 'shop'
+    if (path === '/settings') return 'settings'
+    if (path === '/signin') return 'signin'
+    if (path === '/accessibility') return 'accessibility'
     return 'home'
   })
   const [waveBar, setWaveBar] = useState(() => getSaved('arcade-wave-bar', 'on') === 'on')
@@ -789,7 +804,12 @@ function App() {
       return 'home'
     }
     function onPopState() {
-      setCurrentPage(pathToPage(window.location.pathname))
+      const page = pathToPage(window.location.pathname)
+      if (page === 'home') {
+        setActiveGame(null)
+        setIsPlaying(false)
+      }
+      setCurrentPage(page)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
@@ -1042,7 +1062,7 @@ function App() {
         setAchievementToast({ text: `Achievement unlocked: ${names}`, time: Date.now() })
         setPendingAchievementRedirect(true)
       } else {
-        setCurrentPage('achievements')
+        navigateTo('achievements')
       }
       markAchievementsSeen()
     }
@@ -1051,9 +1071,9 @@ function App() {
   useEffect(() => {
     if (!isPlaying && pendingAchievementRedirect) {
       setPendingAchievementRedirect(false)
-      setCurrentPage('achievements')
+      navigateTo('achievements')
     }
-  }, [isPlaying, pendingAchievementRedirect])
+  }, [isPlaying, pendingAchievementRedirect, navigateTo])
 
   useEffect(() => {
     if (!achievementToast) return
@@ -1113,11 +1133,19 @@ function App() {
     setVolumeState(val)
   }
 
+  const navigateTo = useCallback((page) => {
+    setShowConfetti(false)
+    setActiveGame(null)
+    setIsPlaying(false)
+    setConfirmNav(null)
+    setCurrentPage(page)
+  }, [])
+
   const handleHome = useCallback(() => {
     setShowConfetti(false)
     if (isPlaying) setConfirmNav({ type: 'home' })
-    else { setActiveGame(null); setCurrentPage('home') }
-  }, [isPlaying])
+    else navigateTo('home')
+  }, [isPlaying, navigateTo])
 
   const handleNavigateGame = useCallback((gameId) => {
     setShowConfetti(false)
@@ -1126,8 +1154,7 @@ function App() {
   }, [isPlaying, activeGame])
 
   function confirmNavAction() {
-    setShowConfetti(false)
-    if (confirmNav.type === 'home') { setActiveGame(null); setIsPlaying(false); setCurrentPage('home') }
+    if (confirmNav.type === 'home') navigateTo('home')
     else if (confirmNav.type === 'game') { setActiveGame(confirmNav.gameId); setIsPlaying(false); setCurrentPage('home') }
     setConfirmNav(null)
   }
@@ -1209,19 +1236,19 @@ function App() {
   const settings = useMemo(() => ({
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
-    onCloak: () => { setShowConfetti(false); setCurrentPage('cloak') },
-    onSettings: () => { setShowConfetti(false); setCurrentPage('settings') },
-    onLeagues: () => { setShowConfetti(false); setCurrentPage('leagues') },
-    onStats: () => { setShowConfetti(false); setCurrentPage('stats') },
-    onAchievements: () => { setShowConfetti(false); setCurrentPage('achievements') },
-    onShop: () => { setShowConfetti(false); setCurrentPage('shop') },
+    onCloak: () => navigateTo('cloak'),
+    onSettings: () => navigateTo('settings'),
+    onLeagues: () => navigateTo('leagues'),
+    onStats: () => navigateTo('stats'),
+    onAchievements: () => navigateTo('achievements'),
+    onShop: () => navigateTo('shop'),
     onSearch: () => setShowUserSearch(true),
-    onLeaderboard: () => { setShowConfetti(false); setCurrentPage('leaderboard') },
-    onFriends: () => { setShowConfetti(false); setCurrentPage('friends') },
+    onLeaderboard: () => navigateTo('leaderboard'),
+    onFriends: () => navigateTo('friends'),
     user,
     playerName,
     userUsername,
-    onSignIn: () => setCurrentPage('signin'),
+    onSignIn: () => navigateTo('signin'),
     onSignOut: () => signOut().then(() => window.location.reload()).catch(() => {}),
     coins,
     tournamentTickets,
@@ -1231,7 +1258,7 @@ function App() {
     nameplateStyle: getNameplateStyle(activeNameplate),
     nameplateBorderStyle: getNameplateBorderStyle(activeNameplateEffect),
     nameplateNeonColor: getNameplateNeonColor(activeNameplateEffect),
-  }), [handleHome, handleNavigateGame, user, playerName, userUsername, coins, tournamentTickets, xp, leaguePos, activeNameplateEffect, activeNameplate])
+  }), [handleHome, handleNavigateGame, navigateTo, user, playerName, userUsername, coins, tournamentTickets, xp, leaguePos, activeNameplateEffect, activeNameplate])
 
   const handleUpdatePlayerName = useCallback((newName) => {
     setPlayerName(newName)
@@ -1315,11 +1342,13 @@ function App() {
   if (currentPage === 'settings') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-           <SettingsPage onBack={() => setCurrentPage('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} bgUrl={bgUrl} onBgUrlChange={handleBgUrlChange} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => setCurrentPage('cloak')} onAccessibility={() => setCurrentPage('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => setCurrentPage('signin')}           onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
-          {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <SettingsPage onBack={() => navigateTo('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} bgUrl={bgUrl} onBgUrlChange={handleBgUrlChange} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => navigateTo('cloak')} onAccessibility={() => navigateTo('accessibility')} user={user} playerName={playerName} userUsername={userUsername} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => navigateTo('signin')} onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
+            {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1327,10 +1356,12 @@ function App() {
   if (currentPage === 'accessibility') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <AccessibilityPanel onBack={() => setCurrentPage('settings')} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('settings')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <AccessibilityPanel onBack={() => navigateTo('settings')} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1338,10 +1369,12 @@ function App() {
   if (currentPage === 'signin') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <SignInPage onBack={() => setCurrentPage('home')} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <SignInPage onBack={() => navigateTo('home')} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1349,32 +1382,38 @@ function App() {
   if (currentPage === 'leagues') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <LeagueScreen onBack={() => setCurrentPage('home')} userId={userId} onPlayGame={(id) => { setCurrentPage('home'); setActiveGame(id) }} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
-          {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <LeagueScreen onBack={() => navigateTo('home')} userId={userId} onPlayGame={(id) => { setActiveGame(id); setCurrentPage('home') }} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
+            {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
 
   if (currentPage === 'cloak') {
     return (
-      <div className="page-enter">
-        {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <CloakScreen onBack={() => setCurrentPage('home')} />
-      </div>
+      <PageBoundary onBack={() => navigateTo('home')}>
+        <div className="page-enter">
+          {waveBar && <div className="wave-bar" aria-hidden="true" />}
+          <CloakScreen onBack={() => navigateTo('home')} />
+        </div>
+      </PageBoundary>
     )
   }
 
   if (currentPage === 'stats') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <StatsPage games={GAMES} allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => setCurrentPage('home')} onClear={() => { setCurrentPage('home'); setShowConfirmClear(true) }} />
-          {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <StatsPage games={GAMES} allStats={allStats} xp={xp} totalPlayedCount={totalPlayedCount} totalWonCount={totalWonCount} onClose={() => navigateTo('home')} onClear={() => { navigateTo('home'); setShowConfirmClear(true) }} />
+            {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1382,10 +1421,12 @@ function App() {
   if (currentPage === 'achievements') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => setCurrentPage('home')} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => navigateTo('home')} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1393,10 +1434,12 @@ function App() {
   if (currentPage === 'admin') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <AdminPanel userId={user?.uid} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <AdminPanel userId={user?.uid} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1404,24 +1447,26 @@ function App() {
   if (currentPage === 'shop') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <ShopPage
-            onBack={() => setCurrentPage('home')}
-            coins={coins}
-            tournamentTickets={tournamentTickets}
-            ownedItems={ownedItems}
-            activeTitle={activeTitle}
-            activeNameplate={activeNameplate}
-            activeNameplateEffect={activeNameplateEffect}
-            onPurchase={handlePurchase}
-            onEquipTitle={handleEquipTitle}
-            onEquipNameplate={handleEquipNameplate}
-            onEquipNameplateEffect={handleEquipNameplateEffect}
-            isChampion={earnedAchievements.includes('reach-god')}
-            isAdmin={isAdminLoggedIn()}
-          />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <ShopPage
+              onBack={() => navigateTo('home')}
+              coins={coins}
+              tournamentTickets={tournamentTickets}
+              ownedItems={ownedItems}
+              activeTitle={activeTitle}
+              activeNameplate={activeNameplate}
+              activeNameplateEffect={activeNameplateEffect}
+              onPurchase={handlePurchase}
+              onEquipTitle={handleEquipTitle}
+              onEquipNameplate={handleEquipNameplate}
+              onEquipNameplateEffect={handleEquipNameplateEffect}
+              isChampion={earnedAchievements.includes('reach-god')}
+              isAdmin={isAdminLoggedIn()}
+            />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1429,10 +1474,12 @@ function App() {
   if (currentPage === 'about') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <AboutUs onBack={() => setCurrentPage('home')} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <AboutUs onBack={() => navigateTo('home')} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1440,10 +1487,12 @@ function App() {
   if (currentPage === 'download') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <DownloadPage onBack={() => setCurrentPage('home')} onCheckUpdates={handleCheckUpdates} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <DownloadPage onBack={() => navigateTo('home')} onCheckUpdates={handleCheckUpdates} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1451,10 +1500,12 @@ function App() {
   if (currentPage === 'leaderboard') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <DailyLeaderboard gameId={dailyGame.gameId} onClose={() => setCurrentPage('home')} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <DailyLeaderboard gameId={dailyGame.gameId} onClose={() => navigateTo('home')} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
@@ -1462,17 +1513,26 @@ function App() {
   if (currentPage === 'friends') {
     return (
       <Suspense fallback={loadingFallback}>
-        <div className="page-enter">
-          {waveBar && <div className="wave-bar" aria-hidden="true" />}
-          <FriendsPanel userId={user?.uid} user={user} onClose={() => setCurrentPage('home')} />
-        </div>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <FriendsPanel userId={user?.uid} user={user} onClose={() => navigateTo('home')} />
+          </div>
+        </PageBoundary>
       </Suspense>
     )
   }
 
+  useEffect(() => {
+    if (activeGame && !GAMES.some(g => g.id === activeGame)) {
+      setActiveGame(null)
+      setIsPlaying(false)
+    }
+  }, [activeGame])
+
   if (activeGame) {
     const game = GAMES.find(g => g.id === activeGame)
-    if (!game) { setActiveGame(null); return null }
+    if (!game) return null
     const ActiveComponent = game.component
     return (
       <div>
@@ -1480,7 +1540,7 @@ function App() {
         <SettingsBar {...settings} />
         {user && user.isAnonymous && (
           <div className="guest-banner">
-            You are not signed in. <span className="guest-banner-link" onClick={() => setCurrentPage('signin')}>Sign In</span> to save your data across devices!
+            You are not signed in. <span className="guest-banner-link" onClick={() => navigateTo('signin')}>Sign In</span> to save your data across devices!
           </div>
         )}
         <header className="arcade-header">
@@ -1526,24 +1586,25 @@ function App() {
   }
 
   return (
-    <div>
-      <a href="#main-content" style={{
-        position: 'absolute', left: -9999, top: 0, zIndex: 10000,
-        background: 'var(--neon-purple)', color: '#fff', padding: '8px 16px',
-        borderRadius: '0 0 8px 0', fontSize: 14, fontWeight: 600,
-        textDecoration: 'none',
-      }} onFocus={(e) => e.target.style.left = '0'} onBlur={(e) => e.target.style.left = '-9999px'}>
-        Skip to games
-      </a>
+    <PageBoundary onBack={() => navigateTo('home')}>
+      <div>
+        <a href="#main-content" style={{
+          position: 'absolute', left: -9999, top: 0, zIndex: 10000,
+          background: 'var(--neon-purple)', color: '#fff', padding: '8px 16px',
+          borderRadius: '0 0 8px 0', fontSize: 14, fontWeight: 600,
+          textDecoration: 'none',
+        }} onFocus={(e) => e.target.style.left = '0'} onBlur={(e) => e.target.style.left = '-9999px'}>
+          Skip to games
+        </a>
       {bg && <AmbientParticles />}
       <NotificationRenderer notifications={notifications} onDismiss={dismissNotification} />
-      <InstallBanner onNavigate={(page) => setCurrentPage(page)} />
+      <InstallBanner onNavigate={(page) => navigateTo(page)} />
       <OfflineIndicator />
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
       <SettingsBar {...settings} />
       {user && user.isAnonymous && (
         <div className="guest-banner">
-          You are not signed in. <span className="guest-banner-link" onClick={() => setCurrentPage('signin')}>Sign In</span> to save your data across devices!
+          You are not signed in. <span className="guest-banner-link" onClick={() => navigateTo('signin')}>Sign In</span> to save your data across devices!
         </div>
       )}
       <header className="arcade-header" role="banner">
@@ -1556,7 +1617,7 @@ function App() {
         </div>
         {user && user.isAnonymous && (
           <div className="home-action-bar">
-            <button className="home-action-btn signin-prompt" onClick={() => setCurrentPage('signin')} title="Sign in to save data" aria-label="Sign in">☁️ Sign In</button>
+            <button className="home-action-btn signin-prompt" onClick={() => navigateTo('signin')} title="Sign in to save data" aria-label="Sign in">☁️ Sign In</button>
           </div>
         )}
       </header>
@@ -1658,8 +1719,8 @@ function App() {
           </div>
         )}
         <div className="about-footer-link">
-          <button className="about-link-btn" onClick={() => setCurrentPage('about')}>About Offline Arcade →</button>
-          <button className="about-link-btn" onClick={() => setCurrentPage('download')}>📥 Download App</button>
+          <button className="about-link-btn" onClick={() => navigateTo('about')}>About Offline Arcade →</button>
+          <button className="about-link-btn" onClick={() => navigateTo('download')}>📥 Download App</button>
         </div>
       </main>
       <Confetti active={showConfetti} onDone={hideConfetti} />
@@ -1696,7 +1757,8 @@ function App() {
           onClose={() => setUpdateStatus(null)}
         />
       )}
-    </div>
+      </div>
+    </PageBoundary>
   )
 }
 
