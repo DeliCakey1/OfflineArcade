@@ -98,9 +98,12 @@ const server = http.createServer((req, res) => {
       return
     }
     const filePath = path.join(DIST, pathname === '/' ? 'index.html' : pathname)
+    const resolved = fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()
+      ? path.join(filePath, 'index.html')
+      : filePath
 
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      serveFile(res, filePath)
+    if (fs.existsSync(resolved) && fs.statSync(resolved).isFile()) {
+      serveFile(res, resolved)
     } else if (VALID_ROUTES.includes(pathname) || /^\/play\/[^/]+$/.test(pathname)) {
       serveFile(res, path.join(DIST, 'index.html'))
     } else {
