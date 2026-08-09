@@ -85,25 +85,49 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
 
   useEffect(() => {
     if (tournament?.id) {
-      unsubTournamentRef.current = subscribeToTournament(tournament.id, (t) => {
+      let cancelled = false
+      subscribeToTournament(tournament.id, (t) => {
         setTournament(t)
         if (t.status === 'completed') setTournament(null)
+      }).then((unsub) => {
+        if (cancelled) { if (typeof unsub === 'function') unsub(); return }
+        unsubTournamentRef.current = unsub
       })
-      return () => unsubTournamentRef.current?.()
+      return () => {
+        cancelled = true
+        const unsub = unsubTournamentRef.current
+        if (typeof unsub === 'function') unsub()
+      }
     }
   }, [tournament?.id])
 
   useEffect(() => {
     if (!tournament?.id && league?.id) {
-      unsubLeagueRef.current = subscribeToLeague(league.id, setLeague)
-      return () => unsubLeagueRef.current?.()
+      let cancelled = false
+      subscribeToLeague(league.id, setLeague).then((unsub) => {
+        if (cancelled) { if (typeof unsub === 'function') unsub(); return }
+        unsubLeagueRef.current = unsub
+      })
+      return () => {
+        cancelled = true
+        const unsub = unsubLeagueRef.current
+        if (typeof unsub === 'function') unsub()
+      }
     }
   }, [league?.id, tournament?.id])
 
   useEffect(() => {
     if (!player?.id) return
-    unsubPlayerRef.current = subscribeToPlayer(player.id, setPlayer)
-    return () => unsubPlayerRef.current?.()
+    let cancelled = false
+    subscribeToPlayer(player.id, setPlayer).then((unsub) => {
+      if (cancelled) { if (typeof unsub === 'function') unsub(); return }
+      unsubPlayerRef.current = unsub
+    })
+    return () => {
+      cancelled = true
+      const unsub = unsubPlayerRef.current
+      if (typeof unsub === 'function') unsub()
+    }
   }, [player?.id])
 
   useEffect(() => {
