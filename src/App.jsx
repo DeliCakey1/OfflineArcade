@@ -892,7 +892,7 @@ function App() {
   useEffect(() => {
     if (!userId) return
     import('./leagueService').then(({ updatePlayer }) => {
-      updatePlayer(userId, { bgUrl: bgUrl || '' })
+      updatePlayer(userId, { bgUrl: bgUrl || '' }).catch(() => {})
     }).catch(() => {})
   }, [userId, bgUrl])
   useEffect(() => { document.documentElement.classList.toggle('has-wave-bar', waveBar); try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {} }, [waveBar])
@@ -991,12 +991,12 @@ function App() {
           const xp = calculateWinXP(gameId, p.streak || 0, score || 0)
           const coinReward = calculateWinCoins(gameId, p.streak || 0, score || 0)
           if (won) {
-            updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) })
+            updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) }).catch(() => {})
             syncLeagueData({ ...p, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
           } else {
             const lossXp = Math.round(xp / 4)
             const lossCoins = Math.round(coinReward / 4)
-            updatePlayer(userId, { xp: increment(lossXp), coins: increment(lossCoins) })
+            updatePlayer(userId, { xp: increment(lossXp), coins: increment(lossCoins) }).catch(() => {})
             syncLeagueData({ ...p, coins: (p.coins || 0) + lossCoins })
           }
         })
@@ -1271,7 +1271,7 @@ function App() {
     setPlayerName(newName)
     if (userId) {
       import('./leagueService').then(({ updatePlayer }) => {
-        updatePlayer(userId, { name: newName, nameLower: newName.toLowerCase() })
+        updatePlayer(userId, { name: newName, nameLower: newName.toLowerCase() }).catch(() => {})
       }).catch(() => {})
     }
   }, [userId])
@@ -1288,7 +1288,7 @@ function App() {
     equipTitle(titleId)
     if (userId) {
       import('./leagueService').then(({ updatePlayer }) => {
-        updatePlayer(userId, { title: titleId })
+        updatePlayer(userId, { title: titleId }).catch(() => {})
       }).catch(() => {})
     }
   }, [userId, equipTitle])
@@ -1297,7 +1297,7 @@ function App() {
     equipNameplate(nameplateId)
     if (userId) {
       import('./leagueService').then(({ updatePlayer }) => {
-        updatePlayer(userId, { nameplate: nameplateId })
+        updatePlayer(userId, { nameplate: nameplateId }).catch(() => {})
       }).catch(() => {})
     }
   }, [userId, equipNameplate])
@@ -1306,7 +1306,7 @@ function App() {
     equipNameplateEffect(nameplateId)
     if (userId) {
       import('./leagueService').then(({ updatePlayer }) => {
-        updatePlayer(userId, { nameplateEffect: nameplateId })
+        updatePlayer(userId, { nameplateEffect: nameplateId }).catch(() => {})
       }).catch(() => {})
     }
   }, [userId, equipNameplateEffect])
@@ -1317,11 +1317,11 @@ function App() {
       import('./leagueService').then(({ updatePlayer, increment }) => {
         const coinUpdate = { coins: increment(-price) }
         if (itemId === 'ticket-tournament') {
-          updatePlayer(userId, { ...coinUpdate, tournamentTickets: increment(1) })
+          updatePlayer(userId, { ...coinUpdate, tournamentTickets: increment(1) }).catch(() => {})
         } else {
           const owned = new Set(ownedItems || [])
           owned.add(itemId)
-          updatePlayer(userId, { ...coinUpdate, ownedItems: [...owned] })
+          updatePlayer(userId, { ...coinUpdate, ownedItems: [...owned] }).catch(() => {})
         }
       }).catch(() => {})
     }
