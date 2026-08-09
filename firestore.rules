@@ -105,45 +105,48 @@ service cloud.firestore {
           'league', 'leagueInstanceId', 'friends', 'lastActive'
         ])
           && isBoundedLeaderboardChange()
-          && (isFriendsSelfMutation() || request.resource.data.friends == resource.data.friends);
+          && (!keys.hasAny(['friends']) || isFriendsSelfMutation());
       }
 
+      // For every numeric field: either it is untouched (equals the existing
+      // value) or the change is within the bounds the app legitimately writes.
       function isBoundedLeaderboardChange() {
-        return request.resource.data.coins >= resource.data.coins
-          && request.resource.data.coins <= resource.data.coins + 3000
-          && request.resource.data.xp >= resource.data.xp - 5
-          && request.resource.data.xp <= resource.data.xp + 50
-          && request.resource.data.referrals >= resource.data.referrals
-          && request.resource.data.referrals <= resource.data.referrals + 1
-          && request.resource.data.wins >= resource.data.wins
-          && request.resource.data.wins <= resource.data.wins + 1
-          && request.resource.data.losses >= resource.data.losses
-          && request.resource.data.losses <= resource.data.losses + 1
-          && request.resource.data.streak >= -100
-          && request.resource.data.streak <= 100
-          && request.resource.data.promotions >= resource.data.promotions
-          && request.resource.data.promotions <= resource.data.promotions + 1
-          && request.resource.data.tournamentTickets >= resource.data.tournamentTickets - 1
-          && request.resource.data.tournamentTickets <= resource.data.tournamentTickets
-          && request.resource.data.tournamentWins >= resource.data.tournamentWins
-          && request.resource.data.tournamentWins <= resource.data.tournamentWins + 1
-          && request.resource.data.firstPlaceFinishes >= resource.data.firstPlaceFinishes
-          && request.resource.data.firstPlaceFinishes <= resource.data.firstPlaceFinishes + 1
-          && request.resource.data.league >= 1
-          && request.resource.data.league <= 11;
+        return (request.resource.data.coins == resource.data.coins
+            || (request.resource.data.coins >= resource.data.coins && request.resource.data.coins <= resource.data.coins + 3000))
+          && (request.resource.data.xp == resource.data.xp
+            || (request.resource.data.xp >= resource.data.xp - 5 && request.resource.data.xp <= resource.data.xp + 50))
+          && (request.resource.data.referrals == resource.data.referrals
+            || (request.resource.data.referrals >= resource.data.referrals && request.resource.data.referrals <= resource.data.referrals + 1))
+          && (request.resource.data.wins == resource.data.wins
+            || (request.resource.data.wins >= resource.data.wins && request.resource.data.wins <= resource.data.wins + 1))
+          && (request.resource.data.losses == resource.data.losses
+            || (request.resource.data.losses >= resource.data.losses && request.resource.data.losses <= resource.data.losses + 1))
+          && (request.resource.data.streak == resource.data.streak
+            || (request.resource.data.streak >= -100 && request.resource.data.streak <= 100))
+          && (request.resource.data.promotions == resource.data.promotions
+            || (request.resource.data.promotions >= resource.data.promotions && request.resource.data.promotions <= resource.data.promotions + 1))
+          && (request.resource.data.tournamentTickets == resource.data.tournamentTickets
+            || (request.resource.data.tournamentTickets >= resource.data.tournamentTickets - 1 && request.resource.data.tournamentTickets <= resource.data.tournamentTickets))
+          && (request.resource.data.tournamentWins == resource.data.tournamentWins
+            || (request.resource.data.tournamentWins >= resource.data.tournamentWins && request.resource.data.tournamentWins <= resource.data.tournamentWins + 1))
+          && (request.resource.data.firstPlaceFinishes == resource.data.firstPlaceFinishes
+            || (request.resource.data.firstPlaceFinishes >= resource.data.firstPlaceFinishes && request.resource.data.firstPlaceFinishes <= resource.data.firstPlaceFinishes + 1))
+          && (request.resource.data.league == resource.data.league
+            || (request.resource.data.league >= 1 && request.resource.data.league <= 11))
+          && (request.resource.data.leagueInstanceId == resource.data.leagueInstanceId
+            || request.resource.data.leagueInstanceId is string
+            || request.resource.data.leagueInstanceId == null);
       }
 
       function isFriendsSelfMutation() {
         let old = resource.data.friends;
         let next = request.resource.data.friends;
-        if (old != null) {
+        // self added to an empty friend list
+        return (old == null && next is list && next.size() == 1 && next.hasAny([request.auth.uid]))
           // self added (arrayUnion): old kept intact + self appended
-          let added = next.hasAll(old) && next.size() == old.size() + 1 && next.hasAny([request.auth.uid]);
+          || (old != null && next is list && next.size() == old.size() + 1 && next.hasAll(old) && next.hasAny([request.auth.uid]))
           // self removed (arrayRemove): old minus self
-          let removed = old.hasAll(next) && next.size() == old.size() - 1 && !next.hasAny([request.auth.uid]);
-          return added || removed;
-        }
-        return next.hasAny([request.auth.uid]) && next.size() == 1;
+          || (old != null && next is list && next.size() == old.size() - 1 && old.hasAll(next) && !next.hasAny([request.auth.uid]));
       }
 
       allow read: if signedIn();
