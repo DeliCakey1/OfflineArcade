@@ -18,11 +18,11 @@ export const RANK_PROMO_DEMO = {
   9:  { promote: 12, demote: 3 },
   8:  { promote: 10, demote: 5 },
   7:  { promote: 8,  demote: 6 },
-  6:  { promote: 8,  demote: 5 },
-  5:  { promote: 7,  demote: 7 },
-  4:  { promote: 5,  demote: 8 },
-  3:  { promote: 3,  demote: 10 },
-  2:  { promote: 3,  demote: 10 },
+  6:  { promote: 8,  demote: 8 },
+  5:  { promote: 7,  demote: 10 },
+  4:  { promote: 5,  demote: 10 },
+  3:  { promote: 5,  demote: 12 },
+  2:  { promote: 5,  demote: 15 },
   1:  { promote: 8,  demote: 10 },
 }
 

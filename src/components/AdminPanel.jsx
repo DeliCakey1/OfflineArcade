@@ -9,7 +9,35 @@ import {
   setLoginCooldown,
   getRemainingCooldown,
 } from '../adminAuth'
-import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer } from '../leagueService'
+import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament } from '../leagueService'
+
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+function toLocalInputValue(ts) {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+}
+
+function nextWednesdayLocalValue() {
+  const now = new Date()
+  const day = now.getDay()
+  let daysAhead = (3 - day + 7) % 7
+  if (daysAhead === 0) daysAhead = 7
+  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysAhead, 0, 0, 0, 0)
+  return toLocalInputValue(target.getTime())
+}
+
+function formatTournamentStart(ts) {
+  return new Date(ts).toLocaleString()
+}
+
+const TOURNAMENT_STAGE_LABELS = {
+  tournament: 'God Tournament',
+  semiFinals: 'Semi-Finals',
+  finals: 'Finals',
+}
 
 export default function AdminPanel({ userId }) {
   const [authenticated, setAuthenticated] = useState(isAdminLoggedIn())
@@ -34,6 +62,12 @@ export default function AdminPanel({ userId }) {
   const [targetCoinAmount, setTargetCoinAmount] = useState('')
   const [targetActionLoading, setTargetActionLoading] = useState('')
   const [targetDone, setTargetDone] = useState('')
+  const [tournament, setTournament] = useState(null)
+  const [scheduleStart, setScheduleStart] = useState('')
+  const [tournamentLoading, setTournamentLoading] = useState(false)
+  const [tournamentError, setTournamentError] = useState('')
+  const [tournamentDone, setTournamentDone] = useState('')
+  const [cancelConfirming, setCancelConfirming] = useState(false)
   const inputRef = useRef(null)
   const sound = useSound()
 
@@ -52,6 +86,17 @@ export default function AdminPanel({ userId }) {
       }).catch(() => setMyCoinsLoading(false))
     }
   }, [authenticated, userId])
+
+  useEffect(() => {
+    if (!authenticated) return
+    let cancelled = false
+    getLatestTournamentForAdmin().then(t => {
+      if (cancelled) return
+      setTournament(t)
+      if (!t) setScheduleStart(nextWednesdayLocalValue())
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [authenticated])
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -181,6 +226,45 @@ export default function AdminPanel({ userId }) {
       sound('lose')
     }
     setTargetActionLoading('')
+  }
+
+  async function handleScheduleTournament(e) {
+    e.preventDefault()
+    if (!scheduleStart) return
+    const ts = new Date(scheduleStart).getTime()
+    if (!ts || isNaN(ts)) { setTournamentError('Pick a valid date and time.'); return }
+    setTournamentLoading(true)
+    setTournamentError('')
+    setTournamentDone('')
+    try {
+      const t = await scheduleTournament(ts)
+      setTournament(t)
+      setTournamentDone(`Scheduled for ${formatTournamentStart(t.startsAt)}`)
+      sound('cash')
+    } catch (err) {
+      setTournamentError(err.message || 'Failed to schedule tournament.')
+      sound('lose')
+    }
+    setTournamentLoading(false)
+  }
+
+  async function handleCancelTournament() {
+    if (!tournament) return
+    setTournamentLoading(true)
+    setTournamentError('')
+    setTournamentDone('')
+    try {
+      await cancelTournament(tournament.id)
+      setTournament(null)
+      setCancelConfirming(false)
+      setScheduleStart(nextWednesdayLocalValue())
+      setTournamentDone('Tournament cancelled.')
+      sound('cash')
+    } catch (err) {
+      setTournamentError(err.message || 'Failed to cancel tournament.')
+      sound('lose')
+    }
+    setTournamentLoading(false)
   }
 
   if (!authenticated) {
@@ -338,6 +422,56 @@ export default function AdminPanel({ userId }) {
                 </div>
               </div>
             )}
+          </div>
+          <div className="admin-section-card">
+            <span className="admin-section-emoji">🏟️</span>
+            <h4>Weekly Tournament</h4>
+            <p>Schedule a 3-week God Tournament (1 week per stage). Top 8 God players with tickets enter when it starts.</p>
+            {tournament ? (
+              <div className="admin-tournament-status">
+                <p className="admin-tournament-line">
+                  {tournament.status === 'scheduled'
+                    ? `📅 Scheduled to start ${formatTournamentStart(tournament.startsAt)}`
+                    : `🔥 Active · ${TOURNAMENT_STAGE_LABELS[tournament.stage] || tournament.stage}`}
+                </p>
+                <p className="admin-tournament-line">👥 {tournament.players?.length || 0} players entered</p>
+                {cancelConfirming ? (
+                  <div className="admin-reset-confirm">
+                    <p className="admin-reset-confirm-text">Cancel this tournament? Players will return to their leagues.</p>
+                    <button className="admin-reset-btn admin-reset-confirm-yes" onClick={handleCancelTournament} disabled={tournamentLoading}>
+                      {tournamentLoading ? '...' : 'Yes, cancel'}
+                    </button>
+                    <button className="admin-reset-btn admin-reset-confirm-no" onClick={() => setCancelConfirming(false)} disabled={tournamentLoading}>
+                      Keep it
+                    </button>
+                  </div>
+                ) : (
+                  <button className="admin-reset-btn" onClick={() => setCancelConfirming(true)} disabled={tournamentLoading}>
+                    ✕ Cancel Tournament
+                  </button>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleScheduleTournament} className="admin-tournament-form">
+                <input
+                  type="datetime-local"
+                  className="admin-coin-input"
+                  value={scheduleStart}
+                  onChange={e => setScheduleStart(e.target.value)}
+                  min={toLocalInputValue(Date.now())}
+                />
+                <div className="admin-tournament-btns">
+                  <button type="button" className="admin-coin-action-btn admin-coin-give" onClick={() => setScheduleStart(nextWednesdayLocalValue())}>
+                    Next Wednesday
+                  </button>
+                  <button type="submit" className="admin-coin-action-btn admin-coin-give" disabled={tournamentLoading || !scheduleStart}>
+                    {tournamentLoading ? '...' : 'Schedule'}
+                  </button>
+                </div>
+              </form>
+            )}
+            {tournamentDone && <p className="admin-reset-success">{tournamentDone}</p>}
+            {tournamentError && <p className="admin-reset-error">{tournamentError}</p>}
           </div>
           <div className="admin-section-card admin-coming-soon">
             <span className="admin-section-emoji">🎮</span>

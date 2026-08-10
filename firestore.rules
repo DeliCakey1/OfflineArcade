@@ -96,7 +96,8 @@ service cloud.firestore {
         && request.resource.data.status is string;
       allow update: if signedIn()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'players', 'status', 'stage', 'season', 'completedAt', 'createdAt'
+          'players', 'status', 'stage', 'season', 'completedAt', 'createdAt',
+          'startsAt', 'stageStartedAt', 'stageEndsAt', 'cancelledAt'
         ]);
       allow delete: if false;
     }

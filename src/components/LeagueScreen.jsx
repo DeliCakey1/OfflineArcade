@@ -10,7 +10,7 @@ import {
   getLeagueInstance, getLeaguePlayers, getTournament,
   subscribeToLeague, subscribeToPlayer, subscribeToTournament,
   processSeasonReset, processTournamentReset, processSemiFinalsReset,
-  processFinalsReset, updatePlayer, ensurePlayerInLeague,
+  processFinalsReset, updatePlayer, ensurePlayerInLeague, activateScheduledTournamentIfDue,
 } from '../leagueService'
 import { MAX_PER_LEAGUE } from '../leagues'
 import { TOURNAMENT_TICKET } from '../shopItems'
@@ -31,6 +31,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [seasonTime, setSeasonTime] = useState(0)
+  const [reloadKey, setReloadKey] = useState(0)
   const sound = useSound()
   const unsubLeagueRef = useRef(null)
   const unsubPlayerRef = useRef(null)
@@ -41,6 +42,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
     async function init() {
       try {
         if (!userId) { return }
+        await activateScheduledTournamentIfDue().catch(() => {})
         const p = await getOrCreatePlayer(userId)
         if (cancelled) return
         setPlayer(p)
@@ -52,7 +54,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
 
         if (p.leagueInstanceId) {
           const tDoc = await getTournament(p.leagueInstanceId).catch(() => null)
-          if (tDoc && tDoc.stage) {
+          if (tDoc && tDoc.stage && tDoc.status === 'active') {
             if (!cancelled) setTournament(tDoc)
             if (!cancelled) setLoading(false)
             return
@@ -81,14 +83,19 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
     }
     init()
     return () => { cancelled = true }
-  }, [userId])
+  }, [userId, reloadKey])
 
   useEffect(() => {
     if (tournament?.id) {
       let cancelled = false
       subscribeToTournament(tournament.id, (t) => {
         setTournament(t)
-        if (t.status === 'completed') setTournament(null)
+        if (t.status === 'completed' || t.status === 'cancelled') {
+          setTournament(null)
+          setLeague(null)
+          setLoading(true)
+          setReloadKey(k => k + 1)
+        }
       }).then((unsub) => {
         if (cancelled) { if (typeof unsub === 'function') unsub(); return }
         unsubTournamentRef.current = unsub
@@ -131,6 +138,17 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
   }, [player?.id])
 
   useEffect(() => {
+    if (!player?.id || !player.leagueInstanceId) return
+    const activeId = tournament?.id || league?.id
+    if (activeId && activeId !== player.leagueInstanceId) {
+      setTournament(null)
+      setLeague(null)
+      setLoading(true)
+      setReloadKey(k => k + 1)
+    }
+  }, [player?.leagueInstanceId, tournament?.id, league?.id, player?.id])
+
+  useEffect(() => {
     const source = tournament?.players || league?.players
     if (!source) return
     let cancelled = false
@@ -150,11 +168,14 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
   }, [tournament?.players, league?.players])
 
   useEffect(() => {
-    const tick = () => setSeasonTime(getTimeUntilSeasonEnd())
+    const tick = () => {
+      if (tournament?.stageEndsAt) setSeasonTime(Math.max(0, tournament.stageEndsAt - Date.now()))
+      else setSeasonTime(getTimeUntilSeasonEnd())
+    }
     tick()
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [tournament?.stageEndsAt])
 
   const sortedPlayers = useMemo(() => [...players].sort((a, b) => b.xp - a.xp), [players])
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
@@ -314,7 +335,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
         <div className="league-header-text">
           <h2>{isTournament ? `${tournamentInfo.emoji} ${tournamentInfo.name}` : `${rankInfo.emoji} ${rankInfo.name}`}</h2>
           <span className="league-season-timer" style={{ color: seasonTime < 3600000 ? 'var(--neon-red)' : 'var(--neon-blue)' }}>
-            ⏱ {formatSeasonTime(seasonTime)} until promotion & demotion
+            ⏱ {formatSeasonTime(seasonTime)} until {isTournament ? 'next stage' : 'promotion & demotion'}
           </span>
         </div>
       </div>
@@ -470,7 +491,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
         }
       </div>
       <div className="league-footer" style={{ marginTop: 4, fontSize: 11 }}>
-        Seasons reset every Wednesday at 12 AM UTC
+        {isTournament ? 'Each tournament stage runs 1 week' : 'Seasons reset every Wednesday at 12 AM UTC'}
       </div>
     </div>
   )

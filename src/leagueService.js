@@ -18,6 +18,8 @@ const LEAGUES = 'leagues'
 const MATCHES = 'matches'
 const TOURNAMENTS = 'tournaments'
 
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
 export async function getOrCreatePlayer(userId, name, username) {
   const { doc, getDoc, setDoc, updateDoc } = await f()
   const { db } = await f()
@@ -353,8 +355,12 @@ export async function processSeasonReset(leagueId) {
     const coinReward = coinRewardPositions[i] || 0
     if (currentRank === 1) {
       if ((p.tournamentTickets || 0) > 0) {
-        await addToTournament(p.id)
-        await updatePlayer(p.id, { league: promoteRank, leagueInstanceId: null, promotions: increment(1), tournamentTickets: increment(-1), coins: increment(coinReward) })
+        const t = await addToTournament(p.id)
+        if (t) {
+          await updatePlayer(p.id, { league: promoteRank, leagueInstanceId: t.id, promotions: increment(1), tournamentTickets: increment(-1), coins: increment(coinReward) })
+        } else {
+          await updatePlayer(p.id, { league: promoteRank, leagueInstanceId: null, promotions: increment(1), coins: increment(coinReward) })
+        }
       } else {
         await updatePlayer(p.id, { promotions: increment(1), coins: increment(coinReward) })
       }
@@ -382,8 +388,26 @@ export async function processSeasonReset(leagueId) {
   await updateDoc(doc(db, LEAGUES, leagueId), { status: 'completed', completedAt: Date.now() })
 }
 
+export async function activateScheduledTournamentIfDue() {
+  const { collection, query, where, getDocs, doc, updateDoc } = await f()
+  const { db } = await f()
+  const q = query(collection(db, TOURNAMENTS), where('status', '==', 'scheduled'))
+  const snap = await getDocs(q)
+  const now = Date.now()
+  const due = snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(t => t.startsAt && t.startsAt <= now)
+    .sort((a, b) => (a.startsAt || 0) - (b.startsAt || 0))[0]
+  if (!due) return null
+  const stageStartedAt = due.startsAt
+  const stageEndsAt = stageStartedAt + WEEK_MS
+  await updateDoc(doc(db, TOURNAMENTS, due.id), { status: 'active', stageStartedAt, stageEndsAt })
+  return { id: due.id, ...due, status: 'active', stageStartedAt, stageEndsAt }
+}
+
 export async function addToTournament(userId) {
-  const { collection, query, where, getDocs, doc, setDoc, updateDoc, arrayUnion } = await f()
+  await activateScheduledTournamentIfDue()
+  const { collection, query, where, getDocs, doc, updateDoc, arrayUnion } = await f()
   const { db } = await f()
   const q = query(collection(db, TOURNAMENTS), where('stage', '==', 'tournament'), where('status', '==', 'active'))
   const snap = await getDocs(q)
@@ -397,11 +421,7 @@ export async function addToTournament(userId) {
     }
   }
 
-  const newRef = doc(collection(db, TOURNAMENTS))
-  const tournament = { stage: 'tournament', season: Date.now(), players: [userId], status: 'active', createdAt: Date.now() }
-  await setDoc(newRef, tournament)
-  await updatePlayer(userId, { leagueInstanceId: newRef.id })
-  return { id: newRef.id, ...tournament }
+  return null
 }
 
 export async function subscribeToTournament(tournamentId, callback) {
@@ -432,9 +452,68 @@ export async function getActiveTournament(stage) {
   return { id: d.id, ...d.data() }
 }
 
+export async function expireEmptyTournaments() {
+  const { collection, query, where, getDocs, doc, updateDoc } = await f()
+  const { db } = await f()
+  const snap = await getDocs(query(collection(db, TOURNAMENTS), where('status', '==', 'active')))
+  const now = Date.now()
+  for (const d of snap.docs) {
+    const data = d.data()
+    if ((data.players?.length || 0) === 0 && data.stageEndsAt && data.stageEndsAt < now) {
+      await updateDoc(doc(db, TOURNAMENTS, d.id), { status: 'completed', completedAt: now }).catch(() => {})
+    }
+  }
+}
+
+export async function getLatestTournamentForAdmin() {
+  await expireEmptyTournaments()
+  const { collection, query, where, getDocs } = await f()
+  const { db } = await f()
+  const snap = await getDocs(query(collection(db, TOURNAMENTS), where('status', 'in', ['scheduled', 'active'])))
+  if (snap.empty) return null
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  docs.sort((a, b) => (a.startsAt || a.createdAt || 0) - (b.startsAt || b.createdAt || 0))
+  return docs[0]
+}
+
+export async function scheduleTournament(startsAt) {
+  const ts = Number(startsAt)
+  if (!ts || ts <= Date.now()) throw new Error('Tournament start must be in the future')
+  const existing = await getLatestTournamentForAdmin()
+  if (existing) throw new Error('A tournament is already scheduled or active. Cancel it first.')
+  const { collection, doc, setDoc } = await f()
+  const { db } = await f()
+  const ref = doc(collection(db, TOURNAMENTS))
+  const tournament = {
+    stage: 'tournament',
+    status: 'scheduled',
+    startsAt: ts,
+    season: ts,
+    stageStartedAt: null,
+    stageEndsAt: null,
+    players: [],
+    createdAt: Date.now(),
+  }
+  await setDoc(ref, tournament)
+  return { id: ref.id, ...tournament }
+}
+
+export async function cancelTournament(tournamentId) {
+  const { doc, updateDoc } = await f()
+  const { db } = await f()
+  const ref = doc(db, TOURNAMENTS, tournamentId)
+  await updateDoc(ref, { status: 'cancelled', cancelledAt: Date.now() })
+}
+
 export async function processTournamentReset() {
   const tournament = await getActiveTournament('tournament')
-  if (!tournament || tournament.players.length === 0) return
+  if (!tournament) return
+  if (tournament.players.length === 0) {
+    const { doc, updateDoc } = await f()
+    const { db } = await f()
+    await updateDoc(doc(db, TOURNAMENTS, tournament.id), { status: 'completed', completedAt: Date.now() })
+    return
+  }
 
   const players = await getLeaguePlayers(tournament.players)
   players.sort((a, b) => b.xp - a.xp)
@@ -444,8 +523,15 @@ export async function processTournamentReset() {
   const { collection, doc, setDoc, updateDoc } = await f()
   const { db } = await f()
 
+  const stageStartedAt = tournament.stageEndsAt || Date.now()
+  const stageEndsAt = stageStartedAt + WEEK_MS
   const semiRef = doc(collection(db, TOURNAMENTS))
-  await setDoc(semiRef, { stage: 'semiFinals', season: tournament.season, players: top15.map(p => p.id), status: 'active', createdAt: Date.now() })
+  await setDoc(semiRef, {
+    stage: 'semiFinals', season: tournament.season,
+    startsAt: tournament.startsAt || tournament.season,
+    stageStartedAt, stageEndsAt,
+    players: top15.map(p => p.id), status: 'active', createdAt: Date.now(),
+  })
 
   for (const p of top15) await updatePlayer(p.id, { leagueInstanceId: semiRef.id })
   for (const p of bottom5) {
@@ -459,7 +545,13 @@ export async function processTournamentReset() {
 
 export async function processSemiFinalsReset() {
   const semi = await getActiveTournament('semiFinals')
-  if (!semi || semi.players.length === 0) return
+  if (!semi) return
+  if (semi.players.length === 0) {
+    const { doc, updateDoc } = await f()
+    const { db } = await f()
+    await updateDoc(doc(db, TOURNAMENTS, semi.id), { status: 'completed', completedAt: Date.now() })
+    return
+  }
 
   const players = await getLeaguePlayers(semi.players)
   players.sort((a, b) => b.xp - a.xp)
@@ -469,8 +561,15 @@ export async function processSemiFinalsReset() {
   const { collection, doc, setDoc, updateDoc } = await f()
   const { db } = await f()
 
+  const stageStartedAt = semi.stageEndsAt || Date.now()
+  const stageEndsAt = stageStartedAt + WEEK_MS
   const finalsRef = doc(collection(db, TOURNAMENTS))
-  await setDoc(finalsRef, { stage: 'finals', season: semi.season, players: top10.map(p => p.id), status: 'active', createdAt: Date.now() })
+  await setDoc(finalsRef, {
+    stage: 'finals', season: semi.season,
+    startsAt: semi.startsAt || semi.season,
+    stageStartedAt, stageEndsAt,
+    players: top10.map(p => p.id), status: 'active', createdAt: Date.now(),
+  })
 
   for (const p of top10) await updatePlayer(p.id, { leagueInstanceId: finalsRef.id })
   for (const p of bottom5) {
@@ -484,7 +583,13 @@ export async function processSemiFinalsReset() {
 
 export async function processFinalsReset() {
   const finals = await getActiveTournament('finals')
-  if (!finals || finals.players.length === 0) return
+  if (!finals) return
+  if (finals.players.length === 0) {
+    const { doc, updateDoc } = await f()
+    const { db } = await f()
+    await updateDoc(doc(db, TOURNAMENTS, finals.id), { status: 'completed', completedAt: Date.now() })
+    return
+  }
 
   const players = await getLeaguePlayers(finals.players)
   players.sort((a, b) => b.xp - a.xp)

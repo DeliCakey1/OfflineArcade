@@ -4885,6 +4885,28 @@ body::after {
   border-color: var(--text-dim);
   color: var(--text);
 }
+.admin-tournament-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.admin-tournament-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.admin-tournament-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+.admin-tournament-line {
+  font-size: 12px;
+  color: var(--text-light);
+  margin: 0;
+}
 .admin-my-coins {
   display: flex;
   align-items: center;
