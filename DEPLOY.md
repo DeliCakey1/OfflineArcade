@@ -85,3 +85,6 @@ Open `/play/snake` in a browser and confirm it renders. Deep links
   deploying breaking asset changes.
 - Firestore rules are in `firestore.rules`; after any change, redeploy from a
   fresh clone: `cd OfflineArcade && git pull && firebase deploy --only firestore:rules --project offline-arcade-468cd`.
+- One-time maintenance scripts live in `scripts/`. To remove players with zero
+  games played from all active leagues/tournaments (Node 20+ in Cloud Shell):
+  `npm install --no-save firebase-admin && gcloud auth application-default login && node scripts/cleanup-inactive-league-members.mjs`
