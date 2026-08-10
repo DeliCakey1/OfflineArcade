@@ -151,7 +151,8 @@ function getAdmin() {
   }
   if (parsed && parsed.project_id) {
     _admin = require('firebase-admin')
-    _admin.initializeApp({ credential: _admin.credential.cert(parsed) })
+    const certFn = (_admin.credential && _admin.credential.cert) || _admin.cert
+    _admin.initializeApp({ credential: certFn(parsed) })
     return _admin
   }
   return null
@@ -167,7 +168,8 @@ async function runChatCleanup() {
       }
       return
     }
-    const db = admin.firestore()
+    const { getFirestore } = require('firebase-admin/firestore')
+    const db = getFirestore()
     const cutoff = Date.now() - CHAT_TTL_MS
     let total = 0
     for (let round = 0; round < CLEANUP_MAX_ROUNDS; round++) {
