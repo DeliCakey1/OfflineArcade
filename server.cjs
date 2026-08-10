@@ -126,3 +126,68 @@ server.listen(PORT, () => {
     console.error('Could not read dist directory:', e.message)
   }
 })
+
+// ===== Hourly chat message cleanup =====
+// Deletes chatMessages older than 7 days so storage stays bounded even when
+// nobody has the app open. Uses firebase-admin (server SDK) so it bypasses
+// security rules. Requires the FIREBASE_SERVICE_ACCOUNT env var (JSON key for
+// a service account with Firestore read/write) or GOOGLE_APPLICATION_CREDENTIALS.
+const CHAT_TTL_MS = 7 * 24 * 60 * 60 * 1000
+const CLEANUP_BATCH = 500
+const CLEANUP_MAX_ROUNDS = 5
+
+let _admin = null
+let _cleanupWarned = false
+
+function getAdmin() {
+  if (_admin) return _admin
+  let parsed = null
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT
+  if (raw) {
+    try { parsed = JSON.parse(raw) } catch {}
+    if (!parsed) {
+      try { parsed = JSON.parse(Buffer.from(raw, 'base64').toString('utf8')) } catch {}
+    }
+  }
+  if (parsed && parsed.project_id) {
+    _admin = require('firebase-admin')
+    _admin.initializeApp({ credential: _admin.credential.cert(parsed) })
+    return _admin
+  }
+  return null
+}
+
+async function runChatCleanup() {
+  try {
+    const admin = getAdmin()
+    if (!admin) {
+      if (!_cleanupWarned) {
+        console.warn('[chat-cleanup] FIREBASE_SERVICE_ACCOUNT not set; skipping. Set it to enable hourly cleanup.')
+        _cleanupWarned = true
+      }
+      return
+    }
+    const db = admin.firestore()
+    const cutoff = Date.now() - CHAT_TTL_MS
+    let total = 0
+    for (let round = 0; round < CLEANUP_MAX_ROUNDS; round++) {
+      const snap = await db.collection('chatMessages')
+        .where('createdAt', '<', cutoff)
+        .orderBy('createdAt')
+        .limit(CLEANUP_BATCH)
+        .get()
+      if (snap.empty) break
+      const batch = db.batch()
+      snap.forEach(d => batch.delete(d.ref))
+      await batch.commit()
+      total += snap.size
+      if (snap.size < CLEANUP_BATCH) break
+    }
+    if (total > 0) console.log(`[chat-cleanup] Deleted ${total} expired chat message(s)`)
+  } catch (e) {
+    console.warn('[chat-cleanup] error:', e.message)
+  }
+}
+
+setTimeout(runChatCleanup, 10 * 1000)
+setInterval(runChatCleanup, 60 * 60 * 1000)

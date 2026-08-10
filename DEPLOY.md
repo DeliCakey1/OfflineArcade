@@ -86,14 +86,23 @@ Open `/play/snake` in a browser and confirm it renders. Deep links
 - Firestore rules are in `firestore.rules`; after any change, redeploy from a
   fresh clone: `cd OfflineArcade && git pull && firebase deploy --only firestore:rules --project offline-arcade-468cd`.
 - **Chat messages auto-expire after 7 days.** Every message is written with an
-  `expiresAt` timestamp (`createdAt + 7 days`); Firestore's native TTL policy
-  hard-deletes them server-side even when nobody has the app open. One-time setup
-  (after the `expiresAt` field is live in new messages), from Cloud Shell:
-  `gcloud firestore fields ttls update expiresAt --collection-group=chatMessages --enable-ttl --project=offline-arcade-468cd`
-  (verify with `gcloud firestore fields ttls list --collection-group=chatMessages --project=offline-arcade-468cd`,
-  or use Firebase console → Firestore → Data → TTL).
-  The client-side cleanup in `src/chatTtl.js` still deletes legacy/edge-case
-  messages older than 7 days when the app is open.
+  `expiresAt` timestamp (`createdAt + 7 days`) and the app filters them out of
+  view after 7 days. Actual deletion happens two ways:
+  - **Server-side hourly cleanup (no billing needed):** `server.cjs` runs every
+    hour and deletes `chatMessages` docs with `createdAt` older than 7 days via
+    `firebase-admin`, so storage stays bounded even when nobody is online. To
+    enable it, create a service account JSON key (Google Cloud console → IAM &
+    Admin → Service accounts → Create key) with **Cloud Datastore User** (or
+    `roles/datastore.user`), then set it on Railway and Render as
+    `FIREBASE_SERVICE_ACCOUNT` (paste the JSON, or base64-encode it first so the
+    value survives env-var handling: `base64 -w0 sa.json`). The server skips the
+    cleanup with a warning if the var is missing.
+  - **Firestore native TTL (optional, requires billing):** if the project is
+    ever on the Blaze plan, `gcloud firestore fields ttls update expiresAt
+    --collection-group=chatMessages --enable-ttl --project=offline-arcade-468cd`
+    would also delete them natively.
+  - **Client fallback:** `src/chatTtl.js` deletes anything older than 7 days
+    when the app is open.
 - One-time maintenance scripts live in `scripts/`. To remove players with zero
   games played from all active leagues/tournaments (Node 20+ in Cloud Shell):
   `npm install --no-save firebase-admin && gcloud auth application-default login && node scripts/cleanup-inactive-league-members.mjs`
