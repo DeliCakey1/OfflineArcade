@@ -1078,10 +1078,16 @@ function App() {
           getPlayer(userId).then(p => {
             if (!p) return
             syncLeagueData(p)
-            ensurePlayerInLeague(userId).catch(err => console.warn('League join failed:', err))
+            const updates = { gamesPlayed: increment(1) }
             if (!won) {
-              updatePlayer(userId, { losses: increment(1), streak: 0 }).catch(() => {})
+              updates.losses = increment(1)
+              updates.streak = 0
             }
+            updatePlayer(userId, updates)
+              .then(() => ensurePlayerInLeague(userId))
+              .catch(() => {
+                ensurePlayerInLeague(userId).catch(() => {})
+              })
         })
       }).catch(() => {})
     }

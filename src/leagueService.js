@@ -48,6 +48,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     if (data.inviteCode === undefined) updates.inviteCode = makeInviteCode()
     if (data.referrals == null) updates.referrals = 0
     if (data.referredBy === undefined) updates.referredBy = null
+    if (data.gamesPlayed == null) updates.gamesPlayed = 0
     if (Object.keys(updates).length > 0) {
       updateDoc(ref, updates).catch(() => {})
       Object.assign(data, updates)
@@ -69,6 +70,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     wins: 0,
     losses: 0,
     streak: 0,
+    gamesPlayed: 0,
     promotions: 0,
     tournamentWins: 0,
     firstPlaceFinishes: 0,
@@ -318,6 +320,7 @@ export async function ensurePlayerInLeague(userId) {
   if (isInLockoutPeriod()) return null
   const p = await getPlayer(userId)
   if (!p) return null
+  if ((p.gamesPlayed || 0) < 1 && !(p.wins || 0) && !(p.losses || 0)) return null
   if (p.leagueInstanceId) {
     const lg = await getLeagueInstance(p.leagueInstanceId)
     if (lg && lg.status !== 'completed') return lg
@@ -570,7 +573,7 @@ export async function resetAllScores(adminUserId) {
   for (const d of playersSnap.docs) {
     if (d.id === adminUserId) continue
     await updateDoc(d.ref, {
-      xp: 0, wins: 0, losses: 0, streak: 0, promotions: 0, tournamentWins: 0, firstPlaceFinishes: 0, coins: 0,
+      xp: 0, wins: 0, losses: 0, streak: 0, gamesPlayed: 0, promotions: 0, tournamentWins: 0, firstPlaceFinishes: 0, coins: 0,
       title: null, nameplate: null, nameplateEffect: null, ownedItems: [], league: 10, leagueInstanceId: null, statsBlob: null, lastActive: Date.now(),
     })
   }
