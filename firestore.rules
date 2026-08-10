@@ -105,7 +105,10 @@ service cloud.firestore {
     // ===== config (shop sales, misc settings) =====
     match /config/{configId} {
       allow read: if signedIn();
-      allow create, update: if signedIn()
+      allow create: if signedIn()
+        && request.resource.data.items is map
+        && request.resource.data.updatedAt is number;
+      allow update: if signedIn()
         && request.resource.data.items is map
         && request.resource.data.updatedAt is number
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt']);
