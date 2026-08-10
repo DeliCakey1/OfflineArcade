@@ -20,7 +20,9 @@ service cloud.firestore {
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 100
         && request.resource.data.roomId is string
-        && request.resource.data.createdAt is number;
+        && request.resource.data.createdAt is number
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time;
       allow update: if signedIn()
         && resource.data.userId == request.auth.uid
         && request.resource.data.text is string

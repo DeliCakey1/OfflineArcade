@@ -101,7 +101,7 @@ export function useChatRoom(roomId) {
     sentTimestamps.current.push(now)
     setSending(true)
     try {
-      const { collection, addDoc } = await f()
+      const { collection, addDoc, Timestamp } = await f()
       const { db } = await f()
       await addDoc(collection(db, COLLECTION), {
         roomId,
@@ -109,6 +109,7 @@ export function useChatRoom(roomId) {
         username: user.displayName || user.email?.split('@')[0] || 'Anon',
         text: text.trim().slice(0, MAX_LEN),
         createdAt: Date.now(),
+        expiresAt: Timestamp.fromMillis(Date.now() + CHAT_TTL_MS),
       })
     } catch (e) {
       console.warn('Chat send error:', e)

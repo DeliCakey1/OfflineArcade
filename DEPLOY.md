@@ -85,6 +85,14 @@ Open `/play/snake` in a browser and confirm it renders. Deep links
   deploying breaking asset changes.
 - Firestore rules are in `firestore.rules`; after any change, redeploy from a
   fresh clone: `cd OfflineArcade && git pull && firebase deploy --only firestore:rules --project offline-arcade-468cd`.
+- **Chat messages auto-expire after 7 days.** Every message is written with an
+  `expiresAt` timestamp (`createdAt + 7 days`); Firestore's native TTL policy
+  hard-deletes them server-side even when nobody has the app open. One-time setup
+  (after the `expiresAt` field is live in new messages), from Cloud Shell:
+  `gcloud firestore ttl-policies create --collection=chatMessages --field=expiresAt --project=offline-arcade-468cd`
+  (or Firebase console → Firestore → Data → TTL → create policy on `chatMessages.expiresAt`).
+  The client-side cleanup in `src/chatTtl.js` still deletes legacy/edge-case
+  messages older than 7 days when the app is open.
 - One-time maintenance scripts live in `scripts/`. To remove players with zero
   games played from all active leagues/tournaments (Node 20+ in Cloud Shell):
   `npm install --no-save firebase-admin && gcloud auth application-default login && node scripts/cleanup-inactive-league-members.mjs`
