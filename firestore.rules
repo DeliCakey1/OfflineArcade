@@ -102,16 +102,64 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ===== config (shop sales, misc settings) =====
+    // ===== config (shop sales, announcements, misc settings) =====
     match /config/{configId} {
+      // Each config doc validates its own known shape; unknown docs are rejected.
+      function isShopSale() { return configId == 'shopSale'; }
+      function isAnnouncement() { return configId == 'announcement'; }
+      function isChatControls() { return configId == 'chatControls'; }
+
+      function validShopSaleCreate() {
+        return isShopSale()
+          && request.resource.data.keys().hasOnly(['items', 'updatedAt'])
+          && request.resource.data.items is map
+          && request.resource.data.updatedAt is number;
+      }
+      function validShopSaleUpdate() {
+        return isShopSale()
+          && request.resource.data.keys().hasOnly(['items', 'updatedAt'])
+          && request.resource.data.items is map
+          && request.resource.data.updatedAt is number
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt']);
+      }
+
+      function validAnnouncementCreate() {
+        return isAnnouncement()
+          && request.resource.data.keys().hasOnly(['text', 'enabled', 'updatedAt'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 200
+          && request.resource.data.enabled is bool
+          && request.resource.data.updatedAt is number;
+      }
+      function validAnnouncementUpdate() {
+        return isAnnouncement()
+          && request.resource.data.keys().hasOnly(['text', 'enabled', 'updatedAt'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 200
+          && request.resource.data.enabled is bool
+          && request.resource.data.updatedAt is number
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'enabled', 'updatedAt']);
+      }
+
+      function validChatControlsCreate() {
+        return isChatControls()
+          && request.resource.data.keys().hasOnly(['enabled', 'updatedAt'])
+          && request.resource.data.enabled is bool
+          && request.resource.data.updatedAt is number;
+      }
+      function validChatControlsUpdate() {
+        return isChatControls()
+          && request.resource.data.keys().hasOnly(['enabled', 'updatedAt'])
+          && request.resource.data.enabled is bool
+          && request.resource.data.updatedAt is number
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['enabled', 'updatedAt']);
+      }
+
       allow read: if signedIn();
       allow create: if signedIn()
-        && request.resource.data.items is map
-        && request.resource.data.updatedAt is number;
+        && (validShopSaleCreate() || validAnnouncementCreate() || validChatControlsCreate());
       allow update: if signedIn()
-        && request.resource.data.items is map
-        && request.resource.data.updatedAt is number
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt']);
+        && (validShopSaleUpdate() || validAnnouncementUpdate() || validChatControlsUpdate());
       allow delete: if false;
     }
 

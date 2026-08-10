@@ -772,6 +772,15 @@ function App() {
   const hideConfetti = useCallback(() => setShowConfetti(false), [])
   const [lastGameResult, setLastGameResult] = useState(null)
   const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
+  const [announcement, setAnnouncement] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    import('./leagueService').then(m => m.getAnnouncement()).then(a => {
+      if (!cancelled) setAnnouncement(a)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands', friends: '/friends', leaderboard: '/leaderboard', accessibility: '/accessibility' }
@@ -1618,6 +1627,9 @@ function App() {
             You are not signed in. <span className="guest-banner-link" onClick={() => navigateTo('signin')}>Sign In</span> to save your data across devices!
           </div>
         )}
+        {announcement && announcement.enabled && announcement.text && (
+          <div className="announcement-banner" role="status">📣 {announcement.text}</div>
+        )}
         <header className="arcade-header">
           <h1 className="arcade-title">ARCADE GAMES</h1>
         </header>
@@ -1682,6 +1694,9 @@ function App() {
         <div className="guest-banner">
           You are not signed in. <span className="guest-banner-link" onClick={() => navigateTo('signin')}>Sign In</span> to save your data across devices!
         </div>
+      )}
+      {announcement && announcement.enabled && announcement.text && (
+        <div className="announcement-banner" role="status">📣 {announcement.text}</div>
       )}
       <header className="arcade-header" role="banner">
         <h1 className="arcade-title">ARCADE GAMES</h1>

@@ -9,7 +9,7 @@ import {
   setLoginCooldown,
   getRemainingCooldown,
 } from '../adminAuth'
-import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament, getShopSale, setShopSale } from '../leagueService'
+import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament, getShopSale, setShopSale, getAnnouncement, setAnnouncement, getChatControls, setChatControls, getAnalytics } from '../leagueService'
 import { TITLES, ALL_NAMEPLATES, TOURNAMENT_TICKET, SALE_PERCENT_OPTIONS } from '../shopItems'
 import { getNextWednesdayMidnightUTC } from '../leagues'
 
@@ -61,6 +61,8 @@ const ADMIN_MENU = [
   { id: 'target', emoji: '🎯', title: 'Give / Remove Coins', desc: 'Search a player and adjust their coins' },
   { id: 'tournament', emoji: '🏟️', title: 'Weekly Tournament', desc: 'Schedule or cancel the God Tournament' },
   { id: 'sale', emoji: '🛒', title: 'Shop Discounts', desc: 'Put shop items on sale' },
+  { id: 'controls', emoji: '🎮', title: 'Game Controls', desc: 'Announcement banner and chat on/off' },
+  { id: 'analytics', emoji: '📈', title: 'Analytics', desc: 'Live stats on players, coins, and activity' },
   { id: 'reset', emoji: '💥', title: 'Reset All Scores', desc: 'Wipe all stats, coins, leagues, and tournaments' },
 ]
 
@@ -69,6 +71,8 @@ const ADMIN_MENU_TITLES = {
   target: 'Give / Remove Coins',
   tournament: 'Weekly Tournament',
   sale: 'Shop Discounts',
+  controls: 'Game Controls',
+  analytics: 'Analytics',
   reset: 'Reset All Scores',
 }
 
@@ -107,6 +111,16 @@ export default function AdminPanel({ userId }) {
   const [saleSaving, setSaleSaving] = useState(false)
   const [saleDone, setSaleDone] = useState('')
   const [saleError, setSaleError] = useState('')
+  const [controlsLoading, setControlsLoading] = useState(false)
+  const [controlsSaving, setControlsSaving] = useState(false)
+  const [announcementText, setAnnouncementText] = useState('')
+  const [announcementEnabled, setAnnouncementEnabled] = useState(false)
+  const [chatEnabled, setChatEnabled] = useState(true)
+  const [controlsDone, setControlsDone] = useState('')
+  const [controlsError, setControlsError] = useState('')
+  const [analytics, setAnalytics] = useState(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState('')
   const [adminPage, setAdminPage] = useState('menu')
   const inputRef = useRef(null)
   const sound = useSound()
@@ -147,6 +161,20 @@ export default function AdminPanel({ userId }) {
       setSaleItems(items)
       setSaleDraft({ ...items })
     }).catch(() => {})
+    return () => { cancelled = true }
+  }, [authenticated])
+
+  useEffect(() => {
+    if (!authenticated) return
+    let cancelled = false
+    setControlsLoading(true)
+    Promise.all([getAnnouncement(), getChatControls()]).then(([ann, chat]) => {
+      if (cancelled) return
+      setAnnouncementText(ann?.text || '')
+      setAnnouncementEnabled(!!ann?.enabled)
+      setChatEnabled(chat?.enabled !== false)
+      setControlsLoading(false)
+    }).catch(() => setControlsLoading(false))
     return () => { cancelled = true }
   }, [authenticated])
 
@@ -383,6 +411,37 @@ export default function AdminPanel({ userId }) {
     setSaleSaving(false)
   }
 
+  async function handleSaveControls() {
+    setControlsSaving(true)
+    setControlsError('')
+    setControlsDone('')
+    try {
+      await Promise.all([
+        setAnnouncement(announcementText, announcementEnabled),
+        setChatControls(chatEnabled),
+      ])
+      setControlsDone('Controls saved. Changes are live for all players.')
+      sound('cash')
+    } catch (err) {
+      setControlsError(err.message || 'Failed to save controls.')
+      sound('lose')
+    }
+    setControlsSaving(false)
+  }
+
+  async function handleLoadAnalytics() {
+    setAnalyticsLoading(true)
+    setAnalyticsError('')
+    setAnalytics(null)
+    try {
+      const data = await getAnalytics()
+      setAnalytics(data)
+    } catch (err) {
+      setAnalyticsError(err.message || 'Failed to load analytics.')
+    }
+    setAnalyticsLoading(false)
+  }
+
   if (!authenticated) {
     return (
       <div className="full-page">
@@ -446,16 +505,6 @@ export default function AdminPanel({ userId }) {
                   <span className="admin-menu-arrow">→</span>
                 </button>
               ))}
-              <div className="admin-menu-card admin-menu-coming-soon">
-                <span className="admin-menu-emoji">🎮</span>
-                <span className="admin-menu-title">Game Controls</span>
-                <span className="admin-menu-desc">Coming soon...</span>
-              </div>
-              <div className="admin-menu-card admin-menu-coming-soon">
-                <span className="admin-menu-emoji">📈</span>
-                <span className="admin-menu-title">Analytics</span>
-                <span className="admin-menu-desc">Coming soon...</span>
-              </div>
             </div>
             <button className="admin-logout-btn" onClick={handleLogout}>
               🚪 Lock Admin Panel
@@ -690,6 +739,137 @@ export default function AdminPanel({ userId }) {
                 </div>
                 {saleDone && <p className="admin-reset-success">{saleDone}</p>}
                 {saleError && <p className="admin-reset-error">{saleError}</p>}
+              </div>
+            )}
+
+            {adminPage === 'controls' && (
+              <div className="admin-section-card admin-page-body">
+                <span className="admin-section-emoji">🎮</span>
+                <h4>Game Controls</h4>
+                <p>Global settings that apply to every player immediately.</p>
+                {controlsLoading ? (
+                  <p className="admin-tournament-line">Loading current settings...</p>
+                ) : (
+                  <>
+                    <div className="admin-control-group">
+                      <h5 className="admin-control-heading">📣 Announcement Banner</h5>
+                      <p className="admin-tournament-line">Shown at the top of the app for all players (max 200 chars).</p>
+                      <textarea
+                        className="admin-announcement-textarea"
+                        value={announcementText}
+                        onChange={e => setAnnouncementText(e.target.value.slice(0, 200))}
+                        placeholder="e.g. God Tournament starts this Wednesday at 00:00 UTC!"
+                        maxLength={200}
+                      />
+                      <div className="admin-control-char-count">{announcementText.length}/200</div>
+                      <div className="admin-toggle-row">
+                        <span className="admin-toggle-label">Show banner</span>
+                        <button
+                          className={`admin-toggle ${announcementEnabled ? 'on' : ''}`}
+                          onClick={() => setAnnouncementEnabled(v => !v)}
+                          role="switch"
+                          aria-checked={announcementEnabled}
+                        >
+                          <span className="admin-toggle-knob" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="admin-control-group">
+                      <h5 className="admin-control-heading">💬 Live Chat</h5>
+                      <p className="admin-tournament-line">When off, players can read messages but not send new ones.</p>
+                      <div className="admin-toggle-row">
+                        <span className="admin-toggle-label">Chat enabled</span>
+                        <button
+                          className={`admin-toggle ${chatEnabled ? 'on' : ''}`}
+                          onClick={() => setChatEnabled(v => !v)}
+                          role="switch"
+                          aria-checked={chatEnabled}
+                        >
+                          <span className="admin-toggle-knob" />
+                        </button>
+                      </div>
+                    </div>
+                    <button className="admin-coin-action-btn admin-coin-give" onClick={handleSaveControls} disabled={controlsSaving}>
+                      {controlsSaving ? 'Saving...' : '💾 Save controls'}
+                    </button>
+                    {controlsDone && <p className="admin-reset-success">{controlsDone}</p>}
+                    {controlsError && <p className="admin-reset-error">{controlsError}</p>}
+                  </>
+                )}
+              </div>
+            )}
+
+            {adminPage === 'analytics' && (
+              <div className="admin-section-card admin-page-body">
+                <span className="admin-section-emoji">📈</span>
+                <h4>Analytics</h4>
+                <p>Live snapshot of players, activity, and the economy.</p>
+                <div className="admin-analytics-topbar">
+                  <button className="admin-coin-action-btn admin-coin-give" onClick={handleLoadAnalytics} disabled={analyticsLoading}>
+                    {analyticsLoading ? 'Loading...' : '🔄 Refresh'}
+                  </button>
+                </div>
+                {analyticsError && <p className="admin-reset-error">{analyticsError}</p>}
+                {!analytics && !analyticsLoading && !analyticsError && (
+                  <p className="admin-tournament-line">Click Refresh to pull the latest stats.</p>
+                )}
+                {analyticsLoading && <p className="admin-tournament-line">Crunching numbers...</p>}
+                {analytics && !analyticsLoading && (
+                  <>
+                    <div className="admin-analytics-grid">
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">👥 {analytics.totalPlayers.toLocaleString()}</span><span className="admin-analytics-label">Total players</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">🟢 {analytics.activeToday.toLocaleString()}</span><span className="admin-analytics-label">Active today</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">📆 {analytics.activeWeek.toLocaleString()}</span><span className="admin-analytics-label">Active this week</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">🪙 {analytics.totalCoins.toLocaleString()}</span><span className="admin-analytics-label">Coins in circulation</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">⭐ {analytics.totalXp.toLocaleString()}</span><span className="admin-analytics-label">Total XP</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">🎮 {analytics.totalGames.toLocaleString()}</span><span className="admin-analytics-label">Games played</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">🏆 {analytics.leagues.active.toLocaleString()}</span><span className="admin-analytics-label">Active leagues</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">⚔️ {analytics.leagues.players.toLocaleString()}</span><span className="admin-analytics-label">Players in leagues</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">🔥 {analytics.tournaments.active.toLocaleString()}</span><span className="admin-analytics-label">Active tournaments</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">👑 {analytics.tournaments.players.toLocaleString()}</span><span className="admin-analytics-label">Tournament players</span></div>
+                    </div>
+                    <div className="admin-analytics-section">
+                      <h5 className="admin-control-heading">League distribution</h5>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(rank => {
+                        const count = analytics.rankCounts[rank] || 0
+                        const pct = analytics.totalPlayers > 0 ? Math.round((count / analytics.totalPlayers) * 100) : 0
+                        return (
+                          <div key={rank} className="admin-analytics-rank">
+                            <span className="admin-analytics-rank-name">Rank {rank}</span>
+                            <div className="admin-analytics-rank-track">
+                              <div className="admin-analytics-rank-fill" style={{ width: `${Math.max(2, pct)}%` }} />
+                            </div>
+                            <span className="admin-analytics-rank-count">{count}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="admin-analytics-columns">
+                      <div className="admin-analytics-section">
+                        <h5 className="admin-control-heading">Top by XP</h5>
+                        {analytics.topXp.length === 0 && <p className="admin-tournament-line">No players yet.</p>}
+                        {analytics.topXp.map((p, i) => (
+                          <div key={p.id} className="admin-top-row">
+                            <span className="admin-top-rank">{i + 1}</span>
+                            <span className="admin-top-name">@{p.username || p.name || 'unknown'}</span>
+                            <span className="admin-top-value">⭐ {p.xp?.toLocaleString() || 0}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="admin-analytics-section">
+                        <h5 className="admin-control-heading">Top by Coins</h5>
+                        {analytics.topCoins.length === 0 && <p className="admin-tournament-line">No players yet.</p>}
+                        {analytics.topCoins.map((p, i) => (
+                          <div key={p.id} className="admin-top-row">
+                            <span className="admin-top-rank">{i + 1}</span>
+                            <span className="admin-top-name">@{p.username || p.name || 'unknown'}</span>
+                            <span className="admin-top-value">🪙 {p.coins?.toLocaleString() || 0}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

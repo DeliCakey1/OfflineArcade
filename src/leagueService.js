@@ -177,6 +177,105 @@ export async function setShopSale(items) {
   return clean
 }
 
+export async function getAnnouncement() {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
+  const snap = await getDoc(doc(db, CONFIG, 'announcement'))
+  if (!snap.exists()) return { text: '', enabled: false, updatedAt: null }
+  const data = snap.data()
+  return { text: data.text || '', enabled: !!data.enabled, updatedAt: data.updatedAt || null }
+}
+
+export async function setAnnouncement(text, enabled) {
+  const { doc, setDoc } = await f()
+  const { db } = await f()
+  const clean = { text: String(text || '').slice(0, 200), enabled: !!enabled, updatedAt: Date.now() }
+  await setDoc(doc(db, CONFIG, 'announcement'), clean)
+  return clean
+}
+
+export async function getChatControls() {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
+  const snap = await getDoc(doc(db, CONFIG, 'chatControls'))
+  if (!snap.exists()) return { enabled: true, updatedAt: null }
+  const data = snap.data()
+  return { enabled: data.enabled !== false, updatedAt: data.updatedAt || null }
+}
+
+export async function setChatControls(enabled) {
+  const { doc, setDoc } = await f()
+  const { db } = await f()
+  const clean = { enabled: !!enabled, updatedAt: Date.now() }
+  await setDoc(doc(db, CONFIG, 'chatControls'), clean)
+  return clean
+}
+
+export async function getAnalytics() {
+  const { collection, getDocs } = await f()
+  const { db } = await f()
+  const now = Date.now()
+  const DAY_MS = 24 * 60 * 60 * 1000
+  const WEEK_MS2 = 7 * DAY_MS
+
+  const [playersSnap, leaguesSnap, tournamentsSnap] = await Promise.all([
+    getDocs(collection(db, PLAYERS)).catch(() => null),
+    getDocs(collection(db, LEAGUES)).catch(() => null),
+    getDocs(collection(db, TOURNAMENTS)).catch(() => null),
+  ])
+
+  const players = playersSnap ? playersSnap.docs.map(d => ({ id: d.id, ...d.data() })) : []
+  const leagues = leaguesSnap ? leaguesSnap.docs.map(d => ({ id: d.id, ...d.data() })) : []
+  const tournaments = tournamentsSnap ? tournamentsSnap.docs.map(d => ({ id: d.id, ...d.data() })) : []
+
+  let totalCoins = 0
+  let totalXp = 0
+  let totalGames = 0
+  let activeToday = 0
+  let activeWeek = 0
+  const rankCounts = {}
+  for (const p of players) {
+    totalCoins += p.coins || 0
+    totalXp += p.xp || 0
+    totalGames += p.gamesPlayed || 0
+    const last = p.lastActive || 0
+    if (now - last < DAY_MS) activeToday++
+    if (now - last < WEEK_MS2) activeWeek++
+    const rank = p.league || 10
+    rankCounts[rank] = (rankCounts[rank] || 0) + 1
+  }
+
+  const topXp = [...players].sort((a, b) => (b.xp || 0) - (a.xp || 0)).slice(0, 5)
+  const topCoins = [...players].sort((a, b) => (b.coins || 0) - (a.coins || 0)).slice(0, 5)
+
+  const activeLeagues = leagues.filter(l => l.status === 'active')
+  const activeTournaments = tournaments.filter(t => t.status === 'active')
+  const scheduledTournaments = tournaments.filter(t => t.status === 'scheduled')
+
+  return {
+    totalPlayers: players.length,
+    activeToday,
+    activeWeek,
+    totalCoins,
+    totalXp,
+    totalGames,
+    rankCounts,
+    topXp,
+    topCoins,
+    leagues: {
+      active: activeLeagues.length,
+      total: leagues.length,
+      players: activeLeagues.reduce((n, l) => n + (l.players?.length || 0), 0),
+    },
+    tournaments: {
+      active: activeTournaments.length,
+      scheduled: scheduledTournaments.length,
+      players: activeTournaments.reduce((n, t) => n + (t.players?.length || 0), 0),
+      stage: activeTournaments[0]?.stage || null,
+    },
+  }
+}
+
 export async function setAdminStatus(userId, isAdmin) {
   const { doc, setDoc } = await f()
   const { db } = await f()

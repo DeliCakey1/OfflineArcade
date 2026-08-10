@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { cleanupExpiredChatMessages, CHAT_TTL_MS } from '../chatTtl'
+import { getChatControls } from '../leagueService'
 
 let _f = null
 async function f() {
@@ -160,6 +161,7 @@ export default function ChatPanel({ roomId, user }) {
   const [editing, setEditing] = useState(null)
   const [editInput, setEditInput] = useState('')
   const [showHistory, setShowHistory] = useState(null)
+  const [chatEnabled, setChatEnabled] = useState(true)
   const bottomRef = useRef(null)
 
   const uid = user?.uid || ''
@@ -167,12 +169,20 @@ export default function ChatPanel({ roomId, user }) {
   const otherColor = friendColors[friendId] || FRIEND_COLORS_DEFAULT
 
   useEffect(() => {
+    let cancelled = false
+    getChatControls().then(c => {
+      if (!cancelled) setChatEnabled(c.enabled)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!input.trim() || sending || rateLimited) return
+    if (!input.trim() || sending || rateLimited || !chatEnabled) return
     send(input, user)
     setInput('')
   }
@@ -330,19 +340,21 @@ export default function ChatPanel({ roomId, user }) {
           <input
             value={input}
             onChange={e => { if (e.target.value.length <= MAX_LEN) setInput(e.target.value) }}
-            placeholder="Type a message..."
+            placeholder={chatEnabled ? 'Type a message...' : 'Chat is paused by the admin'}
             maxLength={MAX_LEN}
+            disabled={!chatEnabled}
             style={{
               flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 8, padding: '8px 10px', color: 'var(--text, #e8e0ff)', fontSize: 13,
               outline: 'none', fontFamily: 'Fredoka, sans-serif',
+              opacity: chatEnabled ? 1 : 0.5,
             }}
           />
-          <button type="submit" disabled={sending || !input.trim() || rateLimited} style={{
+          <button type="submit" disabled={sending || !input.trim() || rateLimited || !chatEnabled} style={{
             background: rateLimited ? 'rgba(245,158,11,0.2)' : myColor,
             color: '#fff', border: 'none', borderRadius: 8,
-            padding: '8px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'Fredoka, sans-serif',
-            opacity: sending || !input.trim() || rateLimited ? 0.5 : 1,
+            padding: '8px 14px', fontWeight: 600, fontSize: 13, cursor: chatEnabled ? 'pointer' : 'default', fontFamily: 'Fredoka, sans-serif',
+            opacity: sending || !input.trim() || rateLimited || !chatEnabled ? 0.5 : 1,
           }}>{rateLimited ? '⏳' : 'Send'}</button>
         </div>
         <div style={{ fontSize: 10, color: remaining < 20 ? '#ef4444' : 'var(--text-dim)', textAlign: 'right', opacity: 0.6 }}>

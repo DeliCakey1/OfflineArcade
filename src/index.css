@@ -5030,6 +5030,210 @@ body::after {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.admin-control-group {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  text-align: left;
+}
+.admin-control-heading {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-light);
+}
+.admin-announcement-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 64px;
+  margin-top: 8px;
+  resize: vertical;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text-light);
+  font-family: Fredoka, sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+.admin-announcement-textarea:focus {
+  border-color: var(--accent, #8b5cf6);
+}
+.admin-control-char-count {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: right;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+.admin-toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.admin-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.admin-toggle.on {
+  background: var(--neon-green);
+}
+.admin-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+.admin-toggle.on .admin-toggle-knob {
+  transform: translateX(20px);
+}
+.admin-analytics-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0;
+}
+.admin-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+.admin-analytics-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  text-align: center;
+}
+.admin-analytics-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+.admin-analytics-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.8;
+}
+.admin-analytics-section {
+  margin: 14px 0 4px;
+}
+.admin-analytics-rank {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.admin-analytics-rank-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  width: 62px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.admin-analytics-rank-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.admin-analytics-rank-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue));
+  border-radius: 5px;
+  min-width: 2px;
+}
+.admin-analytics-rank-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-light);
+  width: 28px;
+  text-align: left;
+}
+.admin-analytics-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 560px) {
+  .admin-analytics-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.admin-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  margin: 3px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+.admin-top-rank {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--neon-green);
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.admin-top-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.admin-top-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+.announcement-banner {
+  width: 100%;
+  max-width: 960px;
+  margin: 10px auto 0;
+  padding: 8px 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(59, 130, 246, 0.85));
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.35);
+  box-sizing: border-box;
+}
 .admin-sale-bar {
   display: flex;
   align-items: center;
