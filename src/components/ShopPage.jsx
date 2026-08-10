@@ -287,6 +287,7 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
                 onBuy={handleBuy}
                 onEquip={onEquipTitle}
                 isAdmin={isAdmin}
+                saleItems={saleItems}
               />
             ))}
           </div>
@@ -319,6 +320,7 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
                 onBuy={handleBuy}
                 onEquip={equipHandler(item)}
                 isAdmin={isAdmin}
+                saleItems={saleItems}
               />
             ))}
           </div>
