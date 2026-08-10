@@ -215,6 +215,20 @@ export const RARITY_COLORS = {
   champion: '#ff2d7b',
 }
 
+export const SALE_PERCENT_OPTIONS = [10, 15, 20, 25, 30, 40, 50]
+
+export function salePercentFor(saleItems, itemId) {
+  const p = saleItems?.[itemId]
+  if (typeof p === 'number' && p > 0 && p < 100) return Math.round(p)
+  return 0
+}
+
+export function salePriceFor(item, saleItems) {
+  const pct = salePercentFor(saleItems, item.id)
+  if (!pct) return item.price
+  return Math.max(1, Math.round(item.price * (100 - pct) / 100))
+}
+
 export function isOwned(ownedIds, itemId) {
   return ownedIds.includes(itemId)
 }

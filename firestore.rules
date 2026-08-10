@@ -102,6 +102,16 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ===== config (shop sales, misc settings) =====
+    match /config/{configId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.items is map
+        && request.resource.data.updatedAt is number
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt']);
+      allow delete: if false;
+    }
+
     // ===== players =====
     match /players/{playerId} {
       // Cross-user player updates are only the narrow operations the app

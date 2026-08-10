@@ -17,6 +17,7 @@ const PLAYERS = 'players'
 const LEAGUES = 'leagues'
 const MATCHES = 'matches'
 const TOURNAMENTS = 'tournaments'
+const CONFIG = 'config'
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -157,6 +158,23 @@ export async function updatePlayer(userId, data) {
   const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
   await updateDoc(ref, { ...data, lastActive: Date.now() })
+}
+
+export async function getShopSale() {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
+  const snap = await getDoc(doc(db, CONFIG, 'shopSale'))
+  if (!snap.exists()) return { items: {}, updatedAt: null }
+  const data = snap.data()
+  return { items: data.items || {}, updatedAt: data.updatedAt || null }
+}
+
+export async function setShopSale(items) {
+  const { doc, setDoc } = await f()
+  const { db } = await f()
+  const clean = { items: items || {}, updatedAt: Date.now() }
+  await setDoc(doc(db, CONFIG, 'shopSale'), clean)
+  return clean
 }
 
 export async function setAdminStatus(userId, isAdmin) {

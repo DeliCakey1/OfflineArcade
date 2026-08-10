@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import useSound from '../useSound'
 import {
   verifyPassword,
@@ -9,7 +9,8 @@ import {
   setLoginCooldown,
   getRemainingCooldown,
 } from '../adminAuth'
-import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament } from '../leagueService'
+import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament, getShopSale, setShopSale } from '../leagueService'
+import { TITLES, ALL_NAMEPLATES, TOURNAMENT_TICKET, SALE_PERCENT_OPTIONS } from '../shopItems'
 
 function pad2(n) {
   return String(n).padStart(2, '0')
@@ -37,6 +38,20 @@ const TOURNAMENT_STAGE_LABELS = {
   tournament: 'God Tournament',
   semiFinals: 'Semi-Finals',
   finals: 'Finals',
+}
+
+const SALE_GROUPS = [
+  { id: 'all', label: 'All items' },
+  { id: 'titles', label: '🏷️ Titles' },
+  { id: 'colors', label: '🎨 Colors' },
+  { id: 'gradients', label: '🌈 Gradients' },
+  { id: 'borders', label: '🔲 Borders' },
+  { id: 'effects', label: '✨ Effects' },
+  { id: 'tickets', label: '🎫 Tickets' },
+]
+
+function isValidSalePercent(p) {
+  return typeof p === 'number' && p > 0 && p < 100
 }
 
 export default function AdminPanel({ userId }) {
@@ -68,6 +83,12 @@ export default function AdminPanel({ userId }) {
   const [tournamentError, setTournamentError] = useState('')
   const [tournamentDone, setTournamentDone] = useState('')
   const [cancelConfirming, setCancelConfirming] = useState(false)
+  const [saleItems, setSaleItems] = useState({})
+  const [saleDraft, setSaleDraft] = useState({})
+  const [saleGroup, setSaleGroup] = useState('all')
+  const [saleSaving, setSaleSaving] = useState(false)
+  const [saleDone, setSaleDone] = useState('')
+  const [saleError, setSaleError] = useState('')
   const inputRef = useRef(null)
   const sound = useSound()
 
@@ -97,6 +118,33 @@ export default function AdminPanel({ userId }) {
     }).catch(() => {})
     return () => { cancelled = true }
   }, [authenticated])
+
+  useEffect(() => {
+    if (!authenticated) return
+    let cancelled = false
+    getShopSale().then(sale => {
+      if (cancelled) return
+      const items = sale?.items || {}
+      setSaleItems(items)
+      setSaleDraft({ ...items })
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [authenticated])
+
+  const saleItemList = useMemo(() => {
+    const items = []
+    for (const t of TITLES) items.push({ id: t.id, name: t.name, emoji: t.emoji, price: t.price, group: 'titles' })
+    for (const np of ALL_NAMEPLATES) {
+      const group = np.type === 'solid' ? 'colors' : np.type === 'gradient' ? 'gradients' : np.type === 'border' ? 'borders' : 'effects'
+      items.push({ id: np.id, name: np.name, emoji: '✨', price: np.price, group })
+    }
+    items.push({ id: TOURNAMENT_TICKET.id, name: TOURNAMENT_TICKET.name, emoji: TOURNAMENT_TICKET.emoji, price: TOURNAMENT_TICKET.price, group: 'tickets' })
+    return items
+  }, [])
+
+  const filteredSaleItems = useMemo(() => saleItemList.filter(it => saleGroup === 'all' || it.group === saleGroup), [saleItemList, saleGroup])
+
+  const activeSaleCount = useMemo(() => Object.values(saleItems).filter(isValidSalePercent).length, [saleItems])
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -265,6 +313,46 @@ export default function AdminPanel({ userId }) {
       sound('lose')
     }
     setTournamentLoading(false)
+  }
+
+  function handleSaleSet(itemId, value) {
+    const pct = parseInt(value, 10)
+    setSaleDraft(prev => {
+      const next = { ...prev }
+      if (isValidSalePercent(pct)) next[itemId] = pct
+      else delete next[itemId]
+      return next
+    })
+    setSaleDone('')
+    sound('click')
+  }
+
+  function handleClearSale() {
+    setSaleDraft({})
+    setSaleDone('')
+    sound('click')
+  }
+
+  async function handleSaveSale() {
+    setSaleSaving(true)
+    setSaleError('')
+    setSaleDone('')
+    try {
+      const cleaned = {}
+      for (const [id, pct] of Object.entries(saleDraft)) {
+        if (isValidSalePercent(pct)) cleaned[id] = Math.round(pct)
+      }
+      await setShopSale(cleaned)
+      setSaleItems(cleaned)
+      setSaleDraft({ ...cleaned })
+      const count = Object.keys(cleaned).length
+      setSaleDone(count > 0 ? `Sale saved: ${count} item${count === 1 ? '' : 's'} on discount.` : 'Sale cleared. No items discounted.')
+      sound('cash')
+    } catch (err) {
+      setSaleError(err.message || 'Failed to save sale.')
+      sound('lose')
+    }
+    setSaleSaving(false)
   }
 
   if (!authenticated) {
@@ -472,6 +560,55 @@ export default function AdminPanel({ userId }) {
             )}
             {tournamentDone && <p className="admin-reset-success">{tournamentDone}</p>}
             {tournamentError && <p className="admin-reset-error">{tournamentError}</p>}
+          </div>
+          <div className="admin-section-card">
+            <span className="admin-section-emoji">🛒</span>
+            <h4>Shop Discounts</h4>
+            <p>Put items on sale. Discounted prices show in the Shop for everyone.</p>
+            <div className="admin-sale-bar">
+              <span className="admin-sale-count">{activeSaleCount} on sale</span>
+              <select
+                className="admin-sale-group-select"
+                value={saleGroup}
+                onChange={e => setSaleGroup(e.target.value)}
+              >
+                {SALE_GROUPS.map(g => (
+                  <option key={g.id} value={g.id}>{g.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-sale-list">
+              {filteredSaleItems.map(it => {
+                const pct = saleDraft[it.id]
+                return (
+                  <div key={it.id} className={`admin-sale-row ${isValidSalePercent(pct) ? 'on-sale' : ''}`}>
+                    <span className="admin-sale-emoji">{it.emoji}</span>
+                    <span className="admin-sale-name">{it.name}</span>
+                    <span className="admin-sale-price">🪙 {it.price.toLocaleString()}</span>
+                    <select
+                      className="admin-sale-select"
+                      value={isValidSalePercent(pct) ? pct : ''}
+                      onChange={e => handleSaleSet(it.id, e.target.value)}
+                    >
+                      <option value="">Off</option>
+                      {SALE_PERCENT_OPTIONS.map(p => (
+                        <option key={p} value={p}>{p}%</option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="admin-sale-actions">
+              <button className="admin-reset-btn" onClick={handleClearSale} disabled={saleSaving}>
+                Clear discounts
+              </button>
+              <button className="admin-coin-action-btn admin-coin-give" onClick={handleSaveSale} disabled={saleSaving}>
+                {saleSaving ? 'Saving...' : '💾 Save sale'}
+              </button>
+            </div>
+            {saleDone && <p className="admin-reset-success">{saleDone}</p>}
+            {saleError && <p className="admin-reset-error">{saleError}</p>}
           </div>
           <div className="admin-section-card admin-coming-soon">
             <span className="admin-section-emoji">🎮</span>

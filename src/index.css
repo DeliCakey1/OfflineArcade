@@ -4116,6 +4116,23 @@ body::after {
   margin-bottom: 6px;
   display: inline-block;
 }
+.shop-card-sale-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #1a1033;
+  background: linear-gradient(135deg, var(--neon-yellow), var(--neon-orange));
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-bottom: 6px;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(255, 230, 0, 0.35);
+}
+.shop-card-old-price {
+  text-decoration: line-through;
+  opacity: 0.6;
+  margin-right: 6px;
+  font-weight: 500;
+}
 .shop-card-bottom {
   margin-top: 8px;
 }
@@ -4906,6 +4923,93 @@ body::after {
   font-size: 12px;
   color: var(--text-light);
   margin: 0;
+}
+.admin-sale-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0 6px;
+}
+.admin-sale-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--neon-green);
+}
+.admin-sale-group-select {
+  padding: 6px 8px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  outline: none;
+}
+.admin-sale-group-select:focus { border-color: var(--neon-blue); }
+.admin-sale-list {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding-right: 4px;
+}
+.admin-sale-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.admin-sale-row.on-sale {
+  background: rgba(255, 230, 0, 0.08);
+  border-color: rgba(255, 230, 0, 0.35);
+}
+.admin-sale-emoji {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.admin-sale-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-sale-price {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.admin-sale-select {
+  padding: 4px 6px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.admin-sale-row.on-sale .admin-sale-select {
+  border-color: rgba(255, 230, 0, 0.5);
+  color: var(--neon-yellow);
+}
+.admin-sale-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 .admin-my-coins {
   display: flex;

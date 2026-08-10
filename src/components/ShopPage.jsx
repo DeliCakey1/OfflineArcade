@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import useSound from '../useSound'
-import { TITLES, ALL_NAMEPLATES, RARITY_COLORS, TOURNAMENT_TICKET, getSeasonalItems } from '../shopItems'
+import { TITLES, ALL_NAMEPLATES, RARITY_COLORS, TOURNAMENT_TICKET, getSeasonalItems, salePercentFor, salePriceFor } from '../shopItems'
 
 const NAMEPLATE_TABS = [
   { id: 'colors', label: 'Colors', emoji: '🎨' },
@@ -9,8 +9,10 @@ const NAMEPLATE_TABS = [
   { id: 'effects', label: 'Effects', emoji: '✨' },
 ]
 
-function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
-  const canAfford = coins >= item.price
+function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin, saleItems }) {
+  const salePercent = salePercentFor(saleItems, item.id)
+  const price = salePriceFor(item, saleItems)
+  const canAfford = coins >= price
   const rarityColor = RARITY_COLORS[item.rarity] || '#a3a3a3'
   const isLocked = item.adminOnly && !isAdmin
 
@@ -23,6 +25,7 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
       <div className="shop-card-name">{item.name}</div>
       {item.adminOnly && <div className="shop-card-admin-badge">🔑 Admin Only</div>}
       {item.championOnly && !isAdmin && <div className="shop-card-champion-badge">Champion Only</div>}
+      {salePercent > 0 && <div className="shop-card-sale-badge">-{salePercent}%</div>}
       <div className="shop-card-bottom">
         {isLocked ? (
           <button className="shop-card-btn disabled" disabled>🔒 Admin Only</button>
@@ -33,10 +36,11 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
         ) : (
           <button
             className={`shop-card-btn buy-btn ${!canAfford ? 'disabled' : ''}`}
-            onClick={() => canAfford && onBuy(item.id, item.price)}
+            onClick={() => canAfford && onBuy(item.id, price)}
             disabled={!canAfford}
           >
-            🪙 {item.price}
+            {salePercent > 0 && <span className="shop-card-old-price">🪙 {item.price}</span>}
+            🪙 {price}
           </button>
         )}
       </div>
@@ -44,8 +48,10 @@ function TitleCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
   )
 }
 
-function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }) {
-  const canAfford = coins >= item.price
+function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin, saleItems }) {
+  const salePercent = salePercentFor(saleItems, item.id)
+  const price = salePriceFor(item, saleItems)
+  const canAfford = coins >= price
   const isLocked = item.adminOnly && !isAdmin
   const [hoverKey, setHoverKey] = useState(0)
 
@@ -145,6 +151,7 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
       <div className="shop-card-name">{item.name}</div>
       {item.adminOnly && <div className="shop-card-admin-badge">🔑 Admin Only</div>}
       {item.championOnly && !isAdmin && <div className="shop-card-champion-badge">Champion Only</div>}
+      {salePercent > 0 && <div className="shop-card-sale-badge">-{salePercent}%</div>}
       <div className="shop-card-bottom">
         {isLocked ? (
           <button className="shop-card-btn disabled" disabled>🔒 Admin Only</button>
@@ -155,10 +162,11 @@ function NameplateCard({ item, owned, equipped, coins, onBuy, onEquip, isAdmin }
         ) : (
           <button
             className={`shop-card-btn buy-btn ${!canAfford ? 'disabled' : ''}`}
-            onClick={() => canAfford && onBuy(item.id, item.price)}
+            onClick={() => canAfford && onBuy(item.id, price)}
             disabled={!canAfford}
           >
-            🪙 {item.price}
+            {salePercent > 0 && <span className="shop-card-old-price">🪙 {item.price}</span>}
+            🪙 {price}
           </button>
         )}
       </div>
@@ -171,6 +179,15 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
   const [npTab, setNpTab] = useState('colors')
   const sound = useSound()
   const [showBought, setShowBought] = useState(null)
+  const [saleItems, setSaleItems] = useState({})
+
+  useEffect(() => {
+    let cancelled = false
+    import('../leagueService').then(({ getShopSale }) => getShopSale()).then(sale => {
+      if (!cancelled) setSaleItems(sale?.items || {})
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   function handleBuy(itemId, price) {
     onPurchase(itemId, price)
@@ -236,6 +253,7 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
                   onBuy={handleBuy}
                   onEquip={onEquipTitle}
                   isAdmin={isAdmin}
+                  saleItems={saleItems}
                 />
               ) : (
                 <NameplateCard
@@ -247,6 +265,7 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
                   onBuy={handleBuy}
                   onEquip={equipHandler(item)}
                   isAdmin={isAdmin}
+                  saleItems={saleItems}
                 />
               )
             ))}
@@ -306,34 +325,41 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
         </div>
       )}
 
-      {tab === 'tickets' && (
-        <div className="full-page-content">
-          <p className="shop-section-desc">Tickets grant access to exclusive events. Each ticket is consumed on entry.</p>
-          <div className="shop-tickets-info">
-            <div className="shop-ticket-card">
-              <div className="shop-ticket-header">
-                <span className="shop-ticket-emoji">{TOURNAMENT_TICKET.emoji}</span>
-                <div className="shop-ticket-info">
-                  <h3 className="shop-ticket-name">{TOURNAMENT_TICKET.name}</h3>
-                  <p className="shop-ticket-desc">{TOURNAMENT_TICKET.description}</p>
+      {tab === 'tickets' && (() => {
+        const ticketSalePercent = salePercentFor(saleItems, TOURNAMENT_TICKET.id)
+        const ticketPrice = salePriceFor(TOURNAMENT_TICKET, saleItems)
+        return (
+          <div className="full-page-content">
+            <p className="shop-section-desc">Tickets grant access to exclusive events. Each ticket is consumed on entry.</p>
+            <div className="shop-tickets-info">
+              <div className="shop-ticket-card">
+                <div className="shop-ticket-header">
+                  <span className="shop-ticket-emoji">{TOURNAMENT_TICKET.emoji}</span>
+                  <div className="shop-ticket-info">
+                    <h3 className="shop-ticket-name">{TOURNAMENT_TICKET.name}</h3>
+                    <p className="shop-ticket-desc">{TOURNAMENT_TICKET.description}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="shop-ticket-footer">
-                <span className="shop-ticket-owned">Owned: {tournamentTickets || 0}</span>
-                {coins >= TOURNAMENT_TICKET.price ? (
-                  <button className="shop-card-btn buy-btn" onClick={() => handleBuy(TOURNAMENT_TICKET.id, TOURNAMENT_TICKET.price)}>
-                    🪙 {TOURNAMENT_TICKET.price.toLocaleString()}
-                  </button>
-                ) : (
-                  <button className="shop-card-btn buy-btn disabled" disabled>
-                    🪙 {TOURNAMENT_TICKET.price.toLocaleString()}
-                  </button>
-                )}
+                <div className="shop-ticket-footer">
+                  <span className="shop-ticket-owned">Owned: {tournamentTickets || 0}</span>
+                  {ticketSalePercent > 0 && <span className="shop-card-sale-badge">-{ticketSalePercent}%</span>}
+                  {coins >= ticketPrice ? (
+                    <button className="shop-card-btn buy-btn" onClick={() => handleBuy(TOURNAMENT_TICKET.id, ticketPrice)}>
+                      {ticketSalePercent > 0 && <span className="shop-card-old-price">🪙 {TOURNAMENT_TICKET.price.toLocaleString()}</span>}
+                      🪙 {ticketPrice.toLocaleString()}
+                    </button>
+                  ) : (
+                    <button className="shop-card-btn buy-btn disabled" disabled>
+                      {ticketSalePercent > 0 && <span className="shop-card-old-price">🪙 {TOURNAMENT_TICKET.price.toLocaleString()}</span>}
+                      🪙 {ticketPrice.toLocaleString()}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
