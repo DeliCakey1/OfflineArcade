@@ -130,8 +130,8 @@ export async function applyReferral(inviteeId, inviteCode) {
   if (!inviteeSnap.exists()) return
   const invitee = inviteeSnap.data()
   if (invitee.referredBy) return
-  await updateDoc(doc(db, PLAYERS, inviter.id), { coins: increment(200), xp: increment(50), referrals: increment(1) }).catch(() => {})
-  await updateDoc(inviteeRef, { referredBy: inviter.id }).catch(() => {})
+  await updateDoc(doc(db, PLAYERS, inviter.id), { coins: increment(250), referrals: increment(1) }).catch(() => {})
+  await updateDoc(inviteeRef, { referredBy: inviter.id, coins: increment(50) }).catch(() => {})
 }
 
 export async function loadPlayerStats(userId) {

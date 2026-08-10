@@ -264,7 +264,7 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
               <span className="settings-card-label">{inviteCopied ? 'Copied!' : 'Copy Link'}</span>
             </button>
           </div>
-          <div className="invite-reward-hint">When a friend joins through your link, you both earn rewards — <strong>you get 200 coins + 50 XP</strong> per invite!</div>
+          <div className="invite-reward-hint">When a friend joins through your link, you both earn coins — <strong>you get 250 coins</strong>, and <strong>they get 50 coins</strong>!</div>
         </div>
       )}
 
