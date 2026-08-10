@@ -347,7 +347,7 @@ export default function useStats(gameId) {
     } catch {}
     if (!currentUserId) return
     const current = sharedStats[gid] || getEmptyGameStats()
-    const xpEarned = isScoreBased ? (isWin ? Math.round(score * (GAME_XP[gid] || 20) / 20) : 0) : (isWin ? 10 + Math.min(streak, 10) * 2 : 3)
+    const xpEarned = isScoreBased ? (isWin ? Math.round(score * (GAME_XP[gid] || 20) / 20) : 0) : (isWin ? 10 + Math.min(streak, 10) * 2 : 0)
     const prevXp = sharedStats._xp?.total || 0
     const recent = sharedStats._recent || []
     const newRecent = [gid, ...recent.filter(id => id !== gid)].slice(0, 8)

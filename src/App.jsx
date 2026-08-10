@@ -1048,9 +1048,8 @@ function App() {
             updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) }).catch(() => {})
             syncLeagueData({ ...p, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
           } else {
-            const lossXp = Math.round(xp / 4)
             const lossCoins = Math.round(coinReward / 4)
-            updatePlayer(userId, { xp: increment(lossXp), coins: increment(lossCoins) }).catch(() => {})
+            updatePlayer(userId, { coins: increment(lossCoins) }).catch(() => {})
             syncLeagueData({ ...p, coins: (p.coins || 0) + lossCoins })
           }
         })
