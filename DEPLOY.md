@@ -89,8 +89,9 @@ Open `/play/snake` in a browser and confirm it renders. Deep links
   `expiresAt` timestamp (`createdAt + 7 days`); Firestore's native TTL policy
   hard-deletes them server-side even when nobody has the app open. One-time setup
   (after the `expiresAt` field is live in new messages), from Cloud Shell:
-  `gcloud firestore ttl-policies create --collection=chatMessages --field=expiresAt --project=offline-arcade-468cd`
-  (or Firebase console → Firestore → Data → TTL → create policy on `chatMessages.expiresAt`).
+  `gcloud firestore fields ttls update expiresAt --collection-group=chatMessages --enable-ttl --project=offline-arcade-468cd`
+  (verify with `gcloud firestore fields ttls list --collection-group=chatMessages --project=offline-arcade-468cd`,
+  or use Firebase console → Firestore → Data → TTL).
   The client-side cleanup in `src/chatTtl.js` still deletes legacy/edge-case
   messages older than 7 days when the app is open.
 - One-time maintenance scripts live in `scripts/`. To remove players with zero
