@@ -56,6 +56,22 @@ function isValidSalePercent(p) {
   return typeof p === 'number' && p > 0 && p < 100
 }
 
+const ADMIN_MENU = [
+  { id: 'coins', emoji: '🪙', title: 'My Coins', desc: 'Add or remove coins from your own account' },
+  { id: 'target', emoji: '🎯', title: 'Give / Remove Coins', desc: 'Search a player and adjust their coins' },
+  { id: 'tournament', emoji: '🏟️', title: 'Weekly Tournament', desc: 'Schedule or cancel the God Tournament' },
+  { id: 'sale', emoji: '🛒', title: 'Shop Discounts', desc: 'Put shop items on sale' },
+  { id: 'reset', emoji: '💥', title: 'Reset All Scores', desc: 'Wipe all stats, coins, leagues, and tournaments' },
+]
+
+const ADMIN_MENU_TITLES = {
+  coins: 'My Coins',
+  target: 'Give / Remove Coins',
+  tournament: 'Weekly Tournament',
+  sale: 'Shop Discounts',
+  reset: 'Reset All Scores',
+}
+
 export default function AdminPanel({ userId }) {
   const [authenticated, setAuthenticated] = useState(isAdminLoggedIn())
   const [password, setPassword] = useState('')
@@ -91,6 +107,7 @@ export default function AdminPanel({ userId }) {
   const [saleSaving, setSaleSaving] = useState(false)
   const [saleDone, setSaleDone] = useState('')
   const [saleError, setSaleError] = useState('')
+  const [adminPage, setAdminPage] = useState('menu')
   const inputRef = useRef(null)
   const sound = useSound()
 
@@ -399,266 +416,305 @@ export default function AdminPanel({ userId }) {
         <h2 className="full-page-title">🔒 Admin Panel</h2>
       </div>
       <div className="admin-dashboard">
-        <div className="admin-welcome">
-          <span className="admin-badge-large">👑</span>
-          <h3>Welcome, Admin</h3>
-          <p>You have full admin access. Admin-exclusive items are available in the Shop.</p>
-        </div>
-        <div className="admin-sections">
-          <div className="admin-section-card">
-            <span className="admin-section-emoji">🪙</span>
-            <h4>Your Coins</h4>
-            <div className="admin-my-coins">
-              <span className="admin-my-coins-amount">{myCoinsLoading ? '...' : `🪙 ${(myCoins || 0).toLocaleString()}`}</span>
+        {adminPage === 'menu' ? (
+          <>
+            <div className="admin-welcome">
+              <span className="admin-badge-large">👑</span>
+              <h3>Welcome, Admin</h3>
+              <p>Pick a section to get started.</p>
             </div>
-            <div className="admin-my-coins-actions">
-              <input
-                type="number"
-                className="admin-coin-amount-input"
-                value={myCoinAmount}
-                onChange={e => setMyCoinAmount(e.target.value)}
-                placeholder="Amount"
-                min="1"
-              />
-              <button
-                className="admin-coin-action-btn admin-coin-give"
-                onClick={() => handleMyCoinAction('add')}
-                disabled={!myCoinAmount}
-              >
-                + Add
-              </button>
-              <button
-                className="admin-coin-action-btn admin-coin-remove"
-                onClick={() => handleMyCoinAction('remove')}
-                disabled={!myCoinAmount}
-              >
-                - Remove
-              </button>
-            </div>
-            {myCoinDone && <p className="admin-reset-success">{myCoinDone}</p>}
-            {myCoinError && <p className="admin-reset-error">{myCoinError}</p>}
-          </div>
-          <div className="admin-section-card">
-            <span className="admin-section-emoji">🛡️</span>
-            <h4>Admin Cosmetics</h4>
-            <p>The "Owner" title is exclusive to admin. All other items are purchased with coins in the Shop.</p>
-          </div>
-          <div className="admin-section-card">
-            <span className="admin-section-emoji">🪙</span>
-            <h4>Give / Remove Coins</h4>
-            <p>Search for a player, select them, then give or remove coins.</p>
-            <form onSubmit={handleTargetLookup} className="admin-coin-search">
-              <input
-                type="text"
-                className="admin-coin-input"
-                value={targetUsername}
-                onChange={e => setTargetUsername(e.target.value)}
-                placeholder="Search by username..."
-              />
-              <button type="submit" className="admin-coin-search-btn" disabled={targetLoading || !targetUsername.trim()}>
-                {targetLoading ? '...' : '🔍'}
-              </button>
-            </form>
-            {targetError && <p className="admin-reset-error">{targetError}</p>}
-            {targetDone && <p className="admin-reset-success">{targetDone}</p>}
-            {targetResults.length > 0 && !targetPlayer && (
-              <div className="admin-coin-results">
-                {targetResults.map(r => (
-                  <div key={r.id} className="admin-coin-result admin-coin-selectable" onClick={() => handleSelectTarget(r)}>
-                    <div className="admin-coin-result-info">
-                      <span className="admin-coin-result-name">@{r.username || 'unknown'}</span>
-                      <span className="admin-coin-result-coins">🪙 {(r.coins || 0).toLocaleString()}</span>
-                    </div>
-                    <span className="admin-coin-select-hint">→</span>
-                  </div>
-                ))}
+            <div className="admin-menu-grid">
+              {ADMIN_MENU.map(item => (
+                <button
+                  key={item.id}
+                  className={`admin-menu-card ${item.id === 'reset' ? 'admin-menu-danger' : ''}`}
+                  onClick={() => { setAdminPage(item.id); sound('click') }}
+                >
+                  <span className="admin-menu-emoji">{item.emoji}</span>
+                  <span className="admin-menu-title">{item.title}</span>
+                  <span className="admin-menu-desc">{item.desc}</span>
+                  <span className="admin-menu-arrow">→</span>
+                </button>
+              ))}
+              <div className="admin-menu-card admin-menu-coming-soon">
+                <span className="admin-menu-emoji">🎮</span>
+                <span className="admin-menu-title">Game Controls</span>
+                <span className="admin-menu-desc">Coming soon...</span>
               </div>
-            )}
-            {targetPlayer && (
-              <div className="admin-coin-results">
-                <div className="admin-coin-result">
-                  <div className="admin-coin-result-info">
-                    <span className="admin-coin-result-name">@{targetPlayer.username || 'unknown'}</span>
-                    <span className="admin-coin-result-coins">🪙 {(targetPlayer.coins || 0).toLocaleString()}</span>
-                  </div>
-                  <button className="admin-coin-action-btn admin-coin-back" onClick={() => { setTargetPlayer(null); setTargetResults([]); setTargetDone('') }}>
-                    ✕
-                  </button>
+              <div className="admin-menu-card admin-menu-coming-soon">
+                <span className="admin-menu-emoji">📈</span>
+                <span className="admin-menu-title">Analytics</span>
+                <span className="admin-menu-desc">Coming soon...</span>
+              </div>
+            </div>
+            <button className="admin-logout-btn" onClick={handleLogout}>
+              🚪 Lock Admin Panel
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="admin-sub-header">
+              <button className="quit-btn" onClick={() => { setAdminPage('menu'); sound('click') }}>
+                ← Admin Menu
+              </button>
+              <h3 className="admin-sub-title">{ADMIN_MENU_TITLES[adminPage]}</h3>
+            </div>
+
+            {adminPage === 'coins' && (
+              <div className="admin-section-card admin-page-body">
+                <span className="admin-section-emoji">🪙</span>
+                <h4>My Coins</h4>
+                <div className="admin-my-coins">
+                  <span className="admin-my-coins-amount">{myCoinsLoading ? '...' : `🪙 ${(myCoins || 0).toLocaleString()}`}</span>
                 </div>
-                <div className="admin-coin-amount-row">
+                <div className="admin-my-coins-actions">
                   <input
                     type="number"
                     className="admin-coin-amount-input"
-                    value={targetCoinAmount}
-                    onChange={e => setTargetCoinAmount(e.target.value)}
+                    value={myCoinAmount}
+                    onChange={e => setMyCoinAmount(e.target.value)}
                     placeholder="Amount"
                     min="1"
                   />
                   <button
                     className="admin-coin-action-btn admin-coin-give"
-                    onClick={() => handleTargetCoinAction('add')}
-                    disabled={targetActionLoading === 'add' || !targetCoinAmount}
+                    onClick={() => handleMyCoinAction('add')}
+                    disabled={!myCoinAmount}
                   >
-                    {targetActionLoading === 'add' ? '...' : '+ Give'}
+                    + Add
                   </button>
                   <button
                     className="admin-coin-action-btn admin-coin-remove"
-                    onClick={() => handleTargetCoinAction('remove')}
-                    disabled={targetActionLoading === 'remove' || !targetCoinAmount}
+                    onClick={() => handleMyCoinAction('remove')}
+                    disabled={!myCoinAmount}
                   >
-                    {targetActionLoading === 'remove' ? '...' : '- Remove'}
+                    - Remove
                   </button>
                 </div>
+                {myCoinDone && <p className="admin-reset-success">{myCoinDone}</p>}
+                {myCoinError && <p className="admin-reset-error">{myCoinError}</p>}
               </div>
             )}
-          </div>
-          <div className="admin-section-card">
-            <span className="admin-section-emoji">🏟️</span>
-            <h4>Weekly Tournament</h4>
-            <p>Schedule a 3-week God Tournament (1 week per stage). Top 8 God players with tickets enter when it starts.</p>
-            {tournament ? (
-              <div className="admin-tournament-status">
-                <p className="admin-tournament-line">
-                  {tournament.status === 'scheduled'
-                    ? `📅 Scheduled to start ${formatTournamentStart(tournament.startsAt)}`
-                    : `🔥 Active · ${TOURNAMENT_STAGE_LABELS[tournament.stage] || tournament.stage}`}
-                </p>
-                <p className="admin-tournament-line">👥 {tournament.players?.length || 0} players entered</p>
-                {cancelConfirming ? (
+
+            {adminPage === 'target' && (
+              <div className="admin-section-card admin-page-body">
+                <span className="admin-section-emoji">🎯</span>
+                <h4>Give / Remove Coins</h4>
+                <p>Search for a player, select them, then give or remove coins.</p>
+                <form onSubmit={handleTargetLookup} className="admin-coin-search">
+                  <input
+                    type="text"
+                    className="admin-coin-input"
+                    value={targetUsername}
+                    onChange={e => setTargetUsername(e.target.value)}
+                    placeholder="Search by username..."
+                  />
+                  <button type="submit" className="admin-coin-search-btn" disabled={targetLoading || !targetUsername.trim()}>
+                    {targetLoading ? '...' : '🔍'}
+                  </button>
+                </form>
+                {targetError && <p className="admin-reset-error">{targetError}</p>}
+                {targetDone && <p className="admin-reset-success">{targetDone}</p>}
+                {targetResults.length > 0 && !targetPlayer && (
+                  <div className="admin-coin-results">
+                    {targetResults.map(r => (
+                      <div key={r.id} className="admin-coin-result admin-coin-selectable" onClick={() => handleSelectTarget(r)}>
+                        <div className="admin-coin-result-info">
+                          <span className="admin-coin-result-name">@{r.username || 'unknown'}</span>
+                          <span className="admin-coin-result-coins">🪙 {(r.coins || 0).toLocaleString()}</span>
+                        </div>
+                        <span className="admin-coin-select-hint">→</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {targetPlayer && (
+                  <div className="admin-coin-results">
+                    <div className="admin-coin-result">
+                      <div className="admin-coin-result-info">
+                        <span className="admin-coin-result-name">@{targetPlayer.username || 'unknown'}</span>
+                        <span className="admin-coin-result-coins">🪙 {(targetPlayer.coins || 0).toLocaleString()}</span>
+                      </div>
+                      <button className="admin-coin-action-btn admin-coin-back" onClick={() => { setTargetPlayer(null); setTargetResults([]); setTargetDone('') }}>
+                        ✕
+                      </button>
+                    </div>
+                    <div className="admin-coin-amount-row">
+                      <input
+                        type="number"
+                        className="admin-coin-amount-input"
+                        value={targetCoinAmount}
+                        onChange={e => setTargetCoinAmount(e.target.value)}
+                        placeholder="Amount"
+                        min="1"
+                      />
+                      <button
+                        className="admin-coin-action-btn admin-coin-give"
+                        onClick={() => handleTargetCoinAction('add')}
+                        disabled={targetActionLoading === 'add' || !targetCoinAmount}
+                      >
+                        {targetActionLoading === 'add' ? '...' : '+ Give'}
+                      </button>
+                      <button
+                        className="admin-coin-action-btn admin-coin-remove"
+                        onClick={() => handleTargetCoinAction('remove')}
+                        disabled={targetActionLoading === 'remove' || !targetCoinAmount}
+                      >
+                        {targetActionLoading === 'remove' ? '...' : '- Remove'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {adminPage === 'tournament' && (
+              <div className="admin-section-card admin-page-body">
+                <span className="admin-section-emoji">🏟️</span>
+                <h4>Weekly Tournament</h4>
+                <p>Schedule a 3-week God Tournament (1 week per stage). Top 8 God players with tickets enter when it starts.</p>
+                {tournament ? (
+                  <div className="admin-tournament-status">
+                    <p className="admin-tournament-line">
+                      {tournament.status === 'scheduled'
+                        ? `📅 Scheduled to start ${formatTournamentStart(tournament.startsAt)}`
+                        : `🔥 Active · ${TOURNAMENT_STAGE_LABELS[tournament.stage] || tournament.stage}`}
+                    </p>
+                    <p className="admin-tournament-line">👥 {tournament.players?.length || 0} players entered</p>
+                    {cancelConfirming ? (
+                      <div className="admin-reset-confirm">
+                        <p className="admin-reset-confirm-text">Cancel this tournament? Players will return to their leagues.</p>
+                        <button className="admin-reset-btn admin-reset-confirm-yes" onClick={handleCancelTournament} disabled={tournamentLoading}>
+                          {tournamentLoading ? '...' : 'Yes, cancel'}
+                        </button>
+                        <button className="admin-reset-btn admin-reset-confirm-no" onClick={() => setCancelConfirming(false)} disabled={tournamentLoading}>
+                          Keep it
+                        </button>
+                      </div>
+                    ) : (
+                      <button className="admin-reset-btn" onClick={() => setCancelConfirming(true)} disabled={tournamentLoading}>
+                        ✕ Cancel Tournament
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <form onSubmit={handleScheduleTournament} className="admin-tournament-form">
+                    <select
+                      className="admin-coin-input"
+                      value={scheduleStart == null ? '' : String(scheduleStart)}
+                      onChange={e => setScheduleStart(Number(e.target.value))}
+                    >
+                      {!scheduleStart && <option value="" disabled>Select start week...</option>}
+                      {buildWednesdayOptions().map(o => (
+                        <option key={o.ts} value={String(o.ts)}>{formatWeekOption(o.ts, o.isNext)}</option>
+                      ))}
+                    </select>
+                    <p className="admin-tournament-line">Tournaments start Wednesday 00:00 UTC and run 3 weeks (1 week per stage).</p>
+                    <div className="admin-tournament-btns">
+                      <button type="submit" className="admin-coin-action-btn admin-coin-give" disabled={tournamentLoading || !scheduleStart}>
+                        {tournamentLoading ? '...' : 'Schedule'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+                {tournamentDone && <p className="admin-reset-success">{tournamentDone}</p>}
+                {tournamentError && <p className="admin-reset-error">{tournamentError}</p>}
+              </div>
+            )}
+
+            {adminPage === 'sale' && (
+              <div className="admin-section-card admin-page-body">
+                <span className="admin-section-emoji">🛒</span>
+                <h4>Shop Discounts</h4>
+                <p>Put items on sale. Discounted prices show in the Shop for everyone.</p>
+                <div className="admin-sale-bar">
+                  <span className="admin-sale-count">{activeSaleCount} on sale</span>
+                  <select
+                    className="admin-sale-group-select"
+                    value={saleGroup}
+                    onChange={e => setSaleGroup(e.target.value)}
+                  >
+                    {SALE_GROUPS.map(g => (
+                      <option key={g.id} value={g.id}>{g.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="admin-sale-list">
+                  {filteredSaleItems.map(it => {
+                    const pct = saleDraft[it.id]
+                    return (
+                      <div key={it.id} className={`admin-sale-row ${isValidSalePercent(pct) ? 'on-sale' : ''}`}>
+                        <span className="admin-sale-emoji">{it.emoji}</span>
+                        <span className="admin-sale-name">{it.name}</span>
+                        <span className="admin-sale-price">🪙 {it.price.toLocaleString()}</span>
+                        <select
+                          className="admin-sale-select"
+                          value={isValidSalePercent(pct) ? pct : ''}
+                          onChange={e => handleSaleSet(it.id, e.target.value)}
+                        >
+                          <option value="">Off</option>
+                          {SALE_PERCENT_OPTIONS.map(p => (
+                            <option key={p} value={p}>{p}%</option>
+                          ))}
+                        </select>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="admin-sale-actions">
+                  <button className="admin-reset-btn" onClick={handleClearSale} disabled={saleSaving}>
+                    Clear discounts
+                  </button>
+                  <button className="admin-coin-action-btn admin-coin-give" onClick={handleSaveSale} disabled={saleSaving}>
+                    {saleSaving ? 'Saving...' : '💾 Save sale'}
+                  </button>
+                </div>
+                {saleDone && <p className="admin-reset-success">{saleDone}</p>}
+                {saleError && <p className="admin-reset-error">{saleError}</p>}
+              </div>
+            )}
+
+            {adminPage === 'reset' && (
+              <div className="admin-section-card admin-page-body admin-danger">
+                <span className="admin-section-emoji">💥</span>
+                <h4>Reset All Scores</h4>
+                <p>Wipe all player stats, XP, coins, leagues, and tournaments. Your admin account is preserved.</p>
+                {resetDone && <p className="admin-reset-success">All scores have been reset.</p>}
+                {resetError && <p className="admin-reset-error">{resetError}</p>}
+                {resetConfirming ? (
                   <div className="admin-reset-confirm">
-                    <p className="admin-reset-confirm-text">Cancel this tournament? Players will return to their leagues.</p>
-                    <button className="admin-reset-btn admin-reset-confirm-yes" onClick={handleCancelTournament} disabled={tournamentLoading}>
-                      {tournamentLoading ? '...' : 'Yes, cancel'}
+                    <p className="admin-reset-confirm-text">Are you sure? This cannot be undone.</p>
+                    <button
+                      className="admin-reset-btn admin-reset-confirm-yes"
+                      onClick={handleResetAllScores}
+                      disabled={resetting}
+                    >
+                      {resetting ? 'Resetting...' : 'Yes, reset everything'}
                     </button>
-                    <button className="admin-reset-btn admin-reset-confirm-no" onClick={() => setCancelConfirming(false)} disabled={tournamentLoading}>
-                      Keep it
+                    <button
+                      className="admin-reset-btn admin-reset-confirm-no"
+                      onClick={() => setResetConfirming(false)}
+                      disabled={resetting}
+                    >
+                      Cancel
                     </button>
                   </div>
                 ) : (
-                  <button className="admin-reset-btn" onClick={() => setCancelConfirming(true)} disabled={tournamentLoading}>
-                    ✕ Cancel Tournament
+                  <button
+                    className="admin-reset-btn"
+                    onClick={() => setResetConfirming(true)}
+                  >
+                    💥 Nuclear Reset
                   </button>
                 )}
               </div>
-            ) : (
-              <form onSubmit={handleScheduleTournament} className="admin-tournament-form">
-                <select
-                  className="admin-coin-input"
-                  value={scheduleStart == null ? '' : String(scheduleStart)}
-                  onChange={e => setScheduleStart(Number(e.target.value))}
-                >
-                  {!scheduleStart && <option value="" disabled>Select start week...</option>}
-                  {buildWednesdayOptions().map(o => (
-                    <option key={o.ts} value={String(o.ts)}>{formatWeekOption(o.ts, o.isNext)}</option>
-                  ))}
-                </select>
-                <p className="admin-tournament-line">Tournaments start Wednesday 00:00 UTC and run 3 weeks (1 week per stage).</p>
-                <div className="admin-tournament-btns">
-                  <button type="submit" className="admin-coin-action-btn admin-coin-give" disabled={tournamentLoading || !scheduleStart}>
-                    {tournamentLoading ? '...' : 'Schedule'}
-                  </button>
-                </div>
-              </form>
             )}
-            {tournamentDone && <p className="admin-reset-success">{tournamentDone}</p>}
-            {tournamentError && <p className="admin-reset-error">{tournamentError}</p>}
-          </div>
-          <div className="admin-section-card">
-            <span className="admin-section-emoji">🛒</span>
-            <h4>Shop Discounts</h4>
-            <p>Put items on sale. Discounted prices show in the Shop for everyone.</p>
-            <div className="admin-sale-bar">
-              <span className="admin-sale-count">{activeSaleCount} on sale</span>
-              <select
-                className="admin-sale-group-select"
-                value={saleGroup}
-                onChange={e => setSaleGroup(e.target.value)}
-              >
-                {SALE_GROUPS.map(g => (
-                  <option key={g.id} value={g.id}>{g.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="admin-sale-list">
-              {filteredSaleItems.map(it => {
-                const pct = saleDraft[it.id]
-                return (
-                  <div key={it.id} className={`admin-sale-row ${isValidSalePercent(pct) ? 'on-sale' : ''}`}>
-                    <span className="admin-sale-emoji">{it.emoji}</span>
-                    <span className="admin-sale-name">{it.name}</span>
-                    <span className="admin-sale-price">🪙 {it.price.toLocaleString()}</span>
-                    <select
-                      className="admin-sale-select"
-                      value={isValidSalePercent(pct) ? pct : ''}
-                      onChange={e => handleSaleSet(it.id, e.target.value)}
-                    >
-                      <option value="">Off</option>
-                      {SALE_PERCENT_OPTIONS.map(p => (
-                        <option key={p} value={p}>{p}%</option>
-                      ))}
-                    </select>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="admin-sale-actions">
-              <button className="admin-reset-btn" onClick={handleClearSale} disabled={saleSaving}>
-                Clear discounts
-              </button>
-              <button className="admin-coin-action-btn admin-coin-give" onClick={handleSaveSale} disabled={saleSaving}>
-                {saleSaving ? 'Saving...' : '💾 Save sale'}
-              </button>
-            </div>
-            {saleDone && <p className="admin-reset-success">{saleDone}</p>}
-            {saleError && <p className="admin-reset-error">{saleError}</p>}
-          </div>
-          <div className="admin-section-card admin-coming-soon">
-            <span className="admin-section-emoji">🎮</span>
-            <h4>Game Controls</h4>
-            <p>Coming soon...</p>
-          </div>
-          <div className="admin-section-card admin-coming-soon">
-            <span className="admin-section-emoji">📈</span>
-            <h4>Analytics</h4>
-            <p>Coming soon...</p>
-          </div>
-          <div className="admin-section-card admin-danger">
-            <span className="admin-section-emoji">💥</span>
-            <h4>Reset All Scores</h4>
-            <p>Wipe all player stats, XP, coins, leagues, and tournaments. Your admin account is preserved.</p>
-            {resetDone && <p className="admin-reset-success">All scores have been reset.</p>}
-            {resetError && <p className="admin-reset-error">{resetError}</p>}
-            {resetConfirming ? (
-              <div className="admin-reset-confirm">
-                <p className="admin-reset-confirm-text">Are you sure? This cannot be undone.</p>
-                <button
-                  className="admin-reset-btn admin-reset-confirm-yes"
-                  onClick={handleResetAllScores}
-                  disabled={resetting}
-                >
-                  {resetting ? 'Resetting...' : 'Yes, reset everything'}
-                </button>
-                <button
-                  className="admin-reset-btn admin-reset-confirm-no"
-                  onClick={() => setResetConfirming(false)}
-                  disabled={resetting}
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                className="admin-reset-btn"
-                onClick={() => setResetConfirming(true)}
-              >
-                💥 Nuclear Reset
-              </button>
-            )}
-          </div>
-        </div>
-        <button className="admin-logout-btn" onClick={handleLogout}>
-          🚪 Lock Admin Panel
-        </button>
+
+            <button className="admin-logout-btn" onClick={handleLogout}>
+              🚪 Lock Admin Panel
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
