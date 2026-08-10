@@ -3,6 +3,7 @@ import { getFriendCode, getFriends } from '../socialService'
 import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor } from '../nameplateUtils'
 import { LEAGUE_RANKS } from '../leagues'
 import ChatPanel from './ChatPanel'
+import { cleanupExpiredChatMessages, CHAT_TTL_MS } from '../chatTtl'
 
 let _f = null
 async function fb() {
@@ -90,6 +91,7 @@ export default function FriendsChatPopup({ userId, user }) {
     if (!friendsLoaded.current) init()
 
     async function listenForUnreads() {
+      cleanupExpiredChatMessages()
       const { collection, query, orderBy, limit: qLimit, onSnapshot } = await fb()
       const { db } = await fb()
 
@@ -97,6 +99,7 @@ export default function FriendsChatPopup({ userId, user }) {
       unsub = onSnapshot(q, (snap) => {
         if (cancelled) return
         const counts = {}
+        const cutoff = Date.now() - CHAT_TTL_MS
         snap.docs.forEach(doc => {
           const data = doc.data()
           if (!data.roomId || !data.userId) return
@@ -105,7 +108,7 @@ export default function FriendsChatPopup({ userId, user }) {
           const friendId = parts.find(id => id !== userId)
           if (!friendId) return
           const lastRead = getLastRead(data.roomId)
-          if (data.createdAt > lastRead && !data.deleted) {
+          if (data.createdAt > cutoff && data.createdAt > lastRead && !data.deleted) {
             counts[friendId] = (counts[friendId] || 0) + 1
           }
         })

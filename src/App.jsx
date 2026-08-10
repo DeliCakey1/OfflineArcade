@@ -963,6 +963,12 @@ function App() {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
+    if (!user) return
+    const t = setTimeout(() => { import('./chatTtl').then(m => m.cleanupExpiredChatMessages()) }, 15000)
+    return () => clearTimeout(t)
+  }, [user])
+
+  useEffect(() => {
     handleRedirectResult().catch(() => {})
     let unsubFn = () => {}
     onAuthChange((u) => {

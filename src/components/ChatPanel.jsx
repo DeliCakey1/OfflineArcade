@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { cleanupExpiredChatMessages, CHAT_TTL_MS } from '../chatTtl'
 
 let _f = null
 async function f() {
@@ -61,15 +62,17 @@ export function useChatRoom(roomId) {
     setLoadError('')
 
     async function subscribe() {
+      cleanupExpiredChatMessages()
       try {
         const { collection, query, orderBy, limit, onSnapshot } = await f()
         const { db } = await f()
         const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'), limit(50))
         unsub = onSnapshot(q, snap => {
           if (cancelled) return
+          const cutoff = Date.now() - CHAT_TTL_MS
           const msgs = snap.docs
             .map(d => ({ id: d.id, ...d.data() }))
-            .filter(m => m.roomId === roomId)
+            .filter(m => m.roomId === roomId && m.createdAt > cutoff)
             .reverse()
           setMessages(msgs)
           setLoadError('')

@@ -7,6 +7,13 @@ service cloud.firestore {
 
     // ===== chatMessages =====
     match /chatMessages/{doc} {
+      // 7-day TTL: any signed-in user may hard-delete messages older than 7 days
+      // (client-side cleanup in src/chatTtl.js) so old chat docs don't pile up.
+      function isExpiredChatMessage() {
+        return (resource.data.createdAt is number && resource.data.createdAt < request.time.toMillis() - 604800000)
+          || (resource.data.createdAt is timestamp && resource.data.createdAt < request.time);
+      }
+
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
@@ -18,7 +25,8 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 100;
-      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if signedIn()
+        && (resource.data.userId == request.auth.uid || isExpiredChatMessage());
     }
 
     // ===== dailyScores =====
