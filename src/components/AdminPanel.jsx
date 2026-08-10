@@ -11,23 +11,25 @@ import {
 } from '../adminAuth'
 import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament, getShopSale, setShopSale } from '../leagueService'
 import { TITLES, ALL_NAMEPLATES, TOURNAMENT_TICKET, SALE_PERCENT_OPTIONS } from '../shopItems'
+import { getNextWednesdayMidnightUTC } from '../leagues'
 
-function pad2(n) {
-  return String(n).padStart(2, '0')
-}
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
-function toLocalInputValue(ts) {
-  const d = new Date(ts)
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`
-}
-
-function nextWednesdayLocalValue() {
+function buildWednesdayOptions() {
   const now = new Date()
-  const day = now.getDay()
-  let daysAhead = (3 - day + 7) % 7
-  if (daysAhead === 0) daysAhead = 7
-  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysAhead, 0, 0, 0, 0)
-  return toLocalInputValue(target.getTime())
+  const upper = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 6, now.getUTCDate())).getTime()
+  const opts = []
+  let ts = getNextWednesdayMidnightUTC()
+  while (ts <= upper) {
+    opts.push({ ts, isNext: opts.length === 0 })
+    ts += WEEK_MS
+  }
+  return opts
+}
+
+function formatWeekOption(ts, isNext) {
+  const label = new Date(ts).toLocaleDateString(undefined, { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+  return isNext ? `Next Wednesday · ${label}` : label
 }
 
 function formatTournamentStart(ts) {
@@ -114,7 +116,7 @@ export default function AdminPanel({ userId }) {
     getLatestTournamentForAdmin().then(t => {
       if (cancelled) return
       setTournament(t)
-      if (!t) setScheduleStart(nextWednesdayLocalValue())
+      if (!t) setScheduleStart(buildWednesdayOptions()[0]?.ts ?? null)
     }).catch(() => {})
     return () => { cancelled = true }
   }, [authenticated])
@@ -278,9 +280,8 @@ export default function AdminPanel({ userId }) {
 
   async function handleScheduleTournament(e) {
     e.preventDefault()
-    if (!scheduleStart) return
-    const ts = new Date(scheduleStart).getTime()
-    if (!ts || isNaN(ts)) { setTournamentError('Pick a valid date and time.'); return }
+    const ts = Number(scheduleStart)
+    if (!ts || isNaN(ts) || ts <= Date.now()) { setTournamentError('Pick a valid week to start.'); return }
     setTournamentLoading(true)
     setTournamentError('')
     setTournamentDone('')
@@ -305,7 +306,7 @@ export default function AdminPanel({ userId }) {
       await cancelTournament(tournament.id)
       setTournament(null)
       setCancelConfirming(false)
-      setScheduleStart(nextWednesdayLocalValue())
+      setScheduleStart(buildWednesdayOptions()[0]?.ts ?? null)
       setTournamentDone('Tournament cancelled.')
       sound('cash')
     } catch (err) {
@@ -541,17 +542,18 @@ export default function AdminPanel({ userId }) {
               </div>
             ) : (
               <form onSubmit={handleScheduleTournament} className="admin-tournament-form">
-                <input
-                  type="datetime-local"
+                <select
                   className="admin-coin-input"
-                  value={scheduleStart}
-                  onChange={e => setScheduleStart(e.target.value)}
-                  min={toLocalInputValue(Date.now())}
-                />
+                  value={scheduleStart == null ? '' : String(scheduleStart)}
+                  onChange={e => setScheduleStart(Number(e.target.value))}
+                >
+                  {!scheduleStart && <option value="" disabled>Select start week...</option>}
+                  {buildWednesdayOptions().map(o => (
+                    <option key={o.ts} value={String(o.ts)}>{formatWeekOption(o.ts, o.isNext)}</option>
+                  ))}
+                </select>
+                <p className="admin-tournament-line">Tournaments start Wednesday 00:00 UTC and run 3 weeks (1 week per stage).</p>
                 <div className="admin-tournament-btns">
-                  <button type="button" className="admin-coin-action-btn admin-coin-give" onClick={() => setScheduleStart(nextWednesdayLocalValue())}>
-                    Next Wednesday
-                  </button>
                   <button type="submit" className="admin-coin-action-btn admin-coin-give" disabled={tournamentLoading || !scheduleStart}>
                     {tournamentLoading ? '...' : 'Schedule'}
                   </button>
