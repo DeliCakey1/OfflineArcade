@@ -295,10 +295,7 @@ export default function AdminPanel({ userId }) {
     setTargetActionLoading('')
   }
 
-  async function handleScheduleTournament(e) {
-    e.preventDefault()
-    const ts = Number(scheduleStart)
-    if (!ts || isNaN(ts) || ts <= Date.now()) { setTournamentError('Pick a valid week to start.'); return }
+  async function doSchedule(ts) {
     setTournamentLoading(true)
     setTournamentError('')
     setTournamentDone('')
@@ -312,6 +309,19 @@ export default function AdminPanel({ userId }) {
       sound('lose')
     }
     setTournamentLoading(false)
+  }
+
+  async function handleScheduleTournament(e) {
+    e.preventDefault()
+    const ts = Number(scheduleStart)
+    if (!ts || isNaN(ts) || ts <= Date.now()) { setTournamentError('Pick a valid week to start.'); return }
+    await doSchedule(ts)
+  }
+
+  async function handleQuickSchedule() {
+    const next = buildWednesdayOptions()[0]?.ts
+    if (!next || next <= Date.now()) return
+    await doSchedule(next)
   }
 
   async function handleCancelTournament() {
@@ -598,24 +608,33 @@ export default function AdminPanel({ userId }) {
                     )}
                   </div>
                 ) : (
-                  <form onSubmit={handleScheduleTournament} className="admin-tournament-form">
-                    <select
-                      className="admin-coin-input"
-                      value={scheduleStart == null ? '' : String(scheduleStart)}
-                      onChange={e => setScheduleStart(Number(e.target.value))}
+                  <>
+                    <button
+                      className="admin-quick-schedule-btn"
+                      onClick={handleQuickSchedule}
+                      disabled={tournamentLoading}
                     >
-                      {!scheduleStart && <option value="" disabled>Select start week...</option>}
-                      {buildWednesdayOptions().map(o => (
-                        <option key={o.ts} value={String(o.ts)}>{formatWeekOption(o.ts, o.isNext)}</option>
-                      ))}
-                    </select>
-                    <p className="admin-tournament-line">Tournaments start Wednesday 00:00 UTC and run 3 weeks (1 week per stage).</p>
-                    <div className="admin-tournament-btns">
-                      <button type="submit" className="admin-coin-action-btn admin-coin-give" disabled={tournamentLoading || !scheduleStart}>
-                        {tournamentLoading ? '...' : 'Schedule'}
-                      </button>
-                    </div>
-                  </form>
+                      ⚡ Quick Schedule for Next Week
+                    </button>
+                    <form onSubmit={handleScheduleTournament} className="admin-tournament-form">
+                      <select
+                        className="admin-coin-input"
+                        value={scheduleStart == null ? '' : String(scheduleStart)}
+                        onChange={e => setScheduleStart(Number(e.target.value))}
+                      >
+                        {!scheduleStart && <option value="" disabled>Select start week...</option>}
+                        {buildWednesdayOptions().map(o => (
+                          <option key={o.ts} value={String(o.ts)}>{formatWeekOption(o.ts, o.isNext)}</option>
+                        ))}
+                      </select>
+                      <p className="admin-tournament-line">Tournaments start Wednesday 00:00 UTC and run 3 weeks (1 week per stage).</p>
+                      <div className="admin-tournament-btns">
+                        <button type="submit" className="admin-coin-action-btn admin-coin-give" disabled={tournamentLoading || !scheduleStart}>
+                          {tournamentLoading ? '...' : 'Schedule'}
+                        </button>
+                      </div>
+                    </form>
+                  </>
                 )}
                 {tournamentDone && <p className="admin-reset-success">{tournamentDone}</p>}
                 {tournamentError && <p className="admin-reset-error">{tournamentError}</p>}

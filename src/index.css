@@ -5005,6 +5005,31 @@ body::after {
   color: var(--text-light);
   margin: 0;
 }
+.admin-quick-schedule-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin: 10px 0 4px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--neon-green), #06b6d4);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.admin-quick-schedule-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+.admin-quick-schedule-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .admin-sale-bar {
   display: flex;
   align-items: center;
