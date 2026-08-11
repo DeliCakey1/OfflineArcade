@@ -394,10 +394,16 @@ export async function isUsernameAvailable(username, excludeUserId) {
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
 
-// Claims a username atomically: writes the /usernames/{lower} doc (denied by
-// rules if someone already owns it) and updates the player doc in one batch.
+// Claims a username uniquely. Rules enforce uniqueness via the
+// /usernames/{lower} doc ID: creating it is denied if anyone owns the name,
+// and updating an existing doc is denied outright. A write batch can't be used
+// here because rules for a batch are evaluated against the pre-batch state, so
+// the player update's claim check would never see the claim being created in
+// the same batch. Instead we create the claim first, then update the player,
+// then release the old claim. The claim is rolled back if the player update
+// fails, so a user never gets stuck on a name they own.
 export async function claimUsername(userId, newUsername) {
-  const { doc, getDoc, writeBatch } = await f()
+  const { doc, getDoc, setDoc, deleteDoc, updateDoc } = await f()
   const { db } = await f()
   const trimmed = newUsername.trim()
   const term = trimmed.toLowerCase()
@@ -407,22 +413,28 @@ export async function claimUsername(userId, newUsername) {
   const oldTerm = playerSnap.data().username && typeof playerSnap.data().username === 'string'
     ? playerSnap.data().username.toLowerCase()
     : null
-  const batch = writeBatch(db)
-  if (oldTerm && oldTerm !== term) {
-    batch.delete(doc(db, 'usernames', oldTerm))
-  }
-  if (oldTerm !== term) {
-    batch.set(doc(db, 'usernames', term), { uid: userId, createdAt: Date.now() })
-  }
-  batch.update(playerRef, { username: trimmed, usernameChangedAt: Date.now(), usernameSkipped: false })
-  try {
-    await batch.commit()
-  } catch (e) {
-    if (/permission/i.test(String((e && e.message) || ''))) {
-      throw new Error('Username is already taken')
+  if (oldTerm === term) return trimmed
+  const claimRef = doc(db, 'usernames', term)
+  const claimSnap = await getDoc(claimRef)
+  if (claimSnap.exists()) {
+    if (claimSnap.data().uid !== userId) throw new Error('Username is already taken')
+  } else {
+    try {
+      await setDoc(claimRef, { uid: userId, createdAt: Date.now() })
+    } catch (e) {
+      if (/permission/i.test(String((e && e.message) || ''))) {
+        throw new Error('Username is already taken')
+      }
+      throw e
     }
+  }
+  try {
+    await updateDoc(playerRef, { username: trimmed, usernameChangedAt: Date.now(), usernameSkipped: false })
+  } catch (e) {
+    await deleteDoc(claimRef).catch(() => {})
     throw e
   }
+  if (oldTerm) await deleteDoc(doc(db, 'usernames', oldTerm)).catch(() => {})
   return trimmed
 }
 
