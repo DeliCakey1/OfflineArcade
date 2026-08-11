@@ -214,6 +214,21 @@ service cloud.firestore {
       allow delete: if signedIn() && isAdmin();
     }
 
+    // ===== usernames (unique handle registry) =====
+    // Doc ID is the lowercase username; only one doc can exist per name, so
+    // ownership of the matching doc is the source of truth for uniqueness.
+    match /usernames/{username} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/usernames/$(username))
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt is number;
+      allow update: if false;
+      allow delete: if signedIn()
+        && get(/databases/$(database)/documents/usernames/$(username)).data.uid == request.auth.uid;
+    }
+
     // ===== players =====
     match /players/{playerId} {
       // Cross-user player updates are only the narrow operations the app
@@ -272,10 +287,28 @@ service cloud.firestore {
           || (old != null && next is list && next.size() == old.size() - 1 && old.hasAll(next) && !next.hasAny([request.auth.uid]));
       }
 
+      // Username changes are only allowed if the player owns the matching
+      // lowercase claim doc in /usernames (guaranteed unique by doc ID).
+      function isValidUsernameClaim() {
+        let affected = request.resource.data.diff(resource.data).affectedKeys();
+        // Null->null writes are harmless legacy field backfills, not claims.
+        let nullToNull = request.resource.data.username == null && resource.data.username == null;
+        let term = request.resource.data.username.lower();
+        return !affected.hasAny(['username'])
+          || nullToNull
+          || (request.resource.data.username is string
+            && request.resource.data.username.size() >= 3
+            && request.resource.data.username.size() <= 20
+            && request.resource.data.username.matches('^[a-zA-Z0-9_]+$')
+            && exists(/databases/$(database)/documents/usernames/$(term))
+            && get(/databases/$(database)/documents/usernames/$(term)).data.uid == request.auth.uid);
+      }
+
       allow read: if signedIn();
       allow create: if signedIn() && request.auth.uid == playerId;
       allow update: if signedIn()
-        && (request.auth.uid == playerId || isPermittedCrossPlayerUpdate());
+        && ((request.auth.uid == playerId && isValidUsernameClaim())
+            || isPermittedCrossPlayerUpdate());
       allow delete: if false;
     }
   }

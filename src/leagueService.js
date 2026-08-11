@@ -374,9 +374,14 @@ export async function getPlayer(userId) {
 
 export async function isUsernameAvailable(username, excludeUserId) {
   if (!username || username.trim().length === 0) return false
-  const { collection, query, orderBy, where, getDocs, limit: firestoreLimit } = await f()
+  const { collection, query, orderBy, where, getDocs, limit: firestoreLimit, doc, getDoc } = await f()
   const { db } = await f()
   const term = username.trim().toLowerCase()
+  const claimSnap = await getDoc(doc(db, 'usernames', term))
+  if (claimSnap.exists()) {
+    if (excludeUserId && claimSnap.data().uid === excludeUserId) return true
+    return false
+  }
   const col = collection(db, PLAYERS)
   const q = query(col, orderBy('username'), where('username', '>=', term), where('username', '<=', term + '\uf8ff'), firestoreLimit(20))
   const snap = await getDocs(q)
@@ -388,6 +393,38 @@ export async function isUsernameAvailable(username, excludeUserId) {
 }
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
+
+// Claims a username atomically: writes the /usernames/{lower} doc (denied by
+// rules if someone already owns it) and updates the player doc in one batch.
+export async function claimUsername(userId, newUsername) {
+  const { doc, getDoc, writeBatch } = await f()
+  const { db } = await f()
+  const trimmed = newUsername.trim()
+  const term = trimmed.toLowerCase()
+  const playerRef = doc(db, PLAYERS, userId)
+  const playerSnap = await getDoc(playerRef)
+  if (!playerSnap.exists()) throw new Error('Player not found')
+  const oldTerm = playerSnap.data().username && typeof playerSnap.data().username === 'string'
+    ? playerSnap.data().username.toLowerCase()
+    : null
+  const batch = writeBatch(db)
+  if (oldTerm && oldTerm !== term) {
+    batch.delete(doc(db, 'usernames', oldTerm))
+  }
+  if (oldTerm !== term) {
+    batch.set(doc(db, 'usernames', term), { uid: userId, createdAt: Date.now() })
+  }
+  batch.update(playerRef, { username: trimmed, usernameChangedAt: Date.now(), usernameSkipped: false })
+  try {
+    await batch.commit()
+  } catch (e) {
+    if (/permission/i.test(String((e && e.message) || ''))) {
+      throw new Error('Username is already taken')
+    }
+    throw e
+  }
+  return trimmed
+}
 
 export async function updateUsername(userId, newUsername) {
   const player = await getPlayer(userId)
@@ -403,7 +440,7 @@ export async function updateUsername(userId, newUsername) {
   }
   const available = await isUsernameAvailable(trimmed, userId)
   if (!available) throw new Error('Username is already taken')
-  await updatePlayer(userId, { username: trimmed, usernameChangedAt: Date.now() })
+  await claimUsername(userId, trimmed)
   return trimmed
 }
 

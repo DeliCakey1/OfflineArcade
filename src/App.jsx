@@ -489,29 +489,21 @@ function UsernameCreationModal({ onClose, userId, onUsernameSet }) {
     setLoading(true)
     setError('')
     try {
-      const { isUsernameAvailable, updatePlayer } = await import('./leagueService')
+      const { isUsernameAvailable, claimUsername } = await import('./leagueService')
       const available = await isUsernameAvailable(trimmed, userId)
       if (!available) { setError('Username is already taken'); setLoading(false); return }
-      await updatePlayer(userId, { username: trimmed, usernameChangedAt: Date.now(), usernameSkipped: false })
+      await claimUsername(userId, trimmed)
       onUsernameSet(trimmed)
       onClose()
     } catch (e) {
-      setError(e.message || 'Failed to create username')
+      const msg = String((e && e.message) || '')
+      setError(/permission/i.test(msg) ? 'Username is already taken' : (msg || 'Failed to create username'))
     }
     setLoading(false)
   }
 
-  async function handleSkip() {
-    try {
-      const { updatePlayer } = await import('./leagueService')
-      await updatePlayer(userId, { usernameSkipped: true })
-    } catch {}
-    onClose()
-  }
-
   function handleKeyDown(e) {
     if (e.key === 'Enter') handleCreate()
-    if (e.key === 'Escape') handleSkip()
   }
 
   return (
@@ -520,7 +512,7 @@ function UsernameCreationModal({ onClose, userId, onUsernameSet }) {
         <div className="username-modal-header">
           <span className="username-modal-icon">🏷️</span>
           <h2 className="stats-title">Create Your Username</h2>
-          <p className="username-modal-desc">This is how other players will find you. You can change it once every 12 hours.</p>
+          <p className="username-modal-desc">A username is required to play. This is how other players will find you, and it must be unique. You can change it once every 12 hours.</p>
         </div>
         <div className="username-input-wrap">
           <span className="username-at">@</span>
@@ -538,7 +530,6 @@ function UsernameCreationModal({ onClose, userId, onUsernameSet }) {
         </div>
         {error && <div className="username-error">{error}</div>}
         <div className="username-modal-actions">
-          <button className="username-skip-btn" onClick={handleSkip}>Skip for now</button>
           <button className="username-create-btn" onClick={handleCreate} disabled={loading || !username.trim()}>
             {loading ? 'Creating...' : 'Create Username'}
           </button>
@@ -1020,7 +1011,7 @@ function App() {
                 setBgUrl(p.bgUrl)
                 try { localStorage.setItem('arcade-bg-url', p.bgUrl) } catch {}
               }
-              if (!p.username && !p.usernameSkipped && !u.isAnonymous) {
+              if (!p.username && !u.isAnonymous) {
                 setShowUsernameModal(true)
               }
               try {
