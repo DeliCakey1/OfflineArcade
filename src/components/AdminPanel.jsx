@@ -9,7 +9,7 @@ import {
   setLoginCooldown,
   getRemainingCooldown,
 } from '../adminAuth'
-import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament, getShopSale, setShopSale, getAnnouncement, setAnnouncement, getChatControls, setChatControls, getAnalytics } from '../leagueService'
+import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament, getShopSale, setShopSale, getAnnouncement, setAnnouncement, getChatControls, setChatControls, getAnalytics, setBlacklist, setModeration, clearModeration, getModerationOverview } from '../leagueService'
 import { TITLES, ALL_NAMEPLATES, TOURNAMENT_TICKET, SALE_PERCENT_OPTIONS } from '../shopItems'
 import { getNextWednesdayMidnightUTC } from '../leagues'
 
@@ -63,6 +63,7 @@ const ADMIN_MENU = [
   { id: 'sale', emoji: '🛒', title: 'Shop Discounts', desc: 'Put shop items on sale' },
   { id: 'controls', emoji: '🎮', title: 'Game Controls', desc: 'Announcement banner and chat on/off' },
   { id: 'analytics', emoji: '📈', title: 'Analytics', desc: 'Live stats on players, coins, and activity' },
+  { id: 'moderation', emoji: '🛡️', title: 'Player Moderation', desc: 'Warn or ban players with bad usernames' },
   { id: 'reset', emoji: '💥', title: 'Reset All Scores', desc: 'Wipe all stats, coins, leagues, and tournaments' },
 ]
 
@@ -73,7 +74,27 @@ const ADMIN_MENU_TITLES = {
   sale: 'Shop Discounts',
   controls: 'Game Controls',
   analytics: 'Analytics',
+  moderation: 'Player Moderation',
   reset: 'Reset All Scores',
+}
+
+const BAN_DURATIONS = [
+  { id: '1h', label: '1 hour', ms: 60 * 60 * 1000 },
+  { id: '6h', label: '6 hours', ms: 6 * 60 * 60 * 1000 },
+  { id: '1d', label: '24 hours', ms: 24 * 60 * 60 * 1000 },
+  { id: '3d', label: '3 days', ms: 3 * 24 * 60 * 60 * 1000 },
+  { id: '7d', label: '7 days', ms: 7 * 24 * 60 * 60 * 1000 },
+  { id: '30d', label: '30 days', ms: 30 * 24 * 60 * 60 * 1000 },
+]
+
+function formatModerationStatus(mod) {
+  if (!mod) return null
+  if (mod.type === 'permanent') return { label: 'Permanently banned', emoji: '🚫', tone: 'ban' }
+  if (mod.type === 'temp') {
+    const active = mod.until > Date.now()
+    return { label: active ? `Banned until ${new Date(mod.until).toLocaleString()}` : 'Temp ban expired', emoji: '⏳', tone: active ? 'ban' : 'ok' }
+  }
+  return { label: 'Warned', emoji: '⚠️', tone: 'warn' }
 }
 
 export default function AdminPanel({ userId }) {
@@ -121,6 +142,18 @@ export default function AdminPanel({ userId }) {
   const [analytics, setAnalytics] = useState(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [analyticsError, setAnalyticsError] = useState('')
+  const [modLoading, setModLoading] = useState(false)
+  const [blacklistWords, setBlacklistWords] = useState([])
+  const [blacklistInput, setBlacklistInput] = useState('')
+  const [blacklistSaving, setBlacklistSaving] = useState(false)
+  const [needsAttention, setNeedsAttention] = useState([])
+  const [modTarget, setModTarget] = useState(null)
+  const [modAction, setModAction] = useState('')
+  const [modReason, setModReason] = useState('')
+  const [modDuration, setModDuration] = useState('1d')
+  const [modBusy, setModBusy] = useState(false)
+  const [modDone, setModDone] = useState('')
+  const [modError, setModError] = useState('')
   const [adminPage, setAdminPage] = useState('menu')
   const inputRef = useRef(null)
   const sound = useSound()
@@ -177,6 +210,25 @@ export default function AdminPanel({ userId }) {
     }).catch(() => setControlsLoading(false))
     return () => { cancelled = true }
   }, [authenticated])
+
+  async function handleLoadModeration() {
+    setModLoading(true)
+    setModError('')
+    setModDone('')
+    try {
+      const overview = await getModerationOverview()
+      setBlacklistWords(overview.blacklist)
+      setNeedsAttention(overview.needsAttention)
+    } catch (err) {
+      setModError(err.message || 'Failed to load moderation data.')
+    }
+    setModLoading(false)
+  }
+
+  useEffect(() => {
+    if (!authenticated || adminPage !== 'moderation') return
+    handleLoadModeration()
+  }, [authenticated, adminPage])
 
   const saleItemList = useMemo(() => {
     const items = []
@@ -440,6 +492,98 @@ export default function AdminPanel({ userId }) {
       setAnalyticsError(err.message || 'Failed to load analytics.')
     }
     setAnalyticsLoading(false)
+  }
+
+  function handleAddBlacklistWord() {
+    const word = blacklistInput.trim().toLowerCase()
+    if (!word) return
+    if (!blacklistWords.includes(word)) setBlacklistWords(prev => [...prev, word])
+    setBlacklistInput('')
+    setModDone('')
+    sound('click')
+  }
+
+  function handleRemoveBlacklistWord(word) {
+    setBlacklistWords(prev => prev.filter(w => w !== word))
+    setModDone('')
+    sound('click')
+  }
+
+  async function handleSaveBlacklist() {
+    setBlacklistSaving(true)
+    setModError('')
+    setModDone('')
+    try {
+      const res = await setBlacklist(blacklistWords)
+      setBlacklistWords(res.words)
+      setModDone(`Blacklist saved: ${res.words.length} word${res.words.length === 1 ? '' : 's'}.`)
+      sound('cash')
+    } catch (err) {
+      setModError(err.message || 'Failed to save blacklist.')
+      sound('lose')
+    }
+    setBlacklistSaving(false)
+  }
+
+  function openModTarget(player, mod) {
+    setModTarget({ player, moderation: mod })
+    setModAction('')
+    setModReason('')
+    setModDuration('1d')
+    setModDone('')
+    setModError('')
+  }
+
+  async function handleModSubmit(action) {
+    if (!modTarget) return
+    if (action !== 'warn' && !modReason.trim()) {
+      setModError('Please enter a reason for the ban.')
+      return
+    }
+    setModBusy(true)
+    setModError('')
+    setModDone('')
+    try {
+      const targetName = modTarget.player.username || modTarget.player.name || 'unknown'
+      let result
+      if (action === 'warn') {
+        result = await setModeration(modTarget.player.id, { type: 'warn', reason: modReason.trim() || 'No reason given', until: null, issuedBy: userId, username: targetName })
+      } else if (action === 'temp') {
+        const dur = BAN_DURATIONS.find(d => d.id === modDuration)
+        result = await setModeration(modTarget.player.id, { type: 'temp', reason: modReason.trim(), until: Date.now() + (dur?.ms || BAN_DURATIONS[2].ms), issuedBy: userId, username: targetName })
+      } else {
+        result = await setModeration(modTarget.player.id, { type: 'permanent', reason: modReason.trim(), until: null, issuedBy: userId, username: targetName })
+      }
+      const nextMod = { userId: modTarget.player.id, ...result }
+      setModTarget(prev => prev ? { player: prev.player, moderation: nextMod } : prev)
+      setModDone(action === 'warn' ? `Warning issued to @${targetName}.` : action === 'temp' ? `Temp ban applied to @${targetName}.` : `@${targetName} is now permanently banned.`)
+      setModAction('')
+      setModReason('')
+      sound('cash')
+    } catch (err) {
+      setModError(err.message || 'Action failed.')
+      sound('lose')
+    }
+    setModBusy(false)
+  }
+
+  async function handleModLift() {
+    if (!modTarget) return
+    setModBusy(true)
+    setModError('')
+    setModDone('')
+    try {
+      await clearModeration(modTarget.player.id)
+      setModTarget(prev => prev ? { player: prev.player, moderation: null } : prev)
+      setModDone(`Moderation cleared for @${modTarget.player.username || modTarget.player.name || 'unknown'}.`)
+      setModAction('')
+      setModReason('')
+      sound('cash')
+    } catch (err) {
+      setModError(err.message || 'Failed to clear moderation.')
+      sound('lose')
+    }
+    setModBusy(false)
   }
 
   if (!authenticated) {
@@ -869,6 +1013,146 @@ export default function AdminPanel({ userId }) {
                       </div>
                     </div>
                   </>
+                )}
+              </div>
+            )}
+
+            {adminPage === 'moderation' && (
+              <div className="admin-section-card admin-page-body">
+                <span className="admin-section-emoji">🛡️</span>
+                <h4>Player Moderation</h4>
+                <p>Manage blacklisted words and warn or ban players whose names match them.</p>
+                {modError && <p className="admin-reset-error">{modError}</p>}
+                {modDone && <p className="admin-reset-success">{modDone}</p>}
+
+                <h5 className="admin-control-heading">Blacklisted words</h5>
+                {blacklistWords.length === 0 && <p className="admin-tournament-line">No blacklisted words yet.</p>}
+                <div className="admin-blacklist-chips">
+                  {blacklistWords.map(w => (
+                    <span key={w} className="admin-blacklist-chip">
+                      {w}
+                      <button className="admin-blacklist-chip-x" onClick={() => handleRemoveBlacklistWord(w)} aria-label={`Remove ${w}`}>×</button>
+                    </span>
+                  ))}
+                </div>
+                <div className="admin-control-row">
+                  <input
+                    className="admin-coin-input"
+                    type="text"
+                    value={blacklistInput}
+                    onChange={e => setBlacklistInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddBlacklistWord() }}
+                    placeholder="Add a word…"
+                    maxLength={30}
+                  />
+                  <button className="admin-coin-action-btn admin-coin-give" onClick={handleAddBlacklistWord} disabled={!blacklistInput.trim()}>＋ Add</button>
+                  <button className="admin-coin-action-btn admin-coin-give" onClick={handleSaveBlacklist} disabled={blacklistSaving}>
+                    {blacklistSaving ? 'Saving…' : '💾 Save list'}
+                  </button>
+                </div>
+
+                <h5 className="admin-control-heading">
+                  Needs Attention
+                  <button className="admin-coin-action-btn admin-coin-give admin-mod-refresh" onClick={handleLoadModeration} disabled={modLoading}>
+                    {modLoading ? 'Loading…' : '🔄 Refresh'}
+                  </button>
+                </h5>
+                {modLoading && <p className="admin-tournament-line">Scanning players…</p>}
+                {!modLoading && needsAttention.length === 0 && (
+                  <p className="admin-tournament-line">No player names match the blacklist. 🎉</p>
+                )}
+                <div className="admin-mod-list">
+                  {needsAttention.map(({ player, matches, moderation }) => {
+                    const status = formatModerationStatus(moderation)
+                    return (
+                      <div key={player.id} className="admin-mod-row">
+                        <div className="admin-mod-info">
+                          <span className="admin-mod-name">@{player.username || player.name || 'unknown'}</span>
+                          <span className="admin-mod-words">matched: {matches.join(', ')}</span>
+                          {status && (
+                            <span className={`admin-mod-status admin-mod-status-${status.tone}`}>
+                              {status.emoji} {status.label}
+                            </span>
+                          )}
+                        </div>
+                        <button className="admin-coin-action-btn admin-coin-give" onClick={() => openModTarget(player, moderation)}>
+                          {moderation ? 'Manage' : 'Action'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {modTarget && (
+                  <div className="admin-mod-panel">
+                    <h5 className="admin-control-heading">
+                      @{modTarget.player.username || modTarget.player.name || 'unknown'}
+                    </h5>
+                    {(() => {
+                      const status = formatModerationStatus(modTarget.moderation)
+                      return status ? (
+                        <p className={`admin-mod-status admin-mod-status-${status.tone}`}>{status.emoji} {status.label}</p>
+                      ) : (
+                        <p className="admin-mod-status admin-mod-status-ok">No active moderation.</p>
+                      )
+                    })()}
+                    {modTarget.moderation?.reason && (
+                      <p className="admin-mod-reason">Reason: {modTarget.moderation.reason}</p>
+                    )}
+                    <div className="admin-control-row">
+                      <select className="admin-coin-input admin-mod-select" value={modAction} onChange={e => setModAction(e.target.value)}>
+                        <option value="">Choose action…</option>
+                        <option value="warn">⚠️ Warn</option>
+                        <option value="temp">⏳ Temp ban…</option>
+                        <option value="permanent">🚫 Permanent ban</option>
+                      </select>
+                      {modAction === 'temp' && (
+                        <select className="admin-coin-input admin-mod-select" value={modDuration} onChange={e => setModDuration(e.target.value)}>
+                          {BAN_DURATIONS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
+                        </select>
+                      )}
+                    </div>
+                    {modAction !== '' && modAction !== 'warn' && (
+                      <input
+                        className="admin-coin-input admin-mod-reason-input"
+                        type="text"
+                        value={modReason}
+                        onChange={e => setModReason(e.target.value)}
+                        placeholder="Reason (required)…"
+                        maxLength={300}
+                      />
+                    )}
+                    {modAction === 'warn' && (
+                      <input
+                        className="admin-coin-input admin-mod-reason-input"
+                        type="text"
+                        value={modReason}
+                        onChange={e => setModReason(e.target.value)}
+                        placeholder="Reason (optional)…"
+                        maxLength={300}
+                      />
+                    )}
+                    <div className="admin-mod-actions">
+                      {modAction && (
+                        <button
+                          className="admin-coin-action-btn admin-coin-give"
+                          onClick={() => handleModSubmit(modAction)}
+                          disabled={modBusy}
+                        >
+                          {modBusy ? 'Working…' : modAction === 'warn' ? '⚠️ Issue warning' : modAction === 'temp' ? '⏳ Apply ban' : '🚫 Ban permanently'}
+                        </button>
+                      )}
+                      {modTarget.moderation && (
+                        <button
+                          className="admin-coin-action-btn admin-coin-remove"
+                          onClick={handleModLift}
+                          disabled={modBusy}
+                        >
+                          🔓 Lift / clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

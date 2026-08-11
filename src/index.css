@@ -6753,3 +6753,90 @@ body::after {
   color: var(--text-light, #e8e0f5); font-size: 13px; line-height: 1.5;
 }
 
+/* ===== PLAYER MODERATION (ADMIN) ===== */
+.admin-blacklist-chips {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0;
+}
+.admin-blacklist-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  color: #ffd7d7; background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.admin-blacklist-chip-x {
+  background: none; border: none; color: #ffb3b3; cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 0 2px;
+}
+.admin-blacklist-chip-x:hover { color: #fff; }
+.admin-mod-refresh { margin-left: 8px; }
+.admin-mod-list {
+  display: flex; flex-direction: column; gap: 6px; margin-top: 6px;
+}
+.admin-mod-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 12px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-mod-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.admin-mod-name { font-weight: 700; font-size: 14px; color: var(--text-light, #e8e0f5); }
+.admin-mod-words { font-size: 12px; color: #ffb3b3; }
+.admin-mod-status {
+  display: inline-block; width: fit-content; margin-top: 3px;
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+}
+.admin-mod-status-ban { color: #ffb3b3; background: rgba(239, 68, 68, 0.2); }
+.admin-mod-status-warn { color: #ffd88f; background: rgba(245, 158, 11, 0.18); }
+.admin-mod-status-ok { color: #a7f3d0; background: rgba(16, 185, 129, 0.15); }
+.admin-mod-panel {
+  margin-top: 12px; padding: 12px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.admin-mod-reason {
+  font-size: 12px; color: var(--text-light, #e8e0f5);
+  background: rgba(0, 0, 0, 0.25); padding: 6px 10px; border-radius: 8px;
+}
+.admin-mod-select { flex: 0 0 auto; }
+.admin-mod-reason-input { flex: 1 1 100%; }
+.admin-mod-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-control-row { flex-wrap: wrap; }
+.admin-control-row .admin-mod-reason-input { flex: 1 1 100%; }
+
+/* ===== BANNED SCREEN + WARN BANNER ===== */
+.banned-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 20px; box-sizing: border-box;
+  background: radial-gradient(circle at 50% 30%, rgba(127, 29, 29, 0.35), rgba(10, 8, 16, 0.92));
+}
+.banned-card {
+  max-width: 420px; width: 100%; text-align: center; padding: 32px 28px;
+  border-radius: 18px; background: rgba(20, 16, 30, 0.92);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.banned-emoji { font-size: 48px; margin-bottom: 8px; }
+.banned-title { font-size: 26px; margin: 0 0 6px; color: #ffd7d7; }
+.banned-sub { font-size: 15px; color: var(--text-light, #e8e0f5); margin: 0 0 12px; line-height: 1.5; }
+.banned-reason {
+  font-size: 13px; color: #ffd88f; padding: 8px 12px; border-radius: 8px;
+  background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.25);
+  margin-bottom: 12px;
+}
+.banned-countdown { font-size: 14px; color: var(--text-light, #e8e0f5); margin-bottom: 16px; }
+.banned-countdown strong { color: #ffb3b3; }
+.banned-signout {
+  padding: 10px 22px; border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.2); color: #fff; font-family: 'Fredoka', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.banned-signout:hover { background: rgba(239, 68, 68, 0.35); }
+.warn-banner {
+  width: 100%; max-width: 960px; margin: 10px auto 0; padding: 8px 14px;
+  text-align: center; font-size: 13px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.85), rgba(239, 68, 68, 0.85));
+  border-radius: 10px; box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+  box-sizing: border-box;
+}
+

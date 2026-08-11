@@ -132,6 +132,16 @@ function formatCountdown(ms) {
   return `${s}s`
 }
 
+function formatBanDuration(ms) {
+  const d = Math.floor(ms / 86400000)
+  const h = Math.floor((ms % 86400000) / 3600000)
+  const m = Math.floor((ms % 3600000) / 60000)
+  if (d > 0) return `${d}d ${h}h`
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m`
+  return `${Math.floor(ms / 1000)}s`
+}
+
 function ConfirmModal({ message, onConfirm, onCancel, confirmText = 'Yes, Leave', cancelText = 'Stay' }) {
   const cancelRef = useRef(null)
   const previousFocus = useRef(null)
@@ -970,6 +980,14 @@ function App() {
   }, [])
 
   const [user, setUser] = useState(null)
+  const [moderation, setModeration] = useState(null)
+  const [banNow, setBanNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!(moderation && moderation.type === 'temp' && moderation.until > Date.now())) return
+    const t = setInterval(() => setBanNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [moderation])
 
   useEffect(() => {
     if (!user) return
@@ -990,7 +1008,8 @@ function App() {
         } else {
           setCurrentUserId(null)
         }
-        import('./leagueService').then(({ getOrCreatePlayer, getPlayer }) => {
+        import('./leagueService').then(({ getOrCreatePlayer, getModeration }) => {
+          getModeration(u.uid).then(m => setModeration(m || null)).catch(() => {})
           const loadPlayer = getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
           loadPlayer.then(p => {
             if (p) {
@@ -1037,6 +1056,7 @@ function App() {
         setUserId(null)
         setPlayerName(null)
         setUserUsername(null)
+        setModeration(null)
         clearCurrentUserId()
         try { localStorage.removeItem('arcade-admin-session') } catch {}
         if (!adminSwitchingRef.current) {
@@ -1430,6 +1450,35 @@ function App() {
 
   const loadingFallback = <div className="game-loading"><div className="game-loading-spinner" /><span>Loading...</span></div>
 
+  const banEffective = moderation && (
+    moderation.type === 'permanent'
+    || (moderation.type === 'temp' && moderation.until > banNow)
+  )
+
+  if (banEffective) {
+    const remaining = moderation.type === 'temp' ? moderation.until - banNow : 0
+    return (
+      <div className="banned-screen" role="alert">
+        <div className="banned-card">
+          <div className="banned-emoji">🚫</div>
+          <h1 className="banned-title">Account Banned</h1>
+          {moderation.type === 'permanent'
+            ? <p className="banned-sub">This account has been permanently banned from Offline Arcade.</p>
+            : <p className="banned-sub">This account has been temporarily banned from Offline Arcade.</p>}
+          {moderation.reason && <div className="banned-reason">Reason: {moderation.reason}</div>}
+          {moderation.type === 'temp' && (
+            <div className="banned-countdown">
+              Time remaining: <strong>{formatBanDuration(remaining)}</strong>
+            </div>
+          )}
+          <button className="banned-signout" onClick={() => signOut().then(() => window.location.reload()).catch(() => {})}>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (currentPage === 'settings') {
     return (
       <Suspense fallback={loadingFallback}>
@@ -1630,6 +1679,9 @@ function App() {
         {announcement && announcement.enabled && announcement.text && (
           <div className="announcement-banner" role="status">📣 {announcement.text}</div>
         )}
+        {moderation && moderation.type === 'warn' && (
+          <div className="warn-banner" role="status">⚠️ You have received a warning. Please review your name.{moderation.reason ? ` Reason: ${moderation.reason}` : ''}</div>
+        )}
         <header className="arcade-header">
           <h1 className="arcade-title">ARCADE GAMES</h1>
         </header>
@@ -1697,6 +1749,9 @@ function App() {
       )}
       {announcement && announcement.enabled && announcement.text && (
         <div className="announcement-banner" role="status">📣 {announcement.text}</div>
+      )}
+      {moderation && moderation.type === 'warn' && (
+        <div className="warn-banner" role="status">⚠️ You have received a warning. Please review your name.{moderation.reason ? ` Reason: ${moderation.reason}` : ''}</div>
       )}
       <header className="arcade-header" role="banner">
         <h1 className="arcade-title">ARCADE GAMES</h1>

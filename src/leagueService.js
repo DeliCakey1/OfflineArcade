@@ -211,6 +211,86 @@ export async function setChatControls(enabled) {
   return clean
 }
 
+export async function getBlacklist() {
+  const { doc, getDoc } = await f()
+  const { db } = await f()
+  const snap = await getDoc(doc(db, CONFIG, 'blacklist'))
+  if (!snap.exists()) return { words: [], updatedAt: null }
+  const d = snap.data()
+  return { words: d.words || [], updatedAt: d.updatedAt || null }
+}
+
+export async function setBlacklist(words) {
+  const { doc, setDoc } = await f()
+  const { db } = await f()
+  const clean = { words: (words || []).map(w => String(w).trim()).filter(Boolean).slice(0, 100), updatedAt: Date.now() }
+  await setDoc(doc(db, CONFIG, 'blacklist'), clean)
+  return clean
+}
+
+export async function getModeration(userId) {
+  if (!userId) return null
+  const { doc, getDoc } = await f()
+  const { db } = await f()
+  const snap = await getDoc(doc(db, 'moderation', userId))
+  if (!snap.exists()) return null
+  return { userId, ...snap.data() }
+}
+
+export async function setModeration(playerId, data) {
+  const { doc, setDoc } = await f()
+  const { db } = await f()
+  const clean = {
+    userId: playerId,
+    type: data.type,
+    reason: String(data.reason || '').slice(0, 300),
+    until: data.type === 'temp' ? Number(data.until) || null : null,
+    issuedAt: Date.now(),
+    issuedBy: data.issuedBy || '',
+    username: String(data.username || '').slice(0, 50),
+  }
+  await setDoc(doc(db, 'moderation', playerId), clean)
+  return clean
+}
+
+export async function clearModeration(playerId) {
+  const { doc, deleteDoc } = await f()
+  const { db } = await f()
+  await deleteDoc(doc(db, 'moderation', playerId))
+}
+
+export async function getModerationOverview() {
+  const { collection, getDocs } = await f()
+  const { db } = await f()
+  const [playersSnap, modSnap, blacklist] = await Promise.all([
+    getDocs(collection(db, PLAYERS)).catch(() => null),
+    getDocs(collection(db, 'moderation')).catch(() => null),
+    getBlacklist().catch(() => ({ words: [] })),
+  ])
+
+  const players = playersSnap ? playersSnap.docs.map(d => ({ id: d.id, ...d.data() })) : []
+  const modMap = {}
+  if (modSnap) modSnap.docs.forEach(d => { modMap[d.id] = { ...d.data() } })
+
+  const words = (blacklist.words || []).map(w => String(w).trim().toLowerCase()).filter(Boolean)
+  const needsAttention = []
+  for (const p of players) {
+    const name = String(p.name || '').toLowerCase()
+    const username = String(p.username || '').toLowerCase()
+    const matches = []
+    for (const w of words) {
+      if (name.includes(w) && !matches.includes(w)) matches.push(w)
+      if (username.includes(w) && !matches.includes(w)) matches.push(w)
+    }
+    if (matches.length > 0) {
+      needsAttention.push({ player: p, matches, moderation: modMap[p.id] || null })
+    }
+  }
+  needsAttention.sort((a, b) => (b.player.lastActive || 0) - (a.player.lastActive || 0))
+
+  return { blacklist: words, needsAttention, modMap }
+}
+
 export async function getAnalytics() {
   const { collection, getDocs } = await f()
   const { db } = await f()

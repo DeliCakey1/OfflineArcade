@@ -5,6 +5,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/players/$(request.auth.uid))
+        && get(/databases/$(database)/documents/players/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     // ===== chatMessages =====
     match /chatMessages/{doc} {
       // 7-day TTL: any signed-in user may hard-delete messages older than 7 days
@@ -108,6 +114,7 @@ service cloud.firestore {
       function isShopSale() { return configId == 'shopSale'; }
       function isAnnouncement() { return configId == 'announcement'; }
       function isChatControls() { return configId == 'chatControls'; }
+      function isBlacklist() { return configId == 'blacklist'; }
 
       function validShopSaleCreate() {
         return isShopSale()
@@ -155,12 +162,56 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['enabled', 'updatedAt']);
       }
 
+      function validBlacklistCreate() {
+        return isBlacklist()
+          && request.resource.data.keys().hasOnly(['words', 'updatedAt'])
+          && request.resource.data.words is list
+          && request.resource.data.words.size() <= 100
+          && request.resource.data.updatedAt is number;
+      }
+      function validBlacklistUpdate() {
+        return isBlacklist()
+          && request.resource.data.keys().hasOnly(['words', 'updatedAt'])
+          && request.resource.data.words is list
+          && request.resource.data.words.size() <= 100
+          && request.resource.data.updatedAt is number
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['words', 'updatedAt']);
+      }
+
       allow read: if signedIn();
       allow create: if signedIn()
-        && (validShopSaleCreate() || validAnnouncementCreate() || validChatControlsCreate());
+        && (validShopSaleCreate() || validAnnouncementCreate() || validChatControlsCreate()
+          || (isAdmin() && validBlacklistCreate()));
       allow update: if signedIn()
-        && (validShopSaleUpdate() || validAnnouncementUpdate() || validChatControlsUpdate());
+        && (validShopSaleUpdate() || validAnnouncementUpdate() || validChatControlsUpdate()
+          || (isAdmin() && validBlacklistUpdate()));
       allow delete: if false;
+    }
+
+    // ===== moderation (warnings, temp bans, permanent bans) =====
+    match /moderation/{playerId} {
+      function validModeration() {
+        return request.resource.data.keys().hasOnly([
+            'userId', 'type', 'reason', 'until', 'issuedAt', 'issuedBy', 'username'
+          ])
+          && request.resource.data.userId == playerId
+          && request.resource.data.type in ['warn', 'temp', 'permanent']
+          && request.resource.data.reason is string
+          && request.resource.data.reason.size() <= 300
+          && ((request.resource.data.type == 'temp'
+                && request.resource.data.until is number
+                && request.resource.data.until > request.time.toMillis())
+              || (request.resource.data.type != 'temp'
+                && request.resource.data.until == null))
+          && request.resource.data.issuedAt is number
+          && request.resource.data.issuedBy is string
+          && request.resource.data.username is string
+          && request.resource.data.username.size() <= 50;
+      }
+
+      allow read: if signedIn();
+      allow create, update: if signedIn() && isAdmin() && validModeration();
+      allow delete: if signedIn() && isAdmin();
     }
 
     // ===== players =====
