@@ -1,7 +1,7 @@
 # Deploying Offline Arcade
 
 Offline Arcade is a React + Vite SPA served by a small Node server (`server.cjs`).
-It can run on any Node host. This repo ships configs for Render and Railway.
+It can run on any Node host. This repo ships configs for Railway (primary).
 
 ## How it runs
 
@@ -14,7 +14,7 @@ It can run on any Node host. This repo ships configs for Render and Railway.
   - The build runs `vite build`, then `node scripts/generate-seo.mjs`, which writes
     the 29 per-game pages into `dist/play/<id>/index.html` plus `sitemap.xml` and
     `robots.txt`. SEO URLs come from the `SITE_URL` env var (defaults to
-    `https://offline-arcade.onrender.com`).
+    `https://offlinearcade.up.railway.app`).
 - **Start**: `npm start` runs `node server.cjs`.
   - Listens on `process.env.PORT || 3000` (Render and Railway inject `PORT`).
   - Serves `dist/` statically with SPA fallback for the app routes and `/play/*`.
@@ -29,24 +29,9 @@ It can run on any Node host. This repo ships configs for Render and Railway.
 | --- | --- | --- |
 | `NODE_ENV` | `production` at runtime | `production` |
 | `ELECTRON_SKIP_BINARY_DOWNLOAD` | skip Electron's ~100 MB download during install (never used on the server) | `1` |
-| `SITE_URL` | origin used for per-game SEO pages, canonical/OG URLs, sitemap | `https://offline-arcade.onrender.com` |
+| `SITE_URL` | origin used for per-game SEO pages, canonical/OG URLs, sitemap | `https://offlinearcade.up.railway.app` |
 
-## Render
-
-Deploy via the blueprint (`render.yaml`) or the dashboard.
-
-1. In the Render dashboard: **New > Web Service**, connect the GitHub repo.
-2. Build command: `npm install --include=dev && npm run build`
-3. Start command: `npm start`
-4. Env vars: `NODE_ENV=production`, `ELECTRON_SKIP_BINARY_DOWNLOAD=1`, and
-   `SITE_URL=https://<your-service>.onrender.com`.
-5. The service is automatically healthchecked on `/health`.
-
-`render.yaml` (service name `offline-arcade`, root URL
-`https://offline-arcade.onrender.com`) has all of this, so a push to `main` also
-auto-redeploys if you use the blueprint.
-
-## Railway
+## Railway (primary)
 
 Deploy via `railway.json` (auto-detected) or the CLI.
 
@@ -93,7 +78,7 @@ Open `/play/snake` in a browser and confirm it renders. Deep links
     `firebase-admin`, so storage stays bounded even when nobody is online. To
     enable it, create a service account JSON key (Google Cloud console → IAM &
     Admin → Service accounts → Create key) with **Cloud Datastore User** (or
-    `roles/datastore.user`), then set it on Railway and Render as
+    `roles/datastore.user`), then set it on Railway as
     `FIREBASE_SERVICE_ACCOUNT` (paste the JSON, or base64-encode it first so the
     value survives env-var handling: `base64 -w0 sa.json`). The server skips the
     cleanup with a warning if the var is missing.

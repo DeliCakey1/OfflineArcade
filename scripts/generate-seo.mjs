@@ -5,7 +5,7 @@ import { GAMES } from '../src/games.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(ROOT, 'dist')
-const SITE_URL = (process.env.SITE_URL || 'https://offline-arcade.onrender.com').replace(/\/+$/, '')
+const SITE_URL = (process.env.SITE_URL || 'https://offlinearcade.up.railway.app').replace(/\/+$/, '')
 
 const INDEX = join(DIST, 'index.html')
 if (!existsSync(INDEX)) {

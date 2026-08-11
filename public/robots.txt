@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin-panel
 Disallow: /god-commands
 
-Sitemap: https://offline-arcade.onrender.com/sitemap.xml
+Sitemap: https://offlinearcade.up.railway.app/sitemap.xml
