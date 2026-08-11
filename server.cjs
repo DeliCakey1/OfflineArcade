@@ -193,3 +193,113 @@ async function runChatCleanup() {
 
 setTimeout(runChatCleanup, 10 * 1000)
 setInterval(runChatCleanup, 60 * 60 * 1000)
+
+// ===== Stale account cleanup =====
+// Deletes accounts older than 5 years that have never been used since they
+// were created (no activity after the initial creation write). Admins are
+// always excluded. Uses firebase-admin (server SDK) so it bypasses security
+// rules; requires FIREBASE_SERVICE_ACCOUNT / GOOGLE_APPLICATION_CREDENTIALS.
+const STALE_ACCOUNT_AGE_MS = 5 * 365 * 24 * 60 * 60 * 1000
+const STALE_ACCOUNT_BUFFER_MS = 60 * 60 * 1000
+
+function toMillis(v) {
+  if (typeof v === 'number') return v
+  if (v && typeof v.toMillis === 'function') return v.toMillis()
+  return 0
+}
+
+async function runStaleAccountCleanup() {
+  try {
+    const admin = getAdmin()
+    if (!admin) {
+      if (!_cleanupWarned) {
+        console.warn('[account-cleanup] FIREBASE_SERVICE_ACCOUNT not set; skipping. Set it to enable stale account cleanup.')
+        _cleanupWarned = true
+      }
+      return
+    }
+    const { getFirestore } = require('firebase-admin/firestore')
+    const db = getFirestore()
+    const cutoff = Date.now() - STALE_ACCOUNT_AGE_MS
+
+    const playersSnap = await db.collection('players').get()
+    const stale = []
+    for (const d of playersSnap.docs) {
+      const p = d.data()
+      if (p.isAdmin) continue
+      const created = toMillis(p.createdAt)
+      const last = toMillis(p.lastActive)
+      if (created > 0 && created < cutoff && last <= created + STALE_ACCOUNT_BUFFER_MS) {
+        stale.push({ id: d.id, username: typeof p.username === 'string' ? p.username : null })
+      }
+    }
+    if (stale.length === 0) {
+      console.log('[account-cleanup] No stale accounts found')
+      return
+    }
+    const staleIds = new Set(stale.map(s => s.id))
+
+    let ops = 0
+    let batch = db.batch()
+    const add = (fn) => { fn(batch); ops++ }
+    const flush = async () => {
+      if (ops === 0) return
+      await batch.commit()
+      batch = db.batch()
+      ops = 0
+    }
+
+    // Delete player docs + their username claims + moderation records.
+    for (const s of stale) {
+      if (s.username) add(b => b.delete(db.collection('usernames').doc(s.username.toLowerCase())))
+      add(b => b.delete(db.collection('moderation').doc(s.id)))
+      add(b => b.delete(db.collection('players').doc(s.id)))
+    }
+    await flush()
+
+    // Remove stale ids from other players' friend lists.
+    for (const d of playersSnap.docs) {
+      if (staleIds.has(d.id)) continue
+      const f = d.data().friends
+      if (Array.isArray(f) && f.some(x => staleIds.has(x))) {
+        add(b => b.update(d.ref, { friends: f.filter(x => !staleIds.has(x)) }))
+      }
+    }
+    await flush()
+
+    // Remove stale ids from league/tournament rosters.
+    for (const col of ['leagues', 'tournaments']) {
+      const snap = await db.collection(col).get()
+      for (const d of snap.docs) {
+        const pl = d.data().players
+        if (Array.isArray(pl) && pl.some(x => staleIds.has(x))) {
+          add(b => b.update(d.ref, { players: pl.filter(x => !staleIds.has(x)) }))
+        }
+      }
+      await flush()
+    }
+
+    // Delete chat messages, daily scores, and challenge matches.
+    for (const s of stale) {
+      const chatSnap = await db.collection('chatMessages').where('userId', '==', s.id).get()
+      chatSnap.forEach(m => add(b => b.delete(m.ref)))
+      await flush()
+      const scoreSnap = await db.collection('dailyScores').where('userId', '==', s.id).get()
+      scoreSnap.forEach(sc => add(b => b.delete(sc.ref)))
+      await flush()
+      const m1 = await db.collection('matches').where('player1', '==', s.id).get()
+      m1.forEach(m => add(b => b.delete(m.ref)))
+      await flush()
+      const m2 = await db.collection('matches').where('player2', '==', s.id).get()
+      m2.forEach(m => add(b => b.delete(m.ref)))
+      await flush()
+    }
+
+    console.log(`[account-cleanup] Deleted ${stale.length} stale account(s): ${stale.map(s => s.username || s.id).join(', ')}`)
+  } catch (e) {
+    console.warn('[account-cleanup] error:', e.message)
+  }
+}
+
+setTimeout(runStaleAccountCleanup, 20 * 1000)
+setInterval(runStaleAccountCleanup, 24 * 60 * 60 * 1000)
