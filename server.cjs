@@ -50,6 +50,7 @@ const VALID_ROUTES = [
   '/shop',
   '/friends',
   '/leaderboard',
+  '/accessibility',
 ]
 
 const ABOUT_BLANK_HTML = `<!DOCTYPE html>
