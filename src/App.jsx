@@ -682,6 +682,7 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
         <div className="settings-bar-left">
           <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
           <GamesDropdown onNavigate={onNavigateGame} />
+          <a className="settings-btn nav-btn chattopia-btn" href="https://chattopia.up.railway.app" target="_blank" rel="noopener noreferrer" title="Chattopia" aria-label="Chattopia">💬<span className="nav-label">Chattopia</span></a>
           <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
           <button className="settings-btn nav-btn" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
           {user && !user.isAnonymous && <button className="settings-btn nav-btn" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>}

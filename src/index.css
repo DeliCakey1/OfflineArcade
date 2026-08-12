@@ -962,6 +962,7 @@ body::after {
   background: #16a34a; color: #fff; text-align: center;
   padding: 8px 16px; font-size: 13px; font-weight: 500;
   border-radius: 8px;
+  margin: 8px 10px;
 }
 .guest-banner-link {
   color: #fff; text-decoration: underline; cursor: pointer; font-weight: 700;
@@ -5326,6 +5327,12 @@ body::after {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+.banner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 10px 8px;
+}
 .banner-collapse-btn {
   display: flex;
   align-items: center;
@@ -5349,11 +5356,10 @@ body::after {
   font-size: 9px;
   line-height: 1;
 }
-.banner-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 0 10px 8px;
+.chattopia-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 .announcement-banner {
   width: 100%;
