@@ -7,6 +7,7 @@ import OfflineIndicator from './components/OfflineIndicator'
 import GameTutorial from './components/GameTutorial'
 import DailyLoginModal, { checkAndClaimDailyLogin } from './components/DailyLoginModal'
 import UpdateModal from './components/UpdateModal'
+import BannerStack from './components/BannerStack'
 
 const RockPaperScissors = lazy(() => import('./components/RockPaperScissors'))
 const SplitStealGiveAway = lazy(() => import('./components/SplitStealGiveAway'))
@@ -772,15 +773,16 @@ function App() {
   const [showConfetti, setShowConfetti] = useState(false)
   const hideConfetti = useCallback(() => setShowConfetti(false), [])
   const [lastGameResult, setLastGameResult] = useState(null)
-  const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
   const [announcement, setAnnouncement] = useState(null)
+  const activeBanners = announcement && announcement.enabled ? (announcement.banners || []).filter(b => b.enabled && b.text) : []
+  const [dailyCountdown, setDailyCountdown] = useState(getTimeUntilTomorrow())
 
   useEffect(() => {
-    let cancelled = false
-    import('./leagueService').then(m => m.getAnnouncement()).then(a => {
-      if (!cancelled) setAnnouncement(a)
+    let unsub = null
+    import('./leagueService').then(m => {
+      unsub = m.subscribeToAnnouncement(a => setAnnouncement(a))
     }).catch(() => {})
-    return () => { cancelled = true }
+    return () => { if (unsub) unsub() }
   }, [])
 
   useEffect(() => {
@@ -1661,15 +1663,10 @@ function App() {
     return (
       <div>
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
-        <SettingsBar {...settings} />
-        {user && user.isAnonymous && (
-          <div className="guest-banner">
-            You are not signed in. <span className="guest-banner-link" onClick={() => navigateTo('signin')}>Sign In</span> to save your data across devices!
-          </div>
-        )}
-        {announcement && announcement.enabled && announcement.text && (
-          <div className="announcement-banner" role="status">📣 {announcement.text}</div>
-        )}
+        <div className="topbar-wrap">
+          <SettingsBar {...settings} />
+          <BannerStack announcements={activeBanners} showGuestBanner={!!(user && user.isAnonymous)} onSignIn={() => navigateTo('signin')} />
+        </div>
         {moderation && moderation.type === 'warn' && (
           <div className="warn-banner" role="status">⚠️ You have received a warning. Please review your name.{moderation.reason ? ` Reason: ${moderation.reason}` : ''}</div>
         )}
@@ -1732,15 +1729,10 @@ function App() {
       <InstallBanner onNavigate={(page) => navigateTo(page)} />
       <OfflineIndicator />
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
-      <SettingsBar {...settings} />
-      {user && user.isAnonymous && (
-        <div className="guest-banner">
-          You are not signed in. <span className="guest-banner-link" onClick={() => navigateTo('signin')}>Sign In</span> to save your data across devices!
-        </div>
-      )}
-      {announcement && announcement.enabled && announcement.text && (
-        <div className="announcement-banner" role="status">📣 {announcement.text}</div>
-      )}
+      <div className="topbar-wrap">
+        <SettingsBar {...settings} />
+        <BannerStack announcements={activeBanners} showGuestBanner={!!(user && user.isAnonymous)} onSignIn={() => navigateTo('signin')} />
+      </div>
       {moderation && moderation.type === 'warn' && (
         <div className="warn-banner" role="status">⚠️ You have received a warning. Please review your name.{moderation.reason ? ` Reason: ${moderation.reason}` : ''}</div>
       )}

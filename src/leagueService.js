@@ -2,6 +2,7 @@ import { increment } from 'firebase/firestore'
 import { getDb } from './firebase'
 import { MAX_PER_LEAGUE, LEAGUE_RANKS, RANK_PROMO_DEMO, getNextWednesdayMidnightUTC, TOURNAMENT_SIZES, isInLockoutPeriod } from './leagues'
 import { TOURNAMENT_COIN_REWARDS, LEAGUE_COIN_REWARDS } from './shopItems'
+import { BANNER_COLORS } from './bannerColors'
 
 export { increment }
 
@@ -177,19 +178,49 @@ export async function setShopSale(items) {
   return clean
 }
 
+function cleanBannerData(banners) {
+  return (Array.isArray(banners) ? banners : [])
+    .slice(0, 3)
+    .map(b => ({
+      text: String(b.text || '').slice(0, 200),
+      color: BANNER_COLORS[b.color] ? b.color : 'purple',
+      emoji: String(b.emoji || '📣').slice(0, 8),
+      enabled: b.enabled !== false,
+    }))
+}
+
+function bannerView(b, i) {
+  return { ...b, id: `b${i}` }
+}
+
+function announcementFromData(data) {
+  const rawBanners = Array.isArray(data.banners)
+    ? data.banners
+    : (data.text ? [{ text: data.text, color: 'purple', emoji: '📣', enabled: true }] : [])
+  return { banners: cleanBannerData(rawBanners).map(bannerView), enabled: !!data.enabled, updatedAt: data.updatedAt || null }
+}
+
 export async function getAnnouncement() {
   const { doc, getDoc } = await f()
   const { db } = await f()
   const snap = await getDoc(doc(db, CONFIG, 'announcement'))
-  if (!snap.exists()) return { text: '', enabled: false, updatedAt: null }
-  const data = snap.data()
-  return { text: data.text || '', enabled: !!data.enabled, updatedAt: data.updatedAt || null }
+  if (!snap.exists()) return { banners: [], enabled: false, updatedAt: null }
+  return announcementFromData(snap.data())
 }
 
-export async function setAnnouncement(text, enabled) {
+export async function subscribeToAnnouncement(callback) {
+  const { doc, onSnapshot } = await f()
+  const { db } = await f()
+  const ref = doc(db, CONFIG, 'announcement')
+  return onSnapshot(ref, (snap) => {
+    callback(snap.exists() ? announcementFromData(snap.data()) : { banners: [], enabled: false, updatedAt: null })
+  })
+}
+
+export async function setAnnouncement(banners, enabled) {
   const { doc, setDoc } = await f()
   const { db } = await f()
-  const clean = { text: String(text || '').slice(0, 200), enabled: !!enabled, updatedAt: Date.now() }
+  const clean = { banners: cleanBannerData(banners), enabled: !!enabled, updatedAt: Date.now() }
   await setDoc(doc(db, CONFIG, 'announcement'), clean)
   return clean
 }

@@ -12,6 +12,7 @@ import {
 import { resetAllScores, searchPlayersByName, getPlayer, updatePlayer, scheduleTournament, getLatestTournamentForAdmin, cancelTournament, getShopSale, setShopSale, getAnnouncement, setAnnouncement, getChatControls, setChatControls, getAnalytics, setBlacklist, setModeration, clearModeration, getModerationOverview } from '../leagueService'
 import { TITLES, ALL_NAMEPLATES, TOURNAMENT_TICKET, SALE_PERCENT_OPTIONS } from '../shopItems'
 import { getNextWednesdayMidnightUTC } from '../leagues'
+import { BANNER_COLORS, BANNER_EMOJIS } from '../bannerColors'
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -134,7 +135,7 @@ export default function AdminPanel({ userId }) {
   const [saleError, setSaleError] = useState('')
   const [controlsLoading, setControlsLoading] = useState(false)
   const [controlsSaving, setControlsSaving] = useState(false)
-  const [announcementText, setAnnouncementText] = useState('')
+  const [announcementBanners, setAnnouncementBanners] = useState([])
   const [announcementEnabled, setAnnouncementEnabled] = useState(false)
   const [chatEnabled, setChatEnabled] = useState(true)
   const [controlsDone, setControlsDone] = useState('')
@@ -203,7 +204,7 @@ export default function AdminPanel({ userId }) {
     setControlsLoading(true)
     Promise.all([getAnnouncement(), getChatControls()]).then(([ann, chat]) => {
       if (cancelled) return
-      setAnnouncementText(ann?.text || '')
+      setAnnouncementBanners(ann?.banners || [])
       setAnnouncementEnabled(!!ann?.enabled)
       setChatEnabled(chat?.enabled !== false)
       setControlsLoading(false)
@@ -463,13 +464,25 @@ export default function AdminPanel({ userId }) {
     setSaleSaving(false)
   }
 
+  function updateBanner(i, patch) {
+    setAnnouncementBanners(prev => prev.map((b, idx) => (idx === i ? { ...b, ...patch } : b)))
+  }
+
+  function addBanner() {
+    setAnnouncementBanners(prev => prev.length >= 3 ? prev : [...prev, { id: `banner-${Date.now()}-${prev.length}`, text: '', color: 'purple', emoji: '📣', enabled: true }])
+  }
+
+  function removeBanner(i) {
+    setAnnouncementBanners(prev => prev.filter((_, idx) => idx !== i))
+  }
+
   async function handleSaveControls() {
     setControlsSaving(true)
     setControlsError('')
     setControlsDone('')
     try {
       await Promise.all([
-        setAnnouncement(announcementText, announcementEnabled),
+        setAnnouncement(announcementBanners, announcementEnabled),
         setChatControls(chatEnabled),
       ])
       setControlsDone('Controls saved. Changes are live for all players.')
@@ -896,18 +909,57 @@ export default function AdminPanel({ userId }) {
                 ) : (
                   <>
                     <div className="admin-control-group">
-                      <h5 className="admin-control-heading">📣 Announcement Banner</h5>
-                      <p className="admin-tournament-line">Shown at the top of the app for all players (max 200 chars).</p>
-                      <textarea
-                        className="admin-announcement-textarea"
-                        value={announcementText}
-                        onChange={e => setAnnouncementText(e.target.value.slice(0, 200))}
-                        placeholder="e.g. God Tournament starts this Wednesday at 00:00 UTC!"
-                        maxLength={200}
-                      />
-                      <div className="admin-control-char-count">{announcementText.length}/200</div>
+                      <h5 className="admin-control-heading">📣 Announcement Banners</h5>
+                      <p className="admin-tournament-line">Post up to 3 banners with your own emoji and color. Changes go live for all players.</p>
+                      {announcementBanners.map((b, i) => (
+                        <div className="admin-banner-editor" key={b.id || i}>
+                          <div className="admin-banner-editor-top">
+                            <span className="admin-banner-slot-label">Banner {i + 1}</span>
+                            <button className="admin-banner-remove-btn" onClick={() => removeBanner(i)} title="Remove banner" aria-label="Remove banner">✕</button>
+                          </div>
+                          <textarea
+                            className="admin-announcement-textarea"
+                            value={b.text}
+                            onChange={e => updateBanner(i, { text: e.target.value.slice(0, 200) })}
+                            placeholder="e.g. God Tournament starts this Wednesday at 00:00 UTC!"
+                            maxLength={200}
+                          />
+                          <div className="admin-control-char-count">{b.text.length}/200</div>
+                          <div className="admin-banner-emoji-row">
+                            <span className="admin-banner-emoji-label">Emoji</span>
+                            <span className="admin-banner-preview-emoji" aria-hidden="true">{b.emoji}</span>
+                            <div className="admin-emoji-chips">
+                              {BANNER_EMOJIS.map(e => (
+                                <button
+                                  key={e}
+                                  className={`admin-emoji-chip${b.emoji === e ? ' selected' : ''}`}
+                                  onClick={() => updateBanner(i, { emoji: e })}
+                                  title={e}
+                                  aria-label={`Emoji ${e}`}
+                                >{e}</button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="admin-banner-color-row">
+                            <span className="admin-banner-color-label">Color</span>
+                            {Object.entries(BANNER_COLORS).map(([key, c]) => (
+                              <button
+                                key={key}
+                                className={`admin-color-swatch${b.color === key ? ' selected' : ''}`}
+                                style={{ background: c.css }}
+                                onClick={() => updateBanner(i, { color: key })}
+                                title={c.label}
+                                aria-label={`${c.label} color`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {announcementBanners.length < 3 && (
+                        <button className="admin-banner-add-btn" onClick={addBanner}>＋ Add banner ({announcementBanners.length}/3)</button>
+                      )}
                       <div className="admin-toggle-row">
-                        <span className="admin-toggle-label">Show banner</span>
+                        <span className="admin-toggle-label">Show banners</span>
                         <button
                           className={`admin-toggle ${announcementEnabled ? 'on' : ''}`}
                           onClick={() => setAnnouncementEnabled(v => !v)}

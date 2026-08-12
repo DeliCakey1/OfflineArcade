@@ -136,9 +136,13 @@ body::after {
 }
 
 /* ===== SETTINGS BAR ===== */
-.settings-bar-wrap {
+.topbar-wrap {
   position: sticky;
   top: 0;
+  z-index: 60;
+}
+.settings-bar-wrap {
+  position: relative;
   z-index: 50;
 }
 .settings-bar {
@@ -957,6 +961,7 @@ body::after {
 .guest-banner {
   background: #16a34a; color: #fff; text-align: center;
   padding: 8px 16px; font-size: 13px; font-weight: 500;
+  border-radius: 8px;
 }
 .guest-banner-link {
   color: #fff; text-decoration: underline; cursor: pointer; font-weight: 700;
@@ -5069,6 +5074,101 @@ body::after {
   opacity: 0.6;
   margin-top: 2px;
 }
+.admin-banner-editor {
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  padding: 10px;
+  margin: 8px 0;
+  background: rgba(255, 255, 255, 0.02);
+}
+.admin-banner-editor-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.admin-banner-slot-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--neon-green);
+}
+.admin-banner-remove-btn {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.admin-banner-remove-btn:hover {
+  background: rgba(248, 113, 113, 0.15);
+}
+.admin-banner-emoji-row,
+.admin-banner-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+  flex-wrap: wrap;
+}
+.admin-banner-emoji-label,
+.admin-banner-color-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  min-width: 44px;
+}
+.admin-banner-preview-emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+.admin-emoji-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.admin-emoji-chip {
+  font-size: 15px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: var(--bg-glass);
+  line-height: 1;
+}
+.admin-emoji-chip.selected {
+  border-color: var(--neon-purple);
+  background: rgba(139, 92, 246, 0.25);
+}
+.admin-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+}
+.admin-color-swatch.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--neon-purple);
+}
+.admin-banner-add-btn {
+  background: var(--bg-glass);
+  border: 1px dashed var(--border-glass);
+  color: var(--neon-purple);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  width: 100%;
+  margin: 4px 0 8px;
+}
+.admin-banner-add-btn:hover {
+  background: rgba(139, 92, 246, 0.12);
+}
 .admin-toggle-row {
   display: flex;
   align-items: center;
@@ -5220,18 +5320,49 @@ body::after {
   color: var(--text-light);
   white-space: nowrap;
 }
+.banner-stack {
+  background: var(--bg-glass);
+  border-bottom: 1px solid var(--border-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.banner-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 2px 0 3px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+.banner-collapse-btn:hover {
+  color: var(--neon-purple);
+  background: rgba(255, 255, 255, 0.04);
+}
+.banner-collapse-arrow {
+  font-size: 9px;
+  line-height: 1;
+}
+.banner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 10px 8px;
+}
 .announcement-banner {
   width: 100%;
-  max-width: 960px;
-  margin: 10px auto 0;
   padding: 8px 14px;
   text-align: center;
   font-size: 13px;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(59, 130, 246, 0.85));
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.35);
+  border-radius: 8px;
   box-sizing: border-box;
 }
 .admin-sale-bar {

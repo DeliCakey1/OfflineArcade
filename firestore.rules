@@ -130,22 +130,35 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items', 'updatedAt']);
       }
 
+      function validAnnouncementBanner(b) {
+        return b is map
+          && b.keys().hasOnly(['text', 'color', 'emoji', 'enabled'])
+          && b.text is string
+          && b.text.size() <= 200
+          && b.color is string
+          && b.color.size() <= 20
+          && b.emoji is string
+          && b.emoji.size() <= 8
+          && b.enabled is bool;
+      }
       function validAnnouncementCreate() {
         return isAnnouncement()
-          && request.resource.data.keys().hasOnly(['text', 'enabled', 'updatedAt'])
-          && request.resource.data.text is string
-          && request.resource.data.text.size() <= 200
+          && request.resource.data.keys().hasOnly(['banners', 'enabled', 'updatedAt'])
+          && request.resource.data.banners is list
+          && request.resource.data.banners.size() <= 3
+          && (request.resource.data.banners.size() == 0
+              || validAnnouncementBanner(request.resource.data.banners[0]))
+          && (request.resource.data.banners.size() <= 1
+              || validAnnouncementBanner(request.resource.data.banners[1]))
+          && (request.resource.data.banners.size() <= 2
+              || validAnnouncementBanner(request.resource.data.banners[2]))
           && request.resource.data.enabled is bool
           && request.resource.data.updatedAt is number;
       }
       function validAnnouncementUpdate() {
         return isAnnouncement()
-          && request.resource.data.keys().hasOnly(['text', 'enabled', 'updatedAt'])
-          && request.resource.data.text is string
-          && request.resource.data.text.size() <= 200
-          && request.resource.data.enabled is bool
-          && request.resource.data.updatedAt is number
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'enabled', 'updatedAt']);
+          && validAnnouncementCreate()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['banners', 'enabled', 'updatedAt', 'text']);
       }
 
       function validChatControlsCreate() {
