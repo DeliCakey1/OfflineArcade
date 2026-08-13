@@ -427,6 +427,7 @@ async function createXsollaPaymentToken(pkg, user) {
       project_id: Number(XSOLLA.projectId),
       currency: 'USD',
       language: 'en',
+      mode: XSOLLA.sandbox ? 'sandbox' : 'production',
       return_url: `${SITE_ORIGIN}/shop`,
     },
     purchase: {
@@ -533,12 +534,8 @@ async function handleXsollaWebhook(req, rawBody) {
     return { status: 400, body: { error: 'Bad JSON.' } }
   }
   if (event.notification_type === 'user_validation') {
-    const userId = webhookUserId(event)
-    if (getAdmin() && userId) {
-      const snap = await getFirestore().collection('players').doc(String(userId)).get()
-      return { status: snap.exists ? 204 : 400, body: snap.exists ? null : { error: 'User not found.' } }
-    }
-    return { status: 503, body: { error: 'Server not configured.' } }
+    if (!getAdmin()) return { status: 503, body: { error: 'Server not configured.' } }
+    return { status: 204, body: null }
   }
   if (event.notification_type === 'payment' && event.payment && event.payment.status === 'done') {
     await grantCoinsFromEvent(event)
