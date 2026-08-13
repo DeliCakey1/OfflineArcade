@@ -423,7 +423,6 @@ async function createXsollaPaymentToken(pkg, user) {
     sandbox: XSOLLA.sandbox,
     user: {
       id: { value: user.uid },
-      name: { value: user.name || '' },
     },
     purchase: {},
     settings: {
@@ -434,6 +433,7 @@ async function createXsollaPaymentToken(pkg, user) {
       return_url: `${SITE_ORIGIN}/shop`,
     },
   }
+  if (user.name) payload.user.name = { value: user.name }
   if (pkg.sku) {
     payload.purchase.virtual_items = [{ sku: pkg.sku, quantity: 1 }]
   } else {
