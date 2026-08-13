@@ -349,6 +349,9 @@ setInterval(runStaleAccountCleanup, 24 * 60 * 60 * 1000)
 // Requires XSOLLA_MERCHANT_ID, XSOLLA_API_KEY, XSOLLA_PROJECT_ID,
 // XSOLLA_WEBHOOK_SECRET and FIREBASE_SERVICE_ACCOUNT env vars. Xsolla stays
 // in sandbox mode until XSOLLA_SANDBOX is explicitly set to "false".
+const { getAuth } = require('firebase-admin/auth')
+const { getFirestore, FieldValue } = require('firebase-admin/firestore')
+
 const COIN_PACKAGES = {
   'coins-100': { id: 'coins-100', coins: 100, sku: 'oa_coins_100', usd: 0.99 },
   'coins-500': { id: 'coins-500', coins: 500, sku: 'oa_coins_500', usd: 4.49 },
@@ -449,7 +452,7 @@ async function handleCreateToken(req, rawBody) {
   const idToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim()
   if (!idToken) return { status: 401, body: { error: 'Not signed in.' } }
   let uid = null
-  try { uid = (await getAdmin().auth().verifyIdToken(idToken)).uid } catch {}
+  try { uid = (await getAuth().verifyIdToken(idToken)).uid } catch {}
   if (!uid) return { status: 401, body: { error: 'Not signed in.' } }
   const pkg = COIN_PACKAGES[body.packageId]
   if (!pkg) return { status: 400, body: { error: 'Unknown coin pack.' } }
@@ -458,7 +461,7 @@ async function handleCreateToken(req, rawBody) {
   tokenThrottle.set(uid, now)
   let name = ''
   try {
-    const snap = await getAdmin().firestore().collection('players').doc(uid).get()
+    const snap = await getFirestore().collection('players').doc(uid).get()
     if (snap.exists && typeof snap.data().username === 'string') name = snap.data().username
   } catch {}
   let result
@@ -497,9 +500,8 @@ function coinAmountFromEvent(event) {
 }
 
 async function grantCoinsFromEvent(event) {
-  const admin = getAdmin()
-  if (!admin) return
-  const db = admin.firestore()
+  if (!getAdmin()) return
+  const db = getFirestore()
   const userId = String(webhookUserId(event))
   const txId = event.transaction && event.transaction.id
   if (!userId || txId == null) return
@@ -514,9 +516,9 @@ async function grantCoinsFromEvent(event) {
       const playerRef = db.collection('players').doc(userId)
       const player = await t.get(playerRef)
       if (player.exists) {
-        t.update(playerRef, { coins: admin.firestore.FieldValue.increment(quantity) })
+        t.update(playerRef, { coins: FieldValue.increment(quantity) })
       } else {
-        t.set(playerRef, { coins: quantity, createdAt: admin.firestore.FieldValue.serverTimestamp() })
+        t.set(playerRef, { coins: quantity, createdAt: FieldValue.serverTimestamp() })
       }
     })
     console.log(`[xsolla] granted ${quantity} coins to ${userId} (tx ${txId})`)
@@ -538,7 +540,7 @@ async function handleXsollaWebhook(req, rawBody) {
   if (event.notification_type === 'user_validation') {
     const userId = webhookUserId(event)
     if (getAdmin() && userId) {
-      const snap = await getAdmin().firestore().collection('players').doc(String(userId)).get()
+      const snap = await getFirestore().collection('players').doc(String(userId)).get()
       return { status: snap.exists ? 204 : 400, body: snap.exists ? null : { error: 'User not found.' } }
     }
     return { status: 503, body: { error: 'Server not configured.' } }
