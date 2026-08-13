@@ -1,22 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { bannerColorCss } from '../bannerColors'
 
-const STORAGE_KEY = 'arcade-banners-collapsed'
-
 export default function BannerStack({ announcements, showGuestBanner, onSignIn }) {
-  const [collapsed, setCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY) === '1'
-    } catch {
-      return false
-    }
-  })
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0')
-    } catch {}
-  }, [collapsed])
+  const [collapsed, setCollapsed] = useState(false)
 
   const list = announcements && announcements.length ? announcements : []
   const count = list.length
