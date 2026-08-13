@@ -119,7 +119,7 @@ const server = http.createServer((req, res) => {
       readRawBody(req)
         .then(raw => handleXsollaWebhook(req, raw))
         .then(({ status, body }) => {
-          if (status === 204) res.writeHead(204)
+          if (status === 204) { res.writeHead(204); res.end() }
           else json(res, status, body)
         })
         .catch(e => {
