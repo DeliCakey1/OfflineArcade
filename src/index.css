@@ -3984,6 +3984,16 @@ body::after {
   color: var(--neon-yellow);
 }
 
+.shop-coins-status {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 230, 0, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 230, 0, 0.08);
+  color: var(--text-light);
+  font-size: 14px;
+}
+
 /* ===== SHOP PAGE ===== */
 .shop-tabs {
   display: flex;

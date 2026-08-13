@@ -1,4 +1,6 @@
 const http = require('http')
+const https = require('https')
+const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 const url = require('url')
@@ -98,6 +100,35 @@ const server = http.createServer((req, res) => {
       res.end(ABOUT_BLANK_HTML)
       return
     }
+    if (pathname === '/api/payment/packages') {
+      const list = Object.values(COIN_PACKAGES).map(p => ({ id: p.id, coins: p.coins, usd: p.usd }))
+      json(res, 200, list)
+      return
+    }
+    if (pathname === '/api/payment/token' && req.method === 'POST') {
+      readRawBody(req)
+        .then(raw => handleCreateToken(req, raw))
+        .then(({ status, body }) => json(res, status, body))
+        .catch(e => {
+          console.error('[xsolla] token route error:', e)
+          json(res, 500, { error: 'Server error.' })
+        })
+      return
+    }
+    if (pathname === '/xsolla/webhook' && req.method === 'POST') {
+      readRawBody(req)
+        .then(raw => handleXsollaWebhook(req, raw))
+        .then(({ status, body }) => {
+          if (status === 204) res.writeHead(204)
+          else json(res, status, body)
+        })
+        .catch(e => {
+          console.error('[xsolla] webhook route error:', e)
+          res.writeHead(500)
+          res.end()
+        })
+      return
+    }
     const filePath = path.join(DIST, pathname === '/' ? 'index.html' : pathname)
     const resolved = fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()
       ? path.join(filePath, 'index.html')
@@ -126,6 +157,8 @@ server.listen(PORT, () => {
   } catch (e) {
     console.error('Could not read dist directory:', e.message)
   }
+  if (!XSOLLA_READY) console.warn('[xsolla] XSOLLA_MERCHANT_ID / XSOLLA_API_KEY / XSOLLA_PROJECT_ID not set; coin purchases disabled.')
+  if (!XSOLLA.webhookSecret) console.warn('[xsolla] XSOLLA_WEBHOOK_SECRET not set; payment webhooks disabled.')
 })
 
 // ===== Hourly chat message cleanup =====
@@ -304,3 +337,214 @@ async function runStaleAccountCleanup() {
 
 setTimeout(runStaleAccountCleanup, 20 * 1000)
 setInterval(runStaleAccountCleanup, 24 * 60 * 60 * 1000)
+
+// ===== Xsolla coin purchases =====
+// Buy Coins flow:
+//   1) Client POSTs /api/payment/token with a Firebase ID token + a pack id.
+//   2) Server verifies the user and creates an order + payment token with Xsolla.
+//   3) Client opens the returned Pay Station URL.
+//   4) Xsolla posts a signed "payment" webhook to /xsolla/webhook.
+//   5) Server verifies the signature and idempotently grants coins (safe to
+//      receive the same webhook more than once; grants are keyed by tx id).
+// Requires XSOLLA_MERCHANT_ID, XSOLLA_API_KEY, XSOLLA_PROJECT_ID,
+// XSOLLA_WEBHOOK_SECRET and FIREBASE_SERVICE_ACCOUNT env vars. Xsolla stays
+// in sandbox mode until XSOLLA_SANDBOX is explicitly set to "false".
+const COIN_PACKAGES = {
+  'coins-100': { id: 'coins-100', coins: 100, sku: 'oa_coins_100', usd: 0.99 },
+  'coins-500': { id: 'coins-500', coins: 500, sku: 'oa_coins_500', usd: 4.49 },
+  'coins-1200': { id: 'coins-1200', coins: 1200, sku: 'oa_coins_1200', usd: 9.99 },
+  'coins-3000': { id: 'coins-3000', coins: 3000, sku: 'oa_coins_3000', usd: 19.99 },
+}
+
+const XSOLLA = {
+  merchantId: (process.env.XSOLLA_MERCHANT_ID || '').trim(),
+  apiKey: (process.env.XSOLLA_API_KEY || '').trim(),
+  projectId: (process.env.XSOLLA_PROJECT_ID || '').trim(),
+  webhookSecret: (process.env.XSOLLA_WEBHOOK_SECRET || '').trim(),
+  sandbox: process.env.XSOLLA_SANDBOX !== 'false',
+}
+
+const XSOLLA_READY = Boolean(XSOLLA.merchantId && XSOLLA.apiKey && XSOLLA.projectId)
+const SITE_ORIGIN = (process.env.SITE_URL || '').replace(/\/+$/, '') || 'https://offlinearcade.up.railway.app'
+const XSOLLA_API_BASE = (process.env.XSOLLA_API_BASE || '').replace(/\/+$/, '') || 'https://store.xsolla.com'
+const XSOLLA_UI_BASE = XSOLLA.sandbox ? 'https://sandbox-secure.xsolla.com' : 'https://secure.xsolla.com'
+
+function readRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    req.on('data', c => chunks.push(c))
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
+    req.on('error', reject)
+  })
+}
+
+function json(res, status, data) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' })
+  res.end(JSON.stringify(data))
+}
+
+function xsollaRequest(method, urlStr, authHeader, payload) {
+  return new Promise((resolve, reject) => {
+    const body = payload == null ? null : Buffer.from(JSON.stringify(payload), 'utf8')
+    const headers = { Accept: 'application/json' }
+    if (authHeader) headers.Authorization = authHeader
+    if (body) {
+      headers['Content-Type'] = 'application/json'
+      headers['Content-Length'] = body.length
+    }
+    const req = https.request(urlStr, { method, headers }, res => {
+      let data = ''
+      res.setEncoding('utf8')
+      res.on('data', c => data += c)
+      res.on('end', () => resolve({ status: res.statusCode, body: data }))
+    })
+    req.on('error', reject)
+    if (body) req.write(body)
+    req.end()
+  })
+}
+
+function verifyXsollaSignature(rawBody, authHeader, secret) {
+  const provided = String(authHeader || '').replace(/^Signature\s+/i, '').trim()
+  if (!provided || !secret) return false
+  const expected = crypto.createHash('sha1').update(String(rawBody) + secret).digest('hex')
+  const a = Buffer.from(provided)
+  const b = Buffer.from(expected)
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
+}
+
+async function createXsollaPaymentToken(pkg, user) {
+  const url = `${XSOLLA_API_BASE}/api/v3/project/${XSOLLA.projectId}/admin/payment/token`
+  const auth = Buffer.from(`${XSOLLA.merchantId}:${XSOLLA.apiKey}`).toString('base64')
+  const payload = {
+    sandbox: XSOLLA.sandbox,
+    user: {
+      id: { value: user.uid },
+      name: { value: user.name || '' },
+    },
+    purchase: {},
+    settings: {
+      project_id: Number(XSOLLA.projectId),
+      currency: 'USD',
+      language: 'en',
+      external_id: user.uid,
+      return_url: `${SITE_ORIGIN}/shop`,
+    },
+  }
+  if (pkg.sku) {
+    payload.purchase.virtual_items = [{ sku: pkg.sku, quantity: 1 }]
+  } else {
+    payload.purchase.virtual_currency = { quantity: pkg.coins }
+  }
+  return xsollaRequest('POST', url, `Basic ${auth}`, payload)
+}
+
+const tokenThrottle = new Map()
+
+async function handleCreateToken(req, rawBody) {
+  if (!getAdmin()) return { status: 503, body: { error: 'Server is not fully configured.' } }
+  if (!XSOLLA_READY) return { status: 503, body: { error: 'Coin purchases are not configured yet.' } }
+  let body = {}
+  try { body = JSON.parse(rawBody || '{}') } catch {}
+  const idToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim()
+  if (!idToken) return { status: 401, body: { error: 'Not signed in.' } }
+  let uid = null
+  try { uid = (await getAdmin().auth().verifyIdToken(idToken)).uid } catch {}
+  if (!uid) return { status: 401, body: { error: 'Not signed in.' } }
+  const pkg = COIN_PACKAGES[body.packageId]
+  if (!pkg) return { status: 400, body: { error: 'Unknown coin pack.' } }
+  const now = Date.now()
+  if (now - (tokenThrottle.get(uid) || 0) < 5000) return { status: 429, body: { error: 'Too fast. Try again in a few seconds.' } }
+  tokenThrottle.set(uid, now)
+  let name = ''
+  try {
+    const snap = await getAdmin().firestore().collection('players').doc(uid).get()
+    if (snap.exists && typeof snap.data().username === 'string') name = snap.data().username
+  } catch {}
+  let result
+  try {
+    result = await createXsollaPaymentToken(pkg, { uid, name })
+  } catch (e) {
+    console.warn('[xsolla] create token error:', e.message)
+    return { status: 502, body: { error: 'Payment provider unreachable.' } }
+  }
+  if (result.status >= 300) {
+    console.warn('[xsolla] create token status', result.status, result.body.slice(0, 300))
+    return { status: 502, body: { error: 'Payment provider rejected the request.' } }
+  }
+  let token = ''
+  try { token = JSON.parse(result.body).token } catch {}
+  if (!token) return { status: 502, body: { error: 'Payment provider returned no token.' } }
+  return { status: 200, body: { url: `${XSOLLA_UI_BASE}/paystation4/?token=${encodeURIComponent(token)}` } }
+}
+
+function webhookUserId(event) {
+  const u = event && event.user
+  if (!u) return null
+  return u.id && typeof u.id === 'object' ? u.id.value : u.id
+}
+
+function coinAmountFromEvent(event) {
+  const vc = event.purchase && event.purchase.virtual_currency
+  if (vc && vc.quantity) return vc.quantity
+  const items = (event.purchase && event.purchase.virtual_items) || (event.payment && event.payment.virtual_items) || []
+  let total = 0
+  for (const it of items) {
+    const pkg = it && Object.values(COIN_PACKAGES).find(p => p.sku === it.sku)
+    if (pkg) total += pkg.coins * (it.quantity || 1)
+  }
+  return total || 0
+}
+
+async function grantCoinsFromEvent(event) {
+  const admin = getAdmin()
+  if (!admin) return
+  const db = admin.firestore()
+  const userId = String(webhookUserId(event))
+  const txId = event.transaction && event.transaction.id
+  if (!userId || txId == null) return
+  const quantity = coinAmountFromEvent(event)
+  if (!quantity) return
+  try {
+    await db.runTransaction(async t => {
+      const receiptRef = db.collection('coinPurchases').doc(String(txId))
+      const receipt = await t.get(receiptRef)
+      if (receipt.exists) return
+      t.set(receiptRef, { userId, quantity, transactionId: txId, status: 'done', at: Date.now() })
+      const playerRef = db.collection('players').doc(userId)
+      const player = await t.get(playerRef)
+      if (player.exists) {
+        t.update(playerRef, { coins: admin.firestore.FieldValue.increment(quantity) })
+      } else {
+        t.set(playerRef, { coins: quantity, createdAt: admin.firestore.FieldValue.serverTimestamp() })
+      }
+    })
+    console.log(`[xsolla] granted ${quantity} coins to ${userId} (tx ${txId})`)
+  } catch (e) {
+    console.warn('[xsolla] grant error:', e.message)
+  }
+}
+
+async function handleXsollaWebhook(req, rawBody) {
+  const secret = XSOLLA.webhookSecret
+  if (!secret) return { status: 503, body: { error: 'Webhook not configured.' } }
+  if (!verifyXsollaSignature(rawBody, req.headers.authorization, secret)) {
+    return { status: 400, body: { error: 'Invalid signature.' } }
+  }
+  let event = null
+  try { event = JSON.parse(rawBody) } catch {
+    return { status: 400, body: { error: 'Bad JSON.' } }
+  }
+  if (event.notification_type === 'user_validation') {
+    const userId = webhookUserId(event)
+    if (getAdmin() && userId) {
+      const snap = await getAdmin().firestore().collection('players').doc(String(userId)).get()
+      return { status: snap.exists ? 204 : 400, body: snap.exists ? null : { error: 'User not found.' } }
+    }
+    return { status: 503, body: { error: 'Server not configured.' } }
+  }
+  if (event.notification_type === 'payment' && event.payment && event.payment.status === 'done') {
+    await grantCoinsFromEvent(event)
+  }
+  return { status: 204, body: null }
+}
