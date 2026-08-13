@@ -429,14 +429,11 @@ async function createXsollaPaymentToken(pkg, user) {
       language: 'en',
       return_url: `${SITE_ORIGIN}/shop`,
     },
-    purchase: {},
+    purchase: {
+      virtual_currency: { quantity: pkg.coins },
+    },
   }
   if (user.name) payload.user.name = { value: user.name }
-  if (pkg.sku) {
-    payload.purchase.virtual_items = [{ sku: pkg.sku, quantity: 1 }]
-  } else {
-    payload.purchase.virtual_currency = { quantity: pkg.coins }
-  }
   return xsollaRequest('POST', url, `Basic ${auth}`, payload)
 }
 
