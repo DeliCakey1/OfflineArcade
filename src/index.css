@@ -58,7 +58,7 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.38);
+  background: rgba(0, 0, 0, 0.30);
   pointer-events: none;
   z-index: 0;
 }
