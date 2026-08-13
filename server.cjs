@@ -526,7 +526,6 @@ async function handleXsollaWebhook(req, rawBody) {
   const secret = XSOLLA.webhookSecret
   if (!secret) return { status: 503, body: { error: 'Webhook not configured.' } }
   if (!verifyXsollaSignature(rawBody, req.headers.authorization, secret)) {
-    console.warn('[xsolla] webhook sig check failed. auth:', JSON.stringify(req.headers.authorization), 'secret len:', secret.length, 'expected:', crypto.createHash('sha1').update(String(rawBody) + secret).digest('hex'))
     return { status: 400, body: { error: 'Invalid signature.' } }
   }
   let event = null
