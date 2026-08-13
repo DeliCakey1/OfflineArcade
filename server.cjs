@@ -369,7 +369,7 @@ const XSOLLA = {
 
 const XSOLLA_READY = Boolean(XSOLLA.merchantId && XSOLLA.apiKey && XSOLLA.projectId)
 const SITE_ORIGIN = (process.env.SITE_URL || '').replace(/\/+$/, '') || 'https://offlinearcade.up.railway.app'
-const XSOLLA_API_BASE = (process.env.XSOLLA_API_BASE || '').replace(/\/+$/, '') || 'https://store.xsolla.com'
+const XSOLLA_API_BASE = (process.env.XSOLLA_API_BASE || '').replace(/\/+$/, '') || 'https://api.xsolla.com'
 const XSOLLA_UI_BASE = XSOLLA.sandbox ? 'https://sandbox-secure.xsolla.com' : 'https://secure.xsolla.com'
 
 function readRawBody(req) {
@@ -417,21 +417,19 @@ function verifyXsollaSignature(rawBody, authHeader, secret) {
 }
 
 async function createXsollaPaymentToken(pkg, user) {
-  const url = `${XSOLLA_API_BASE}/api/v3/project/${XSOLLA.projectId}/admin/payment/token`
+  const url = `${XSOLLA_API_BASE}/merchant/v2/merchants/${XSOLLA.merchantId}/token`
   const auth = Buffer.from(`${XSOLLA.merchantId}:${XSOLLA.apiKey}`).toString('base64')
   const payload = {
-    sandbox: XSOLLA.sandbox,
     user: {
       id: { value: user.uid },
     },
-    purchase: {},
     settings: {
       project_id: Number(XSOLLA.projectId),
       currency: 'USD',
       language: 'en',
-      external_id: user.uid,
       return_url: `${SITE_ORIGIN}/shop`,
     },
+    purchase: {},
   }
   if (user.name) payload.user.name = { value: user.name }
   if (pkg.sku) {
