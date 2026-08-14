@@ -22,7 +22,7 @@ const CONFIG = 'config'
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
-export async function getOrCreatePlayer(userId, name, username) {
+export async function getOrCreatePlayer(userId, name, username, isGuest) {
   const { doc, getDoc, setDoc, updateDoc } = await f()
   const { db } = await f()
   const ref = doc(db, PLAYERS, userId)
@@ -53,6 +53,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     if (data.referrals == null) updates.referrals = 0
     if (data.referredBy === undefined) updates.referredBy = null
     if (data.gamesPlayed == null) updates.gamesPlayed = 0
+    if (isGuest != null && data.isGuest !== !!isGuest) updates.isGuest = !!isGuest
     if (Object.keys(updates).length > 0) {
       updateDoc(ref, updates).catch(() => {})
       Object.assign(data, updates)
@@ -85,6 +86,7 @@ export async function getOrCreatePlayer(userId, name, username) {
     nameplateEffect: null,
     ownedItems: [],
     isAdmin: false,
+    isGuest: !!isGuest,
     usernameSkipped: false,
     inviteCode: makeInviteCode(),
     referrals: 0,
@@ -506,6 +508,9 @@ export async function findOrCreateLeagueInstance(rank) {
     if (data.players.length < MAX_PER_LEAGUE) {
       return { id: d.id, ...data }
     }
+    await pruneGuestsFromLeague(d.id, data.players)
+    const fresh = await getLeagueInstance(d.id)
+    if (fresh && fresh.players.length < MAX_PER_LEAGUE) return fresh
   }
   const newRef = doc(collection(db, LEAGUES))
   const instance = { rank, instance: snap.size, players: [], seasonStart: Date.now(), status: 'active', createdAt: Date.now() }
@@ -525,6 +530,17 @@ export async function leaveLeague(leagueId, userId) {
   const { db } = await f()
   const ref = doc(db, LEAGUES, leagueId)
   await updateDoc(ref, { players: arrayRemove(userId) })
+}
+
+export async function pruneGuestsFromLeague(leagueId, playerIds) {
+  if (!playerIds || playerIds.length === 0) return false
+  const fetched = await getLeaguePlayers(playerIds)
+  const guestIds = fetched.filter(p => p.isGuest).map(p => p.id)
+  if (guestIds.length === 0) return false
+  const { doc, updateDoc, arrayRemove } = await f()
+  const { db } = await f()
+  await updateDoc(doc(db, LEAGUES, leagueId), { players: arrayRemove(...guestIds) }).catch(() => {})
+  return true
 }
 
 export async function getLeagueInstance(leagueId) {
@@ -599,6 +615,7 @@ export async function ensurePlayerInLeague(userId) {
   if (isInLockoutPeriod()) return null
   const p = await getPlayer(userId)
   if (!p) return null
+  if (p.isGuest) return null
   if ((p.gamesPlayed || 0) < 1 && !(p.wins || 0) && !(p.losses || 0)) return null
   if (p.leagueInstanceId) {
     const lg = await getLeagueInstance(p.leagueInstanceId)
@@ -614,7 +631,16 @@ export async function processSeasonReset(leagueId) {
   const league = await getLeagueInstance(leagueId)
   if (!league || league.players.length === 0) return
 
-  const players = await getLeaguePlayers(league.players)
+  let players = await getLeaguePlayers(league.players)
+  const guestIds = players.filter(p => p.isGuest).map(p => p.id)
+  if (guestIds.length > 0) {
+    const { doc, updateDoc, arrayRemove } = await f()
+    const { db } = await f()
+    await updateDoc(doc(db, LEAGUES, leagueId), { players: arrayRemove(...guestIds) }).catch(() => {})
+    players = players.filter(p => !p.isGuest)
+  }
+  if (players.length < MAX_PER_LEAGUE) return
+
   players.sort((a, b) => b.xp - a.xp)
 
   const currentRank = league.rank

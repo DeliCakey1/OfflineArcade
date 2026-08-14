@@ -5,6 +5,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function notGuest() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
     function isAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/players/$(request.auth.uid))
@@ -70,11 +75,11 @@ service cloud.firestore {
 
     // ===== leagues =====
     match /leagues/{leagueId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if notGuest();
+      allow create: if notGuest()
         && request.resource.data.players is list
         && request.resource.data.status is string;
-      allow update: if signedIn()
+      allow update: if notGuest()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'players', 'status', 'completedAt', 'seasonStart', 'rank', 'instance', 'createdAt'
         ]);
@@ -96,11 +101,11 @@ service cloud.firestore {
 
     // ===== tournaments =====
     match /tournaments/{tournamentId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+      allow read: if notGuest();
+      allow create: if notGuest()
         && request.resource.data.players is list
         && request.resource.data.status is string;
-      allow update: if signedIn()
+      allow update: if notGuest()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'players', 'status', 'stage', 'season', 'completedAt', 'createdAt',
           'startsAt', 'stageStartedAt', 'stageEndsAt', 'cancelledAt'

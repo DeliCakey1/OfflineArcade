@@ -1004,7 +1004,7 @@ function App() {
         }
         import('./leagueService').then(({ getOrCreatePlayer, getModeration }) => {
           getModeration(u.uid).then(m => setModeration(m || null)).catch(() => {})
-          const loadPlayer = getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
+          const loadPlayer = getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null, u.isAnonymous)
           loadPlayer.then(p => {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
@@ -1104,7 +1104,7 @@ function App() {
       const { won } = e.detail || {}
         import('./leagueService').then(({ getPlayer, updatePlayer, ensurePlayerInLeague, increment }) => {
           getPlayer(userId).then(p => {
-            if (!p) return
+            if (!p || p.isGuest) return
             syncLeagueData(p)
             const updates = { gamesPlayed: increment(1) }
             if (!won) {
@@ -1519,7 +1519,7 @@ function App() {
         <PageBoundary onBack={() => navigateTo('home')}>
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
-            <LeagueScreen onBack={() => navigateTo('home')} userId={userId} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
+            <LeagueScreen onBack={() => navigateTo('home')} userId={userId} isGuest={!!(user && user.isAnonymous)} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
             {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
           </div>
         </PageBoundary>

@@ -23,7 +23,7 @@ const TOURNAMENT_LABELS = {
   finals: { name: 'Finals', emoji: '🏆', size: 10 },
 }
 
-export default function LeagueScreen({ onBack, userId, tournamentTickets, coins, onBuyTicket }) {
+export default function LeagueScreen({ onBack, userId, isGuest, tournamentTickets, coins, onBuyTicket }) {
   const [player, setPlayer] = useState(null)
   const [league, setLeague] = useState(null)
   const [tournament, setTournament] = useState(null)
@@ -46,6 +46,10 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
         const p = await getOrCreatePlayer(userId)
         if (cancelled) return
         setPlayer(p)
+        if (isGuest) {
+          if (!cancelled) setLoading(false)
+          return
+        }
 
         if (p.league === 1) {
           if (!cancelled) setLoading(false)
@@ -83,7 +87,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
     }
     init()
     return () => { cancelled = true }
-  }, [userId, reloadKey])
+  }, [userId, reloadKey, isGuest])
 
   useEffect(() => {
     if (tournament?.id) {
@@ -177,7 +181,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
     return () => clearInterval(interval)
   }, [tournament?.stageEndsAt])
 
-  const sortedPlayers = useMemo(() => [...players].sort((a, b) => b.xp - a.xp), [players])
+  const sortedPlayers = useMemo(() => [...players].filter(p => !p.isGuest).sort((a, b) => b.xp - a.xp), [players])
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
 
   const isTournament = !!tournament
@@ -256,6 +260,24 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
           <h2>⚔️ Leagues</h2>
         </div>
         <p style={{ color: 'var(--lose-color)', textAlign: 'center', padding: 20 }}>{error}</p>
+      </div>
+    )
+  }
+
+  if (isGuest) {
+    return (
+      <div className="league-page">
+        <div className="league-page-header">
+          <button className="quit-btn" onClick={onBack}>← Back</button>
+          <div className="league-header-text">
+            <h2>⚔️ Leagues</h2>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>👤</div>
+          <h3 style={{ color: 'var(--text-light)', marginBottom: 8 }}>Sign in to compete in leagues</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>Guest players can play games, but league placement is reserved for signed-in players. Create an account to join the competition!</p>
+        </div>
       </div>
     )
   }
@@ -349,7 +371,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
             {player.streak > 0 && <span>🔥 {player.streak}</span>}
           </div>
         )}
-        <span className="league-size">{players.length}/{isTournament ? tournamentInfo.size : MAX_PER_LEAGUE}</span>
+        <span className="league-size">{sortedPlayers.length}/{isTournament ? tournamentInfo.size : MAX_PER_LEAGUE}</span>
       </div>
 
       {playerPosition > 0 && (
@@ -472,7 +494,7 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
         />
       )}
 
-      {seasonTime === 0 && (
+      {seasonTime === 0 && (isTournament || sortedPlayers.length >= MAX_PER_LEAGUE) && (
         <button className="league-reset-btn" onClick={handleSeasonReset}>
           {isTournament ? `🔄 Advance ${tournamentInfo.name}` : '🔄 Reset Season'}
         </button>
