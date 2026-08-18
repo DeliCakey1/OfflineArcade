@@ -694,6 +694,7 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
               <div className="level-bar-wrap">
                 <div className="level-bar-fill" style={{ width: `${progressPct}%` }} />
               </div>
+              <span className="level-xp-text">{xpInLevel}/{xpNeeded}</span>
             </div>
           )}
           <div className="stat-pill xp-pill" title="Total Points">⭐ {xp?.toLocaleString() || '0'}</div>
