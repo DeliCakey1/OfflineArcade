@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signInWithGoogle, signInWithGitHub, signInWithApple, signInWithDiscord, signInWithMicrosoft } from '../auth'
+import { signInWithGoogle, signInWithGitHub, signInWithApple, signInWithDiscord, signInWithMicrosoft, signInWithFacebook, signInWithTwitter, signInWithTwitch } from '../auth'
 
 export default function SignInPage({ onBack }) {
   const [loading, setLoading] = useState(null)
@@ -14,6 +14,9 @@ export default function SignInPage({ onBack }) {
       else if (provider === 'apple') await signInWithApple()
       else if (provider === 'discord') await signInWithDiscord()
       else if (provider === 'microsoft') await signInWithMicrosoft()
+      else if (provider === 'facebook') await signInWithFacebook()
+      else if (provider === 'twitter') await signInWithTwitter()
+      else if (provider === 'twitch') await signInWithTwitch()
       window.location.reload()
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
@@ -54,22 +57,46 @@ export default function SignInPage({ onBack }) {
           <span className="signin-btn-label">Continue with GitHub</span>
         </button>
 
-        <button className="signin-btn microsoft" disabled>
-          <span className="signin-btn-icon">🪟</span>
+        <button className="signin-btn microsoft" onClick={() => handleSignIn('microsoft')} disabled={loading !== null}>
+          <span className="signin-btn-icon">
+            {loading === 'microsoft' ? <span className="signin-spinner" /> : '🪟'}
+          </span>
           <span className="signin-btn-label">Continue with Microsoft</span>
-          <span className="signin-coming-soon">Coming Soon</span>
         </button>
 
-        <button className="signin-btn apple" disabled>
-          <span className="signin-btn-icon"></span>
+        <button className="signin-btn apple" onClick={() => handleSignIn('apple')} disabled={loading !== null}>
+          <span className="signin-btn-icon">
+            {loading === 'apple' ? <span className="signin-spinner" /> : ''}
+          </span>
           <span className="signin-btn-label">Continue with Apple</span>
-          <span className="signin-coming-soon">Coming Soon</span>
         </button>
 
-        <button className="signin-btn discord" disabled>
-          <span className="signin-btn-icon">💬</span>
+        <button className="signin-btn facebook" onClick={() => handleSignIn('facebook')} disabled={loading !== null}>
+          <span className="signin-btn-icon">
+            {loading === 'facebook' ? <span className="signin-spinner" /> : '📘'}
+          </span>
+          <span className="signin-btn-label">Continue with Facebook</span>
+        </button>
+
+        <button className="signin-btn discord" onClick={() => handleSignIn('discord')} disabled={loading !== null}>
+          <span className="signin-btn-icon">
+            {loading === 'discord' ? <span className="signin-spinner" /> : '💬'}
+          </span>
           <span className="signin-btn-label">Continue with Discord</span>
-          <span className="signin-coming-soon">Coming Soon</span>
+        </button>
+
+        <button className="signin-btn twitter" onClick={() => handleSignIn('twitter')} disabled={loading !== null}>
+          <span className="signin-btn-icon">
+            {loading === 'twitter' ? <span className="signin-spinner" /> : '𝕏'}
+          </span>
+          <span className="signin-btn-label">Continue with X</span>
+        </button>
+
+        <button className="signin-btn twitch" onClick={() => handleSignIn('twitch')} disabled={loading !== null}>
+          <span className="signin-btn-icon">
+            {loading === 'twitch' ? <span className="signin-spinner" /> : '🟣'}
+          </span>
+          <span className="signin-btn-label">Continue with Twitch</span>
         </button>
       </div>
 

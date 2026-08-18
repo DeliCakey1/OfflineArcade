@@ -58,6 +58,34 @@ export async function signInWithMicrosoft() {
   return signInWithPopup(auth, provider)
 }
 
+export async function signInWithFacebook() {
+  const auth = await getAuthInstance()
+  if (!auth) return null
+  const { signInWithPopup, signInWithRedirect, FacebookAuthProvider } = await import('firebase/auth')
+  const provider = new FacebookAuthProvider()
+  if (isMobile()) return signInWithRedirect(auth, provider)
+  return signInWithPopup(auth, provider)
+}
+
+export async function signInWithTwitter() {
+  const auth = await getAuthInstance()
+  if (!auth) return null
+  const { signInWithPopup, signInWithRedirect, OAuthProvider } = await import('firebase/auth')
+  const provider = new OAuthProvider('twitter.com')
+  if (isMobile()) return signInWithRedirect(auth, provider)
+  return signInWithPopup(auth, provider)
+}
+
+export async function signInWithTwitch() {
+  const auth = await getAuthInstance()
+  if (!auth) return null
+  const { signInWithPopup, signInWithRedirect, OAuthProvider } = await import('firebase/auth')
+  const provider = new OAuthProvider('twitch.tv')
+  provider.addScope('user:read:email')
+  if (isMobile()) return signInWithRedirect(auth, provider)
+  return signInWithPopup(auth, provider)
+}
+
 export async function handleRedirectResult() {
   const auth = await getAuthInstance()
   if (!auth) return null
