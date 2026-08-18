@@ -663,9 +663,6 @@ body::before {
 .signin-btn.microsoft:hover:not(:disabled) { border-color: #00a4ef; }
 .signin-btn.apple:hover:not(:disabled) { border-color: #fff; }
 .signin-btn.discord:hover:not(:disabled) { border-color: #5865f2; }
-.signin-btn.facebook:hover:not(:disabled) { border-color: #1877f2; }
-.signin-btn.twitter:hover:not(:disabled) { border-color: #fff; }
-.signin-btn.twitch:hover:not(:disabled) { border-color: #9146ff; }
 .signin-btn-icon {
   width: 24px;
   height: 24px;
@@ -680,9 +677,6 @@ body::before {
 .signin-btn.microsoft .signin-btn-icon { color: #00a4ef; }
 .signin-btn.apple .signin-btn-icon { color: #fff; }
 .signin-btn.discord .signin-btn-icon { color: #5865f2; }
-.signin-btn.facebook .signin-btn-icon { color: #1877f2; }
-.signin-btn.twitter .signin-btn-icon { color: #fff; }
-.signin-btn.twitch .signin-btn-icon { color: #9146ff; }
 .signin-spinner {
   width: 18px;
   height: 18px;
