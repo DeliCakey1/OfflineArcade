@@ -236,6 +236,21 @@ export default function LeagueScreen({ onBack, userId, tournamentTickets, coins,
     }
   }
 
+  if (!userId) {
+    return (
+      <div className="league-page">
+        <div className="league-page-header">
+          <button className="quit-btn" onClick={onBack}>← Back</button>
+          <h2>⚔️ Leagues</h2>
+        </div>
+        <div className="full-page-content">
+          <p className="friends-signin-msg">Sign in to access leagues and compete with others.</p>
+          <button className="settings-btn sign-in-cta" onClick={onBack}>Sign In</button>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="league-page">

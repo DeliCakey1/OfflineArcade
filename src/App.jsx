@@ -1346,7 +1346,7 @@ function App() {
     onNavigateGame: handleNavigateGame,
     onCloak: () => navigateTo('cloak'),
     onSettings: () => navigateTo('settings'),
-    onLeagues: () => navigateTo(user ? 'leagues' : 'signin'),
+    onLeagues: () => navigateTo('leagues'),
     onStats: () => navigateTo('stats'),
     onAchievements: () => navigateTo('achievements'),
     onShop: () => navigateTo('shop'),
