@@ -14,6 +14,7 @@ export default function ThemePicker({ current, onChange }) {
             <button key={id} className={`theme-option ${id === current ? 'active' : ''}`} onClick={() => { onChange(id); setOpen(false) }}>
               <span className="theme-option-emoji">{THEMES[id].emoji}</span>
               <span className="theme-option-name">{THEMES[id].name}</span>
+              <span className="theme-option-mode">{THEMES[id].mode === 'light' ? '☀️' : '🌙'}</span>
             </button>
           ))}
         </div>

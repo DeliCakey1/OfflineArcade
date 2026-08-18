@@ -56,7 +56,7 @@ export default function AboutUs({ onBack }) {
             <strong>A full competitive league system.</strong> 10 ranks themed as creatures, from Microbe to God. You're grouped with 19 other players, and every week the standings reset. Top players promote, bottom players get demoted. Hit Rank 1, buy a tournament ticket with in-game coins, and you enter the God Tournament: a 3-stage bracket cutting from 20 players to 15 to 10, with the top 3 earning massive rewards. It's genuinely competitive in a way you won't expect.
           </p>
           <p>
-            <strong>Every game earns XP and coins.</strong> XP pushes you up the league ladder, coins buy you stuff in the shop. 50+ nameplate effects like Neon Glow, Rainbow Wave, Hologram, Fire Trail, and Matrix. 25 titles across rarity tiers from Common to Champion. 80+ achievements tracking win streaks, league milestones, and per-game records. Plus a daily challenge that rotates every day with a fresh game and difficulty.
+            <strong>Every game earns points and coins.</strong> Points push you up the league ladder, coins buy you stuff in the shop. 50+ nameplate effects like Neon Glow, Rainbow Wave, Hologram, Fire Trail, and Matrix. 25 titles across rarity tiers from Common to Champion. 80+ achievements tracking win streaks, league milestones, and per-game records. Plus a daily challenge that rotates every day with a fresh game and difficulty.
           </p>
           <p>
             <strong>It works offline.</strong> Load it once, kill your wifi, everything still runs. Progress syncs to the cloud when you sign back in. Six themes: Neon Arcade, Retro CRT, Ocean, Pastel Dream, Crimson, Forest.
@@ -71,7 +71,7 @@ export default function AboutUs({ onBack }) {
 
         <section className="about-section">
           <h2>🎮 All 21 Games</h2>
-          <p>Every game earns league XP (for climbing ranks) and coins (for the shop). Games fall into 5 categories:</p>
+          <p>Every game earns league points (for climbing ranks) and coins (for the shop). Games fall into 5 categories:</p>
           <div className="about-category-labels">
             <span className="about-cat-chip">🎲 Chance</span>
             <span className="about-cat-chip">🧠 Brain</span>
@@ -94,16 +94,16 @@ export default function AboutUs({ onBack }) {
           <div className="about-game-earnings">
             <h3>How Earnings Work</h3>
             <p>
-              <strong>Win/loss games</strong> (RPS, Blackjack, Dice, etc.) give fixed XP and coins on win. 
-              Losses give 1/4 of the win XP and coins. Streak bonus: +1 coin per 3 wins in a row (max +5).
+              <strong>Win/loss games</strong> (RPS, Blackjack, Dice, etc.) give fixed points and coins on win. 
+              Losses give 1/4 of the win points and coins. Streak bonus: +1 coin per 3 wins in a row (max +5).
             </p>
             <p>
-              <strong>Score-based games</strong> (Snake, Tetris, Breakout, Flappy Bird, Minesweeper) give XP on every play. 
+              <strong>Score-based games</strong> (Snake, Tetris, Breakout, Flappy Bird, Minesweeper) give points on every play. 
               Coins scale with your score — higher score = more coins. 0 score = 0 coins.
             </p>
             <div className="about-earnings-table">
               <div className="about-earnings-row about-earnings-header">
-                <span>Game</span><span>XP (win)</span><span>Coins (base)</span>
+                <span>Game</span><span>Points (win)</span><span>Coins (base)</span>
               </div>
               {Object.entries(GAME_XP).map(([id, xp]) => (
                 <div key={id} className="about-earnings-row">
@@ -119,7 +119,7 @@ export default function AboutUs({ onBack }) {
         <section className="about-section">
           <h2>⚔️ League System</h2>
           <p>
-            Every week, players compete in leagues. Win games to earn league XP. 
+            Every week, players compete in leagues. Win games to earn league points. 
             The top players get promoted to a higher league, while the bottom players get demoted. 
             Leagues reset every <strong>Wednesday at midnight UTC</strong>.
           </p>
@@ -140,8 +140,8 @@ export default function AboutUs({ onBack }) {
           </p>
           <h3>Promotion & Demotion Zones</h3>
           <p>
-            Every Wednesday, the top XP players in each league get promoted to the next rank up, 
-            and the bottom XP players get demoted down. The stay zone is everyone in between.
+            Every Wednesday, the top points players in each league get promoted to the next rank up, 
+            and the bottom points players get demoted down. The stay zone is everyone in between.
           </p>
           <div className="about-zones-table">
             <div className="about-zones-row about-zones-header">
@@ -182,7 +182,7 @@ export default function AboutUs({ onBack }) {
               )
             })}
           </div>
-          <p>Players ranked 4th–20th get no league coins — just the XP and coins earned from playing games during the season.</p>
+          <p>Players ranked 4th–20th get no league coins — just the points and coins earned from playing games during the season.</p>
           <h3>Season Lockout</h3>
           <p>
             The last 24 hours before reset is a <strong>lockout period</strong> — you can't join new leagues 
@@ -344,7 +344,7 @@ export default function AboutUs({ onBack }) {
           <h3>Categories</h3>
           <ul className="about-list">
             <li><strong>General</strong> — First win, games played milestones (1, 25, 50, 100, 250, 500, 1000), games won milestones, play all games, favorite games</li>
-            <li><strong>XP</strong> — Earn 100, 500, 1K, 2.5K, 5K, 10K, 25K XP</li>
+            <li><strong>Points</strong> — Earn 100, 500, 1K, 2.5K, 5K, 10K, 25K points</li>
             <li><strong>League</strong> — Join a league, get promoted (1, 5, 10, 25, 50 times), reach each rank, win 10/50/100 league games</li>
             <li><strong>Tournament</strong> — Enter a tournament, win 1, 3, 5 tournaments, get 1st place 1, 3 times</li>
             <li><strong>Streaks</strong> — Win 3, 5, 10, 25, 50, 100 games in a row, multi-game streaks</li>
@@ -361,7 +361,7 @@ export default function AboutUs({ onBack }) {
           <h2>📅 Daily Challenge</h2>
           <p>
             Every day, a new challenge rotates with a fresh game and difficulty setting. 
-            Complete it for bonus XP and coins. A countdown timer shows when the next challenge starts.
+            Complete it for bonus points and coins. A countdown timer shows when the next challenge starts.
           </p>
           <p>
             Daily challenges track your completion streak — complete 7 in a row for a bonus achievement.
@@ -383,8 +383,7 @@ export default function AboutUs({ onBack }) {
           <h3>Sync Across Devices</h3>
           <p>
             When you sign in, your cosmetics sync to the cloud via Firebase Firestore. 
-            Sign in on another device and your title, nameplates, and effects are all there. 
-            Guest players can play games but their cosmetic choices won't persist.
+            Sign in on another device and your title, nameplates, and effects are all there.
           </p>
           <h3>Rarity Tiers</h3>
           <div className="about-rarity-list">
@@ -401,7 +400,7 @@ export default function AboutUs({ onBack }) {
           <h2>👤 User Accounts</h2>
           <p>
             Sign in with <strong>Google</strong> or <strong>Apple</strong> to save your progress to the cloud. 
-            Guest users can play all games, but progress won't persist across sessions.
+            Without signing in, progress won't persist across sessions.
           </p>
           <ul className="about-list">
             <li><strong>Username</strong> — Set a unique username to appear in league standings and user search</li>

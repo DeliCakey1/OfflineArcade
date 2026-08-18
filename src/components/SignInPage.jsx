@@ -36,7 +36,7 @@ export default function SignInPage({ onBack }) {
       <div className="signin-info">
         <div className="signin-info-icon">☁️</div>
         <h3>Save Your Progress</h3>
-        <p>Sign in to sync your stats, XP, league rank, and achievements across devices.</p>
+        <p>Sign in to sync your stats, points, league rank, and achievements across devices.</p>
       </div>
 
       <div className="signin-providers">

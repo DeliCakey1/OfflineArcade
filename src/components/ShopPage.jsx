@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import useSound from '../useSound'
-import { ensureAuth } from '../firebase'
+
 import { TITLES, ALL_NAMEPLATES, RARITY_COLORS, TOURNAMENT_TICKET, getSeasonalItems, salePercentFor, salePriceFor } from '../shopItems'
 
 const NAMEPLATE_TABS = [
@@ -181,9 +181,6 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
   const sound = useSound()
   const [showBought, setShowBought] = useState(null)
   const [saleItems, setSaleItems] = useState({})
-  const [coinsPackages, setCoinsPackages] = useState([])
-  const [coinsStatus, setCoinsStatus] = useState(null)
-  const [coinsBusy, setCoinsBusy] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -192,46 +189,6 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
     }).catch(() => {})
     return () => { cancelled = true }
   }, [])
-
-  useEffect(() => {
-    if (tab !== 'coins') return
-    let cancelled = false
-    fetch('/api/payment/packages').then(r => r.json()).then(list => {
-      if (!cancelled && Array.isArray(list)) setCoinsPackages(list)
-    }).catch(() => {})
-    return () => { cancelled = true }
-  }, [tab])
-
-  async function handleBuyCoins(pkg) {
-    if (coinsBusy) return
-    sound('click')
-    setCoinsBusy(true)
-    setCoinsStatus(null)
-    try {
-      const user = await ensureAuth()
-      if (!user) {
-        setCoinsStatus('Please sign in to buy coins.')
-        return
-      }
-      const idToken = await user.getIdToken()
-      const res = await fetch('/api/payment/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + idToken },
-        body: JSON.stringify({ packageId: pkg.id }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        setCoinsStatus(data.error || 'Payment is unavailable right now.')
-        return
-      }
-      window.open(data.url, '_blank')
-      setCoinsStatus('Payment window opened. Your coins appear here once the payment completes.')
-    } catch {
-      setCoinsStatus('Could not start payment. Try again.')
-    } finally {
-      setCoinsBusy(false)
-    }
-  }
 
   function handleBuy(itemId, price) {
     onPurchase(itemId, price)
@@ -265,7 +222,7 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
 
       <div className="shop-tabs">
         <button className={`shop-tab ${tab === 'coins' ? 'active' : ''}`} onClick={() => { setTab('coins'); sound('click') }}>
-          💳 Coins
+          💳 Coins <span className="shop-tab-soon">Soon</span>
         </button>
         <button className={`shop-tab ${tab === 'seasonal' ? 'active' : ''}`} onClick={() => { setTab('seasonal'); sound('click') }}>
           🌸 Seasonal
@@ -287,25 +244,10 @@ export default function ShopPage({ onBack, coins, tournamentTickets, ownedItems,
 
       {tab === 'coins' && (
         <div className="full-page-content">
-          <p className="shop-section-desc">Run low? Buy more coins to spend anywhere in the shop.</p>
-          {coinsStatus && <div className="shop-coins-status">{coinsStatus}</div>}
-          <div className="shop-grid">
-            {coinsPackages.length === 0 ? (
-              <p className="shop-section-desc">Loading coin packs…</p>
-            ) : coinsPackages.map(pkg => (
-              <div className="shop-card" key={pkg.id}>
-                <div className="shop-card-top">
-                  <span className="shop-card-emoji">🪙</span>
-                  <span className="shop-card-rarity">Coin Pack</span>
-                </div>
-                <div className="shop-card-name">{pkg.coins.toLocaleString()} Coins</div>
-                <div className="shop-card-bottom">
-                  <button className="shop-card-btn buy-btn" onClick={() => handleBuyCoins(pkg)} disabled={coinsBusy}>
-                    💳 ${pkg.usd.toFixed(2)}
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="shop-coins-coming-soon">
+            <span className="shop-coins-coming-soon-icon">🪙</span>
+            <h3>Coins Coming Soon</h3>
+            <p>Real-money coin purchases are being set up. Earn coins by playing games in the meantime!</p>
           </div>
         </div>
       )}

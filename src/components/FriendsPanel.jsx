@@ -24,8 +24,24 @@ export default function FriendsPanel({ userId, user, onClose }) {
       if (!cancelled) setLoading(false)
     }
     if (userId) load()
+    else setLoading(false)
     return () => { cancelled = true }
   }, [userId])
+
+  if (!user) {
+    return (
+      <div className="full-page">
+        <div className="full-page-header">
+          <button className="quit-btn" onClick={onClose}>← Back</button>
+          <h2 className="full-page-title">👥 Friends</h2>
+        </div>
+        <div className="full-page-content">
+          <p className="friends-signin-msg">Sign in to access friends, send friend codes, and chat.</p>
+          <button className="settings-btn sign-in-cta" onClick={onClose}>Sign In</button>
+        </div>
+      </div>
+    )
+  }
 
   async function handleAdd() {
     if (!addCode.trim()) return
@@ -68,7 +84,7 @@ export default function FriendsPanel({ userId, user, onClose }) {
         <h2 className="full-page-title">👥 Friends</h2>
       </div>
 
-      {!selected && (
+      {user && !selected && (
         <>
           <div style={{ background: 'rgba(0,212,255,0.08)', borderRadius: 8, padding: 12, marginBottom: 16, border: '1px solid rgba(0,212,255,0.2)' }}>
             <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Your Friend Code</div>
@@ -102,6 +118,14 @@ export default function FriendsPanel({ userId, user, onClose }) {
         </>
       )}
 
+      {!user && (
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>👤</div>
+          <h3 style={{ color: 'var(--text-light)', marginBottom: 8 }}>Sign in to add friends</h3>
+          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>Friends, friend codes, and chats are only available to signed-in players.</p>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-dim)' }}>Loading friends...</div>
       ) : !selected ? (
@@ -133,7 +157,7 @@ export default function FriendsPanel({ userId, user, onClose }) {
                       <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>{f.name}</div>
                     )}
                     <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-                      {ri?.emoji || '🦠'} {ri?.name || 'Microbe'} · ⭐ {(f.xp || 0).toLocaleString()} XP · 🏆 {(f.wins || 0).toLocaleString()} wins
+                      {ri?.emoji || '🦠'} {ri?.name || 'Microbe'} · ⭐ {(f.xp || 0).toLocaleString()} pts · 🏆 {(f.wins || 0).toLocaleString()} wins
                     </div>
                   </div>
                 </button>
@@ -166,7 +190,7 @@ export default function FriendsPanel({ userId, user, onClose }) {
           <div className="user-profile-stats">
             <div className="user-profile-stat">
               <span className="user-profile-stat-value">{(selected.xp || 0).toLocaleString()}</span>
-              <span className="user-profile-stat-label">Total XP</span>
+              <span className="user-profile-stat-label">Total Points</span>
             </div>
             <div className="user-profile-stat">
               <span className="user-profile-stat-value">{(selected.wins || 0).toLocaleString()}</span>

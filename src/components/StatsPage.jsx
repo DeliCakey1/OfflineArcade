@@ -33,7 +33,7 @@ export default function StatsPage({ games, allStats, onClose, onClear, xp, total
           <StatCard emoji="🎮" label="Played" value={totalPlayedCount} />
           <StatCard emoji="🏆" label="Won" value={totalWonCount} />
           <StatCard emoji="📈" label="Win Rate" value={`${avgWinRate}%`} color={avgWinRate >= 50 ? 'var(--win-color)' : 'var(--lose-color)'} />
-          <StatCard emoji="⭐" label="XP" value={xp.toLocaleString()} color="var(--neon-yellow)" />
+          <StatCard emoji="⭐" label="Points" value={xp.toLocaleString()} color="var(--neon-yellow)" />
           <StatCard emoji="🔥" label="Best Streak" value={bestStreak} color="var(--neon-orange)" />
           <StatCard emoji="🎯" label="Games" value={gameStats.length} color="var(--neon-cyan)" />
         </div>

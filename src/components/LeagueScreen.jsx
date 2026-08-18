@@ -23,7 +23,7 @@ const TOURNAMENT_LABELS = {
   finals: { name: 'Finals', emoji: '🏆', size: 10 },
 }
 
-export default function LeagueScreen({ onBack, userId, isGuest, tournamentTickets, coins, onBuyTicket }) {
+export default function LeagueScreen({ onBack, userId, tournamentTickets, coins, onBuyTicket }) {
   const [player, setPlayer] = useState(null)
   const [league, setLeague] = useState(null)
   const [tournament, setTournament] = useState(null)
@@ -41,15 +41,14 @@ export default function LeagueScreen({ onBack, userId, isGuest, tournamentTicket
     let cancelled = false
     async function init() {
       try {
-        if (!userId) { return }
+        if (!userId) {
+          if (!cancelled) setLoading(false)
+          return
+        }
         await activateScheduledTournamentIfDue().catch(() => {})
         const p = await getOrCreatePlayer(userId)
         if (cancelled) return
         setPlayer(p)
-        if (isGuest) {
-          if (!cancelled) setLoading(false)
-          return
-        }
 
         if (p.league === 1) {
           if (!cancelled) setLoading(false)
@@ -87,7 +86,7 @@ export default function LeagueScreen({ onBack, userId, isGuest, tournamentTicket
     }
     init()
     return () => { cancelled = true }
-  }, [userId, reloadKey, isGuest])
+  }, [userId, reloadKey])
 
   useEffect(() => {
     if (tournament?.id) {
@@ -181,7 +180,7 @@ export default function LeagueScreen({ onBack, userId, isGuest, tournamentTicket
     return () => clearInterval(interval)
   }, [tournament?.stageEndsAt])
 
-  const sortedPlayers = useMemo(() => [...players].filter(p => !p.isGuest).sort((a, b) => b.xp - a.xp), [players])
+  const sortedPlayers = useMemo(() => [...players].sort((a, b) => b.xp - a.xp), [players])
   const playerPosition = sortedPlayers.findIndex(p => p.id === userId) + 1
 
   const isTournament = !!tournament
@@ -264,7 +263,7 @@ export default function LeagueScreen({ onBack, userId, isGuest, tournamentTicket
     )
   }
 
-  if (isGuest) {
+  if (!userId) {
     return (
       <div className="league-page">
         <div className="league-page-header">
@@ -276,7 +275,7 @@ export default function LeagueScreen({ onBack, userId, isGuest, tournamentTicket
         <div style={{ textAlign: 'center', padding: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>👤</div>
           <h3 style={{ color: 'var(--text-light)', marginBottom: 8 }}>Sign in to compete in leagues</h3>
-          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>Guest players can play games, but league placement is reserved for signed-in players. Create an account to join the competition!</p>
+          <p style={{ color: 'var(--text-dim)', fontSize: 14 }}>League placement is reserved for signed-in players. Sign in to join the competition!</p>
         </div>
       </div>
     )
@@ -365,7 +364,7 @@ export default function LeagueScreen({ onBack, userId, isGuest, tournamentTicket
       <div className="league-page-stats">
         {player && (
           <div className="league-player-stats">
-            <span>⭐ {player.xp} XP</span>
+            <span>⭐ {player.xp} pts</span>
             <span>🏆 {player.wins}W</span>
             <span>💀 {player.losses}L</span>
             {player.streak > 0 && <span>🔥 {player.streak}</span>}
@@ -509,7 +508,7 @@ export default function LeagueScreen({ onBack, userId, isGuest, tournamentTicket
           ? tournament.stage === 'finals'
             ? `Top 3 win · Bottom ${demoteCount} → Phoenix`
             : `Top ${promoteCount} advance · Bottom ${demoteCount} → Phoenix`
-          : `Top ${promoteCount} promote · Bottom ${demoteCount} demote · Win +10 XP`
+          : `Top ${promoteCount} promote · Bottom ${demoteCount} demote · Win +10 pts`
         }
       </div>
       <div className="league-footer" style={{ marginTop: 4, fontSize: 11 }}>

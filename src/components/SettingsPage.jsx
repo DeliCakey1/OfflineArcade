@@ -11,7 +11,7 @@ import {
   getRemainingCooldown,
 } from '../adminAuth'
 
-export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, bg, onBgToggle, bgUrl, onBgUrlChange, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAccessibility, user, playerName, userUsername, inviteCode, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial, onCheckUpdates }) {
+export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThemeChange, animations, onAnimToggle, glass, onGlassToggle, waveBar, onWaveBarToggle, volume, onVolumeChange, onCloak, onAccessibility, user, playerName, userUsername, inviteCode, onNameChange, onUsernameChange, onSignIn, onSignOut, onAdminLogin, onAdminLogout, onRedoTutorial, onCheckUpdates }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [editingUsername, setEditingUsername] = useState(false)
@@ -160,7 +160,6 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
   }
 
   const displayName = playerName || user?.displayName || user?.email || 'Signed In'
-  const isGuest = user?.isAnonymous
 
   return (
     <div className="settings-page">
@@ -171,7 +170,7 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
 
       <div className="settings-section">
         <h3 className="settings-section-title">👤 Account</h3>
-        {user && !user.isAnonymous ? (
+        {user ? (
           <>
             <div className="settings-row">
               <div className="settings-card-btn active" style={{ cursor: 'default' }}>
@@ -235,14 +234,6 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
           </>
         ) : (
           <>
-            {isGuest && userUsername && (
-              <div className="settings-row">
-                <div className="settings-card-btn active" style={{ cursor: 'default', flex: 1 }}>
-                  <span className="settings-card-icon">🏷️</span>
-                  <span className="settings-card-label guest-username">@{userUsername}</span>
-                </div>
-              </div>
-            )}
             <button className="settings-card-btn full-width" onClick={onSignIn}>
               <span className="settings-card-icon">☁️</span>
               <span className="settings-card-label">Sign In to Save Data Across Devices</span>
@@ -309,22 +300,10 @@ export default function SettingsPage({ onBack, muted, onMuteToggle, theme, onThe
             <span className="settings-card-icon">{glass ? '💎' : '🪟'}</span>
             <span className="settings-card-label">Glass {glass ? 'On' : 'Off'}</span>
           </button>
-        </div>
-        <div className="settings-row">
-          <button className={`settings-card-btn ${bg ? 'active' : ''}`} onClick={onBgToggle} aria-label={bg ? 'Disable background' : 'Enable background'}>
-            <span className="settings-card-icon">{bg ? '🖼️' : '⬛'}</span>
-            <span className="settings-card-label">Background {bg ? 'On' : 'Off'}</span>
-          </button>
           <button className={`settings-card-btn ${waveBar ? 'active' : ''}`} onClick={onWaveBarToggle} aria-label={waveBar ? 'Disable wave bar' : 'Enable wave bar'}>
             <span className="settings-card-icon">{waveBar ? '🌊' : '🫧'}</span>
             <span className="settings-card-label">Wave Bar {waveBar ? 'On' : 'Off'}</span>
           </button>
-        </div>
-        <div className="settings-row bg-url-row">
-          <input className="bg-url-input" type="text" value={bgUrl} onChange={e => onBgUrlChange(e.target.value)} placeholder="Custom background image URL..." />
-          {bgUrl && (
-            <button className="bg-url-clear" onClick={() => onBgUrlChange('')} aria-label="Reset background">✕</button>
-          )}
         </div>
         <div className="settings-row">
           <button className="settings-card-btn full-width" onClick={onAccessibility} aria-label="Accessibility settings">

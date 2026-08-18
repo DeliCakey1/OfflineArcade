@@ -55,7 +55,7 @@ const AccessibilityPanel = lazy(() => import('./components/AccessibilityPanel'))
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
 import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow, setCurrentUserId, clearCurrentUserId } from './useStats'
-import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS, GAME_XP, GAME_COINS, SCORE_BASED_GAMES } from './leagues'
+import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS, GAME_XP, GAME_COINS, SCORE_BASED_GAMES, getLevel, getLevelReward } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
 import { getNameplateStyle, getNameplateBorderStyle, getNameplateEffectClass, getNameplateNeonColor, getTitleName } from './nameplateUtils'
@@ -190,7 +190,7 @@ const GameCard = memo(function GameCard({ game, stats, isFav, onFavToggle, onCli
       <div className="game-select-label">{game.label}</div>
       <div className="game-select-desc">{game.desc}</div>
       <div className="game-select-rewards">
-        <span className="game-reward-xp">⭐ {isScoreBased ? '0+' : xpReward} XP</span>
+        <span className="game-reward-xp">⭐ {isScoreBased ? '0+' : xpReward} Points</span>
         <span className="game-reward-coins">🪙 {isScoreBased ? '0+' : coinReward}</span>
       </div>
       {gameStats && gameStats.played > 0 && (
@@ -217,7 +217,7 @@ function GamesDropdown({ onNavigate }) {
 
   return (
     <div className="games-dropdown-wrap" ref={ref}>
-      <button className="settings-btn games-dropdown-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="listbox">
+      <button className="nav-pill games-dropdown-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="listbox">
         🕹️ Games ▾
       </button>
       <div className={`theme-dropdown games-dropdown ${open ? 'open' : ''}`}>
@@ -614,7 +614,7 @@ function UserSearchModal({ onClose }) {
                       <span className="user-search-display-name">{p.name}</span>
                     )}
                     <span className="user-search-meta">
-                      {ri?.emoji || '🦠'} {ri?.name || 'Microbe'} · ⭐ {(p.xp || 0).toLocaleString()} XP · 🏆 {(p.wins || 0).toLocaleString()} wins
+                      {ri?.emoji || '🦠'} {ri?.name || 'Microbe'} · ⭐ {(p.xp || 0).toLocaleString()} pts · 🏆 {(p.wins || 0).toLocaleString()} wins
                     </span>
                   </div>
                 </button>
@@ -644,7 +644,7 @@ function UserSearchModal({ onClose }) {
             <div className="user-profile-stats">
               <div className="user-profile-stat">
                 <span className="user-profile-stat-value">{(selected.xp || 0).toLocaleString()}</span>
-                <span className="user-profile-stat-label">Total XP</span>
+                <span className="user-profile-stat-label">Total Points</span>
               </div>
               <div className="user-profile-stat">
                 <span className="user-profile-stat-value">{(selected.wins || 0).toLocaleString()}</span>
@@ -675,35 +675,34 @@ function UserSearchModal({ onClose }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, onLeaderboard, onFriends, user, playerName, userUsername, onSignIn, onSignOut, coins, tournamentTickets, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, onLeaderboard, onFriends, user, playerName, userUsername, onSignIn, onSignOut, coins, tournamentTickets, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor, levelInfo }) {
+  const { level, xpInLevel, xpNeeded } = levelInfo || {}
+  const progressPct = xpNeeded > 0 ? Math.min(100, Math.round((xpInLevel / xpNeeded) * 100)) : 0
   return (
     <div className="settings-bar-wrap">
-      <div className="settings-bar">
-        <div className="settings-bar-left">
-          <button className="settings-btn home-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
-          <GamesDropdown onNavigate={onNavigateGame} />
-          <a className="settings-btn nav-btn chattopia-btn" href="https://chattopia.up.railway.app" target="_blank" rel="noopener noreferrer" title="Chattopia" aria-label="Chattopia">💬<span className="nav-label">Chattopia</span></a>
-          <button className="settings-btn nav-btn" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
-          <button className="settings-btn nav-btn" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
-          {user && !user.isAnonymous && <button className="settings-btn nav-btn" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>}
-          <button className="settings-btn nav-btn" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
-          <button className="settings-btn nav-btn" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
-          <button className="settings-btn nav-btn" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
-          <button className="settings-btn" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭</button>
-          <button className="settings-btn" onClick={onSearch} title="Search Players" aria-label="Search Players">🔍</button>
-        </div>
-        <div className="settings-bar-right">
+      <div className="status-bar">
+        <div className="status-bar-left">
+          <button className="status-icon-btn" onClick={onHome} title="Home" aria-label="Home">🏠</button>
           {leaguePos && (
-            <div className={`stat-badge league-pos-badge ${leaguePos.isPromo ? 'promo' : leaguePos.isDemo ? 'demo' : ''}`} title={`League Rank ${leaguePos.position}/${leaguePos.total}`}>
+            <div className={`stat-pill league-pos-pill ${leaguePos.isPromo ? 'promo' : leaguePos.isDemo ? 'demo' : ''}`} title={`League Rank ${leaguePos.position}/${leaguePos.total}`}>
               <span className="league-pos-hash">#</span>{leaguePos.position}
             </div>
           )}
-          <div className="stat-badge xp-badge" title="Total XP">⭐ {xp?.toLocaleString() || '0'}</div>
-          <div className="stat-badge tickets-badge" title="Tournament Tickets">🎫 {tournamentTickets || 0}</div>
-          <div className="stat-badge coins-badge" title="Coins">🪙 {coins?.toLocaleString() || '0'}</div>
-          <div className="settings-divider" />
-          {user && !user.isAnonymous && userUsername && (
-            <div className="user-badge">
+          {level != null && (
+            <div className="level-pill" title={`Level ${level} — ${xpInLevel}/${xpNeeded} pts`}>
+              <span className="level-label">Lv.{level}</span>
+              <div className="level-bar-wrap">
+                <div className="level-bar-fill" style={{ width: `${progressPct}%` }} />
+              </div>
+            </div>
+          )}
+          <div className="stat-pill xp-pill" title="Total Points">⭐ {xp?.toLocaleString() || '0'}</div>
+          <div className="stat-pill tickets-pill" title="Tournament Tickets">🎫 {tournamentTickets || 0}</div>
+          <div className="stat-pill coins-pill" title="Coins">🪙 {coins?.toLocaleString() || '0'}</div>
+        </div>
+        <div className="status-bar-right">
+          {user && userUsername && (
+            <div className="user-chip">
               <span className="user-avatar">{(userUsername[0] || 'U').toUpperCase()}</span>
               <span
                 className={`user-name ${nameplateEffectClass || ''}`}
@@ -713,13 +712,27 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
               </span>
             </div>
           )}
-          {(!user || user.isAnonymous) && (
-            <button className="settings-btn" onClick={onSignIn} title="Sign In to Save Data" aria-label="Sign in">👤</button>
+          {!user && (
+            <button className="status-icon-btn" onClick={onSignIn} title="Sign In" aria-label="Sign in">👤</button>
           )}
-          {user && !user.isAnonymous && (
-            <button className="settings-btn" onClick={onSignOut} title="Sign Out" aria-label="Sign out">🚪</button>
+          {user && (
+            <button className="status-icon-btn" onClick={onSignOut} title="Sign Out" aria-label="Sign out">🚪</button>
           )}
-          <button className="settings-btn" onClick={onSettings} title="Settings" aria-label="Settings">⚙️</button>
+          <button className="status-icon-btn" onClick={onSettings} title="Settings" aria-label="Settings">⚙️</button>
+        </div>
+      </div>
+      <div className="nav-bar">
+        <div className="nav-bar-scroll">
+          <GamesDropdown onNavigate={onNavigateGame} />
+          <a className="nav-pill chattopia-pill" href="https://chattopia.up.railway.app" target="_blank" rel="noopener noreferrer" title="Chattopia" aria-label="Chattopia">💬<span className="nav-label">Chattopia</span></a>
+          <button className="nav-pill" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
+          <button className="nav-pill" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
+          <button className="nav-pill" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>
+          <button className="nav-pill" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
+          <button className="nav-pill" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
+          <button className="nav-pill" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
+          <button className="nav-pill" onClick={onCloak} title="Tab Cloaking" aria-label="Tab Cloaking">🎭<span className="nav-label">Tab</span></button>
+          <button className="nav-pill" onClick={onSearch} title="Search Players" aria-label="Search Players">🔍<span className="nav-label">Search</span></button>
         </div>
       </div>
     </div>
@@ -743,8 +756,6 @@ function App() {
   const [theme, setTheme] = useState(() => getSaved('arcade-theme', 'neon'))
   const [animations, setAnimations] = useState(() => getSaved('arcade-animations', 'on') === 'on')
   const [glass, setGlass] = useState(() => getSaved('arcade-glass', 'on') === 'on')
-  const [bg, setBg] = useState(() => getSaved('arcade-bg', 'on') === 'on')
-  const [bgUrl, setBgUrl] = useState(() => { try { return localStorage.getItem('arcade-bg-url') || '' } catch { return '' } })
   const [confirmNav, setConfirmNav] = useState(null)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -849,6 +860,7 @@ function App() {
     markDailyCompleted, totalPlayedCount, totalWonCount, syncLeagueData,
     coins, ownedItems, tournamentTickets, activeTitle, activeNameplate, activeNameplateEffect,
     purchaseItem, equipTitle, equipNameplate, equipNameplateEffect, addCoins, checkAchievementCoins,
+    setLastLevel, lastLevel,
   } = useStats('_global')
 
   const { notifications, dismiss: dismissNotification } = useNotifications()
@@ -863,6 +875,7 @@ function App() {
   const [updateStatus, setUpdateStatus] = useState(null)
   const [updateError, setUpdateError] = useState('')
   const [dailyLoginResult, setDailyLoginResult] = useState(null)
+  const [levelUpInfo, setLevelUpInfo] = useState(null)
 
   const dailyGame = useMemo(() => {
     const dg = getDailyGame(ALL_GAME_IDS)
@@ -891,7 +904,7 @@ function App() {
       home: { title: 'Offline Arcade — Play 29 Free Browser Games', description: 'Play 29 free browser games instantly — Snake, Tetris, Flappy Bird, Minesweeper, Wordle, Blackjack and more. No downloads, works offline. Daily challenges, leagues and tournaments.' },
       settings: { title: 'Settings — Offline Arcade', description: 'Customize your Offline Arcade experience: theme, audio, accessibility, privacy and more.' },
       leagues: { title: 'Leagues & Tournaments — Offline Arcade', description: 'Compete in ranked leagues and tournaments. Climb from Microbe to God rank and win coins.' },
-      stats: { title: 'Your Stats — Offline Arcade', description: 'Track your play counts, wins, streaks and XP across all 29 games.' },
+      stats: { title: 'Your Stats — Offline Arcade', description: 'Track your play counts, wins, streaks and points across all 29 games.' },
       achievements: { title: 'Achievements — Offline Arcade', description: 'Unlock achievements and earn coin rewards as you play.' },
       shop: { title: 'Shop — Offline Arcade', description: 'Spend your coins on titles, nameplates and tournament tickets.' },
       about: { title: 'About — Offline Arcade', description: 'Learn about Offline Arcade, an open-source collection of free browser games.' },
@@ -941,26 +954,12 @@ function App() {
     for (const [k, v] of Object.entries(vars)) {
       document.documentElement.style.setProperty(k, v)
     }
+    document.documentElement.style.colorScheme = THEMES[theme]?.mode === 'light' ? 'light' : 'dark'
     try { localStorage.setItem('arcade-theme', theme) } catch {}
   }, [theme])
 
   useEffect(() => { document.documentElement.classList.toggle('no-animations', !animations); try { localStorage.setItem('arcade-animations', animations ? 'on' : 'off') } catch {} }, [animations])
   useEffect(() => { document.documentElement.classList.toggle('no-glass', !glass); try { localStorage.setItem('arcade-glass', glass ? 'on' : 'off') } catch {} }, [glass])
-  useEffect(() => { document.documentElement.classList.toggle('no-bg', !bg); try { localStorage.setItem('arcade-bg', bg ? 'on' : 'off') } catch {} }, [bg])
-  useEffect(() => {
-    if (bgUrl) {
-      document.body.style.backgroundImage = `url('${bgUrl.replace(/'/g, '%27')}')`
-    } else {
-      document.body.style.backgroundImage = ''
-    }
-    try { localStorage.setItem('arcade-bg-url', bgUrl) } catch {}
-  }, [bgUrl])
-  useEffect(() => {
-    if (!userId) return
-    import('./leagueService').then(({ updatePlayer }) => {
-      updatePlayer(userId, { bgUrl: bgUrl || '' }).catch(() => {})
-    }).catch(() => {})
-  }, [userId, bgUrl])
   useEffect(() => { document.documentElement.classList.toggle('has-wave-bar', waveBar); try { localStorage.setItem('arcade-wave-bar', waveBar ? 'on' : 'off') } catch {} }, [waveBar])
 
   useEffect(() => {
@@ -993,28 +992,19 @@ function App() {
     handleRedirectResult().catch(() => {})
     let unsubFn = () => {}
     onAuthChange((u) => {
-      if (u) {
-        const wasAnonymous = !user && u.metadata.creationTime === u.metadata.lastSignInTime
+      if (u && !u.isAnonymous) {
         setUser(u)
         setUserId(u.uid)
-        if (!u.isAnonymous) {
-          setCurrentUserId(u.uid)
-        } else {
-          setCurrentUserId(null)
-        }
+        setCurrentUserId(u.uid)
         import('./leagueService').then(({ getOrCreatePlayer, getModeration }) => {
           getModeration(u.uid).then(m => setModeration(m || null)).catch(() => {})
-          const loadPlayer = getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null, u.isAnonymous)
+          const loadPlayer = getOrCreatePlayer(u.uid, u.displayName || u.email?.split('@')[0] || 'Player', null)
           loadPlayer.then(p => {
             if (p) {
               setPlayerName(p.name || u.displayName || u.email?.split('@')[0] || 'Player')
               setUserUsername(p.username || null)
               if (p.inviteCode) setInviteCode(p.inviteCode)
-              if (p.bgUrl) {
-                setBgUrl(p.bgUrl)
-                try { localStorage.setItem('arcade-bg-url', p.bgUrl) } catch {}
-              }
-              if (!p.username && !u.isAnonymous) {
+              if (!p.username) {
                 setShowUsernameModal(true)
               }
               try {
@@ -1053,10 +1043,8 @@ function App() {
         setModeration(null)
         clearCurrentUserId()
         try { localStorage.removeItem('arcade-admin-session') } catch {}
-        if (!adminSwitchingRef.current) {
-          import('./firebase').then(({ ensureAuth }) => {
-            ensureAuth().then(u => { if (u) { setUser(u); setUserId(u.uid) } })
-          }).catch(() => {})
+        if (u && u.isAnonymous && !adminSwitchingRef.current) {
+          import('./auth').then(({ signOut }) => signOut().catch(() => {})).catch(() => {})
         }
       }
     }).then(unsub => { if (unsub) unsubFn = unsub })
@@ -1071,11 +1059,24 @@ function App() {
       import('./leagueService').then(({ updatePlayer, getPlayer, increment }) => {
         getPlayer(userId).then(p => {
           if (!p) return
-          const xp = calculateWinXP(gameId, p.streak || 0, score || 0)
+          const xpGain = calculateWinXP(gameId, p.streak || 0, score || 0)
           const coinReward = calculateWinCoins(gameId, p.streak || 0, score || 0)
+          const oldXp = p.xp || 0
+          const oldLevel = getLevel(oldXp).level
+          const newXp = oldXp + xpGain
+          const newLevelInfo = getLevel(newXp)
           if (won) {
-            updatePlayer(userId, { xp: increment(xp), wins: increment(1), streak: increment(1), coins: increment(coinReward) }).catch(() => {})
-            syncLeagueData({ ...p, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
+            const updates = { xp: increment(xpGain), wins: increment(1), streak: increment(1), coins: increment(coinReward) }
+            if (newLevelInfo.level > oldLevel) {
+              const levelCoins = getLevelReward(newLevelInfo.level)
+              updates.coins = increment(coinReward + levelCoins)
+              syncLeagueData({ ...p, xp: newXp, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward + levelCoins })
+              setLevelUpInfo({ level: newLevelInfo.level, coins: levelCoins, xpGain, coinReward })
+              setLastLevel(newLevelInfo.level)
+            } else {
+              syncLeagueData({ ...p, xp: newXp, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
+            }
+            updatePlayer(userId, updates).catch(() => {})
           } else {
             const lossCoins = Math.round(coinReward / 4)
             updatePlayer(userId, { coins: increment(lossCoins) }).catch(() => {})
@@ -1086,7 +1087,7 @@ function App() {
     }
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
-  }, [userId, syncLeagueData])
+  }, [userId, syncLeagueData, setLastLevel])
 
   useEffect(() => {
     function handleResult(e) {
@@ -1104,7 +1105,7 @@ function App() {
       const { won } = e.detail || {}
         import('./leagueService').then(({ getPlayer, updatePlayer, ensurePlayerInLeague, increment }) => {
           getPlayer(userId).then(p => {
-            if (!p || p.isGuest) return
+            if (!p) return
             syncLeagueData(p)
             const updates = { gamesPlayed: increment(1) }
             if (!won) {
@@ -1338,12 +1339,14 @@ function App() {
     setShowOnboarding(true)
   }
 
+  const levelInfo = useMemo(() => getLevel(xp || 0), [xp])
+
   const settings = useMemo(() => ({
     onHome: handleHome,
     onNavigateGame: handleNavigateGame,
     onCloak: () => navigateTo('cloak'),
     onSettings: () => navigateTo('settings'),
-    onLeagues: () => navigateTo('leagues'),
+    onLeagues: () => navigateTo(user ? 'leagues' : 'signin'),
     onStats: () => navigateTo('stats'),
     onAchievements: () => navigateTo('achievements'),
     onShop: () => navigateTo('shop'),
@@ -1363,7 +1366,8 @@ function App() {
     nameplateStyle: getNameplateStyle(activeNameplate),
     nameplateBorderStyle: getNameplateBorderStyle(activeNameplateEffect),
     nameplateNeonColor: getNameplateNeonColor(activeNameplateEffect),
-  }), [handleHome, handleNavigateGame, navigateTo, user, playerName, userUsername, coins, tournamentTickets, xp, leaguePos, activeNameplateEffect, activeNameplate])
+    levelInfo,
+  }), [handleHome, handleNavigateGame, navigateTo, user, playerName, userUsername, coins, tournamentTickets, xp, leaguePos, activeNameplateEffect, activeNameplate, levelInfo])
 
   const handleUpdatePlayerName = useCallback((newName) => {
     setPlayerName(newName)
@@ -1376,10 +1380,6 @@ function App() {
 
   const handleUpdateUsername = useCallback((newUsername) => {
     setUserUsername(newUsername)
-  }, [])
-
-  const handleBgUrlChange = useCallback((url) => {
-    setBgUrl(url)
   }, [])
 
   const handleEquipTitle = useCallback((titleId) => {
@@ -1479,7 +1479,7 @@ function App() {
         <PageBoundary onBack={() => navigateTo('home')}>
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
-            <SettingsPage onBack={() => navigateTo('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} bg={bg} onBgToggle={() => setBg(b => !b)} bgUrl={bgUrl} onBgUrlChange={handleBgUrlChange} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => navigateTo('cloak')} onAccessibility={() => navigateTo('accessibility')} user={user} playerName={playerName} userUsername={userUsername} inviteCode={inviteCode} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => navigateTo('signin')} onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
+            <SettingsPage onBack={() => navigateTo('home')} muted={muted} onMuteToggle={handleMuteToggle} theme={theme} onThemeChange={setTheme} animations={animations} onAnimToggle={() => setAnimations(a => !a)} glass={glass} onGlassToggle={() => setGlass(g => !g)} waveBar={waveBar} onWaveBarToggle={() => setWaveBar(w => !w)} volume={volume} onVolumeChange={handleVolumeChange} onCloak={() => navigateTo('cloak')} onAccessibility={() => navigateTo('accessibility')} user={user} playerName={playerName} userUsername={userUsername} inviteCode={inviteCode} onNameChange={handleUpdatePlayerName} onUsernameChange={handleUpdateUsername} onSignIn={() => navigateTo('signin')} onSignOut={() => signOut().then(() => window.location.reload()).catch(() => {})} onAdminLogin={handleAdminLogin} onAdminLogout={handleAdminLogout} onRedoTutorial={handleRedoTutorial} onCheckUpdates={handleCheckUpdates} />
             {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
           </div>
         </PageBoundary>
@@ -1519,7 +1519,7 @@ function App() {
         <PageBoundary onBack={() => navigateTo('home')}>
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
-            <LeagueScreen onBack={() => navigateTo('home')} userId={userId} isGuest={!!(user && user.isAnonymous)} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
+            <LeagueScreen onBack={() => navigateTo('home')} userId={userId} tournamentTickets={tournamentTickets} coins={coins} onBuyTicket={handlePurchase} />
             {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
           </div>
         </PageBoundary>
@@ -1666,7 +1666,7 @@ function App() {
         {waveBar && <div className="wave-bar" aria-hidden="true" />}
         <div className="topbar-wrap">
           <SettingsBar {...settings} />
-          <BannerStack announcements={activeBanners} showGuestBanner={!!(user && user.isAnonymous)} onSignIn={() => navigateTo('signin')} />
+          <BannerStack announcements={activeBanners} showGuestBanner={!user} onSignIn={() => navigateTo('signin')} />
         </div>
         {moderation && moderation.type === 'warn' && (
           <div className="warn-banner" role="status">⚠️ You have received a warning. Please review your name.{moderation.reason ? ` Reason: ${moderation.reason}` : ''}</div>
@@ -1699,11 +1699,39 @@ function App() {
           {showGameTutorial && <GameTutorial gameId={activeGame} onClose={() => setShowGameTutorial(false)} />}
         </main>
         <PracticeModeToggle visible={!!activeGame} />
-        {user && !user.isAnonymous && <FriendsChatPopup userId={user.uid} user={user} />}
-        <Confetti active={showConfetti} onDone={hideConfetti} />
+        {user && <FriendsChatPopup userId={user.uid} user={user} />}
+      <Confetti active={showConfetti} onDone={hideConfetti} />
+      {levelUpInfo && (
+        <div className="level-modal-overlay" onClick={() => setLevelUpInfo(null)}>
+          <div className="level-modal" onClick={e => e.stopPropagation()}>
+            <div className="level-modal-icon">🎉</div>
+            <h2 className="level-modal-title">Level Up!</h2>
+            <div className="level-modal-level">Level {levelUpInfo.level}</div>
+            <div className="level-modal-rewards">
+              <div className="level-modal-reward">🪙 +{levelUpInfo.coins.toLocaleString()} coins</div>
+              <div className="level-modal-reward">⭐ +{levelUpInfo.xpGain.toLocaleString()} pts earned</div>
+            </div>
+            <button className="level-modal-btn" onClick={() => setLevelUpInfo(null)}>Awesome!</button>
+          </div>
+        </div>
+      )}
+        {levelUpInfo && (
+          <div className="level-modal-overlay" onClick={() => setLevelUpInfo(null)}>
+            <div className="level-modal" onClick={e => e.stopPropagation()}>
+              <div className="level-modal-icon">🎉</div>
+              <h2 className="level-modal-title">Level Up!</h2>
+              <div className="level-modal-level">Level {levelUpInfo.level}</div>
+              <div className="level-modal-rewards">
+                <div className="level-modal-reward">🪙 +{levelUpInfo.coins.toLocaleString()} coins</div>
+                <div className="level-modal-reward">⭐ +{levelUpInfo.xpGain.toLocaleString()} pts earned</div>
+              </div>
+              <button className="level-modal-btn" onClick={() => setLevelUpInfo(null)}>Awesome!</button>
+            </div>
+          </div>
+        )}
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
-        {showUsernameModal && user && !user.isAnonymous && (
+        {showUsernameModal && user && (
           <UsernameCreationModal
             userId={user.uid}
             onUsernameSet={(u) => { setUserUsername(u) }}
@@ -1725,14 +1753,14 @@ function App() {
         }} onFocus={(e) => e.target.style.left = '0'} onBlur={(e) => e.target.style.left = '-9999px'}>
           Skip to games
         </a>
-      {bg && <AmbientParticles />}
+      <AmbientParticles />
       <NotificationRenderer notifications={notifications} onDismiss={dismissNotification} />
       <InstallBanner onNavigate={(page) => navigateTo(page)} />
       <OfflineIndicator />
       {waveBar && <div className="wave-bar" aria-hidden="true" />}
       <div className="topbar-wrap">
         <SettingsBar {...settings} />
-        <BannerStack announcements={activeBanners} showGuestBanner={!!(user && user.isAnonymous)} onSignIn={() => navigateTo('signin')} />
+        <BannerStack announcements={activeBanners} showGuestBanner={!user} onSignIn={() => navigateTo('signin')} />
       </div>
       {moderation && moderation.type === 'warn' && (
         <div className="warn-banner" role="status">⚠️ You have received a warning. Please review your name.{moderation.reason ? ` Reason: ${moderation.reason}` : ''}</div>
@@ -1741,11 +1769,11 @@ function App() {
         <h1 className="arcade-title">ARCADE GAMES</h1>
         <p className="arcade-subtitle">Pick a game and challenge the bot!</p>
         <div className="xp-bar">
-          <span className="xp-badge">⭐ {xp.toLocaleString()} XP</span>
+          <span className="xp-badge">⭐ {xp.toLocaleString()} Points</span>
           <span className="coins-home-badge">🪙 {coins.toLocaleString()}</span>
           <span className="xp-detail">{totalPlayedCount} played · {totalWonCount} won</span>
         </div>
-        {user && user.isAnonymous && (
+        {!user && (
           <div className="home-action-bar">
             <button className="home-action-btn signin-prompt" onClick={() => navigateTo('signin')} title="Sign in to save data" aria-label="Sign in">☁️ Sign In</button>
           </div>
@@ -1856,7 +1884,7 @@ function App() {
       <Confetti active={showConfetti} onDone={hideConfetti} />
       {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
       {showUserSearch && <UserSearchModal onClose={() => setShowUserSearch(false)} />}
-      {showUsernameModal && user && !user.isAnonymous && (
+      {showUsernameModal && user && (
         <UsernameCreationModal
           userId={user.uid}
           onUsernameSet={(u) => { setUserUsername(u) }}
@@ -1870,7 +1898,7 @@ function App() {
         </div>
       )}
       {showOnboarding && <OnboardingTutorial onClose={handleOnboardingClose} />}
-      {user && !user.isAnonymous && <FriendsChatPopup userId={user.uid} user={user} />}
+      {user && <FriendsChatPopup userId={user.uid} user={user} />}
       {showDailyLogin && (
         <DailyLoginModal
           onClaim={() => {

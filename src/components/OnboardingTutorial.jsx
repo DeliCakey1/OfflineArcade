@@ -16,19 +16,19 @@ const TUTORIAL_STEPS = [
   {
     emoji: '📅',
     title: 'Daily Challenge',
-    desc: 'A new game every day! Complete it for bonus XP and climb the daily leaderboard.',
+    desc: 'A new game every day! Complete it for bonus points and climb the daily leaderboard.',
     highlight: '.daily-challenge',
   },
   {
     emoji: '⚔️',
     title: 'Leagues & Tournaments',
-    desc: 'Win games to earn XP, climb ranks, and compete in weekly tournaments against other players.',
+    desc: 'Win games to earn points, climb ranks, and compete in weekly tournaments against other players.',
     highlight: null,
   },
   {
     emoji: '⭐',
     title: 'Earn & Spend',
-    desc: 'Win games to earn coins and XP. Spend coins in the Shop for nameplates, titles, and effects.',
+    desc: 'Win games to earn coins and points. Spend coins in the Shop for nameplates, titles, and effects.',
     highlight: null,
   },
   {

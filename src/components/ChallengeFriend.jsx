@@ -100,7 +100,7 @@ export default function ChallengeFriend({ userId, gameId, onClose, onChallenge }
                       {f.username ? `@${f.username}` : f.name || 'Unknown'}
                     </div>
                     <div style={{ color: 'var(--text-dim)', fontSize: 11 }}>
-                      ⭐ {(f.xp || 0).toLocaleString()} XP · 🏆 {f.wins || 0}
+                      ⭐ {(f.xp || 0).toLocaleString()} pts · 🏆 {f.wins || 0}
                     </div>
                   </div>
                   {selected?.id === f.id && <span style={{ color: 'var(--neon-green)', fontSize: 16 }}>✓</span>}

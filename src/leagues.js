@@ -167,3 +167,29 @@ export function calculateWinCoins(gameId, streak = 0, score = 0) {
   const streakBonus = Math.min(Math.floor(streak / 3), 5)
   return base + streakBonus
 }
+
+const LEVEL_BASE = 10
+const LEVEL_MULTIPLIER = 1.25
+
+function levelXpNeeded(level) {
+  if (level <= 0) return LEVEL_BASE
+  return Math.ceil(levelXpNeeded(level - 1) * LEVEL_MULTIPLIER)
+}
+
+export function getLevel(xp) {
+  let level = 0
+  let remaining = xp || 0
+  while (remaining >= levelXpNeeded(level)) {
+    remaining -= levelXpNeeded(level)
+    level++
+  }
+  return {
+    level,
+    xpInLevel: remaining,
+    xpNeeded: levelXpNeeded(level),
+  }
+}
+
+export function getLevelReward(level) {
+  return Math.floor(5 * Math.pow(1.3, level))
+}

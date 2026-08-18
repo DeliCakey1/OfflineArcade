@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { ACHIEVEMENT_COIN_REWARDS } from './shopItems'
-import { SCORE_BASED_GAMES, GAME_XP } from './leagues'
+import { SCORE_BASED_GAMES, GAME_XP, getLevel } from './leagues'
 
 let currentUserId = null
 let statsListeners = new Set()
@@ -97,12 +97,15 @@ async function loadFromFirestore(uid) {
         }
       }
 
-      if (blob && uid === currentUserId) {
+        if (blob && uid === currentUserId) {
         if (!player) player = await getPlayer(uid).catch(() => null)
         if (player) {
           if ((player.xp || 0) > (blob._xp?.total || 0)) blob._xp = { total: player.xp }
           if ((player.coins || 0) !== (blob._coins || 0)) blob._coins = player.coins || 0
           if ((player.tournamentTickets || 0) !== (blob._tournamentTickets || 0)) blob._tournamentTickets = player.tournamentTickets || 0
+        }
+        if (blob._lastLevel == null) {
+          blob._lastLevel = getLevel(blob._xp?.total || 0).level
         }
         sharedStats = blob
         notifyListeners()
@@ -533,6 +536,13 @@ export default function useStats(gameId) {
     notifyListeners()
   }, [])
 
+  const setLastLevel = useCallback((level) => {
+    if (!currentUserId) return
+    sharedStats = { ...sharedStats, _lastLevel: level }
+    scheduleSave()
+    notifyListeners()
+  }, [])
+
   const totalPlayedCount = useMemo(() => currentUserId ? totalPlayed(stats) : 0, [stats])
   const totalWonCount = useMemo(() => currentUserId ? totalWon(stats) : 0, [stats])
 
@@ -544,6 +554,6 @@ export default function useStats(gameId) {
     coins, ownedItems, tournamentTickets, activeTitle, activeNameplate, activeNameplateEffect,
     addCoins, spendCoins, purchaseItem, equipTitle, equipNameplate, equipNameplateEffect,
     checkAchievementCoins,
-    getHighScore, setHighScore,
+    getHighScore, setHighScore, setLastLevel, lastLevel: stats._lastLevel,
   }
 }

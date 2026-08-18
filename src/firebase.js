@@ -37,11 +37,13 @@ async function getAuthInstance() { await initFirebase(); return _auth }
 export async function ensureAuth() {
   const auth = await getAuthInstance()
   if (!auth) return null
-  const { onAuthStateChanged, signInAnonymously } = await import('firebase/auth')
+  const { onAuthStateChanged } = await import('firebase/auth')
   return new Promise((resolve) => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) { unsub(); resolve(user) }
-      else { signInAnonymously(auth).catch(() => resolve(null)) }
+      unsub()
+      // Guest/anonymous accounts are no longer supported, so only resolve with
+      // a real signed-in user.
+      resolve(user && !user.isAnonymous ? user : null)
     })
   })
 }

@@ -2,12 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
-      return request.auth != null;
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
     function notGuest() {
-      return request.auth != null
-        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      return signedIn();
     }
 
     function isAdmin() {
@@ -196,7 +196,8 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['words', 'updatedAt']);
       }
 
-      allow read: if signedIn();
+      // Announcement is public so all users see it; other config docs require sign-in
+      allow read: if signedIn() || configId == 'announcement';
       allow create: if signedIn()
         && (validShopSaleCreate() || validAnnouncementCreate() || validChatControlsCreate()
           || (isAdmin() && validBlacklistCreate()));

@@ -3,7 +3,7 @@ import { ACHIEVEMENTS } from '../useStats'
 const CATEGORIES = [
   { id: 'general', label: 'General', emoji: '🎮' },
   { id: 'streaks', label: 'Streaks', emoji: '🔥' },
-  { id: 'xp', label: 'XP', emoji: '⭐' },
+  { id: 'xp', label: 'Points', emoji: '⭐' },
   { id: 'league', label: 'League & Tournament', emoji: '⚔️' },
   { id: 'games', label: 'Per-Game', emoji: '🕹️' },
 ]

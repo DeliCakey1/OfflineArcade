@@ -1017,7 +1017,7 @@ export default function AdminPanel({ userId }) {
                       <div className="admin-analytics-stat"><span className="admin-analytics-num">🟢 {analytics.activeToday.toLocaleString()}</span><span className="admin-analytics-label">Active today</span></div>
                       <div className="admin-analytics-stat"><span className="admin-analytics-num">📆 {analytics.activeWeek.toLocaleString()}</span><span className="admin-analytics-label">Active this week</span></div>
                       <div className="admin-analytics-stat"><span className="admin-analytics-num">🪙 {analytics.totalCoins.toLocaleString()}</span><span className="admin-analytics-label">Coins in circulation</span></div>
-                      <div className="admin-analytics-stat"><span className="admin-analytics-num">⭐ {analytics.totalXp.toLocaleString()}</span><span className="admin-analytics-label">Total XP</span></div>
+                      <div className="admin-analytics-stat"><span className="admin-analytics-num">⭐ {analytics.totalXp.toLocaleString()}</span><span className="admin-analytics-label">Total Points</span></div>
                       <div className="admin-analytics-stat"><span className="admin-analytics-num">🎮 {analytics.totalGames.toLocaleString()}</span><span className="admin-analytics-label">Games played</span></div>
                       <div className="admin-analytics-stat"><span className="admin-analytics-num">🏆 {analytics.leagues.active.toLocaleString()}</span><span className="admin-analytics-label">Active leagues</span></div>
                       <div className="admin-analytics-stat"><span className="admin-analytics-num">⚔️ {analytics.leagues.players.toLocaleString()}</span><span className="admin-analytics-label">Players in leagues</span></div>
@@ -1042,7 +1042,7 @@ export default function AdminPanel({ userId }) {
                     </div>
                     <div className="admin-analytics-columns">
                       <div className="admin-analytics-section">
-                        <h5 className="admin-control-heading">Top by XP</h5>
+                        <h5 className="admin-control-heading">Top by Points</h5>
                         {analytics.topXp.length === 0 && <p className="admin-tournament-line">No players yet.</p>}
                         {analytics.topXp.map((p, i) => (
                           <div key={p.id} className="admin-top-row">
@@ -1213,7 +1213,7 @@ export default function AdminPanel({ userId }) {
               <div className="admin-section-card admin-page-body admin-danger">
                 <span className="admin-section-emoji">💥</span>
                 <h4>Reset All Scores</h4>
-                <p>Wipe all player stats, XP, coins, leagues, and tournaments. Your admin account is preserved.</p>
+                <p>Wipe all player stats, points, coins, leagues, and tournaments. Your admin account is preserved.</p>
                 {resetDone && <p className="admin-reset-success">All scores have been reset.</p>}
                 {resetError && <p className="admin-reset-error">{resetError}</p>}
                 {resetConfirming ? (

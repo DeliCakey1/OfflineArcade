@@ -241,7 +241,7 @@ export default function FriendsChatPopup({ userId, user }) {
                               @{f.username || f.name || 'Anonymous'}
                             </span>
                             <span style={{ fontSize: 10, opacity: 0.4 }}>
-                              {ri?.emoji || '🦠'} {ri?.name || 'Microbe'} · {(f.xp || 0).toLocaleString()} XP
+                              {ri?.emoji || '🦠'} {ri?.name || 'Microbe'} · {(f.xp || 0).toLocaleString()} pts
                             </span>
                           </div>
                           <span style={{ fontSize: 10, opacity: 0.3 }}>{unread > 0 ? '💬' : '💬'}</span>
