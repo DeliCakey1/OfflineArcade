@@ -228,7 +228,7 @@ body::before {
   font-variant-numeric: tabular-nums;
 }
 .level-bar-wrap {
-  width: 36px;
+  width: 70px;
   height: 5px;
   border-radius: 3px;
   background: var(--bg-subtle);
