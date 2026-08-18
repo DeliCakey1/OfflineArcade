@@ -142,26 +142,26 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 3px 10px;
+  padding: 5px 12px;
   background: var(--bg-card-solid);
   border-bottom: 1px solid var(--border-subtle);
 }
 .status-bar-left, .status-bar-right {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 .status-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   transition: background 0.15s, transform 0.15s;
 }
 .status-icon-btn:hover {
@@ -176,10 +176,10 @@ body::before {
 .stat-pill {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 7px;
+  gap: 3px;
+  padding: 3px 9px;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   line-height: 1.2;
@@ -313,10 +313,10 @@ body::before {
 .user-chip {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 1px 6px 1px 1px;
+  gap: 5px;
+  padding: 2px 8px 2px 2px;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-light);
   cursor: default;
@@ -329,9 +329,9 @@ body::before {
 }
 .nav-bar-scroll {
   display: flex;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
-  padding: 4px 10px;
+  padding: 5px 12px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -342,13 +342,13 @@ body::before {
 .nav-pill {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 4px 8px;
+  gap: 4px;
+  padding: 5px 10px;
   border: none;
   border-radius: 8px;
   background: var(--bg-subtle);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-light);
   white-space: nowrap;
   transition: background 0.15s, transform 0.15s;
@@ -362,7 +362,7 @@ body::before {
 }
 .nav-label {
   display: none;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-family: 'Fredoka', sans-serif;
 }
