@@ -13,8 +13,7 @@ export function setCurrentUserId(uid) {
   if (uid) {
     loadFromFirestore(uid)
   } else {
-    sharedStats = {}
-    notifyListeners()
+    loadFromLocal()
   }
 }
 
@@ -28,6 +27,18 @@ function notifyListeners() {
   for (const fn of statsListeners) {
     try { fn({ ...sharedStats }) } catch {}
   }
+}
+
+function loadFromLocal() {
+  try {
+    const raw = localStorage.getItem('arcade-stats-guest')
+    sharedStats = raw ? JSON.parse(raw) : {}
+  } catch { sharedStats = {} }
+  notifyListeners()
+}
+
+function saveToLocal() {
+  try { localStorage.setItem('arcade-stats-guest', JSON.stringify(sharedStats)) } catch {}
 }
 
 async function loadFromFirestore(uid) {
@@ -122,13 +133,16 @@ async function loadFromFirestore(uid) {
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
-    if (!currentUserId) return
-    const statsToSave = { ...sharedStats }
-    import('./leagueService').then(({ savePlayerStats }) => {
-      savePlayerStats(currentUserId, statsToSave).catch(e => {
-        console.warn('Failed to save stats to Firestore:', e)
-      })
-    }).catch(() => {})
+    if (currentUserId) {
+      const statsToSave = { ...sharedStats }
+      import('./leagueService').then(({ savePlayerStats }) => {
+        savePlayerStats(currentUserId, statsToSave).catch(e => {
+          console.warn('Failed to save stats to Firestore:', e)
+        })
+      }).catch(() => {})
+    } else {
+      saveToLocal()
+    }
   }, 300)
 }
 
@@ -348,7 +362,6 @@ export default function useStats(gameId) {
         }
       }
     } catch {}
-    if (!currentUserId) return
     const current = sharedStats[gid] || getEmptyGameStats()
     const xpEarned = isScoreBased ? (isWin ? Math.round(score * (GAME_XP[gid] || 20) / 20) : 0) : (isWin ? 10 + Math.min(streak, 10) * 2 : 0)
     const prevXp = sharedStats._xp?.total || 0
@@ -375,7 +388,6 @@ export default function useStats(gameId) {
   }, [])
 
   const setFavorite = useCallback((id, val) => {
-    if (!currentUserId) return
     const favs = sharedStats._favorites || []
     const isFav = favs.includes(id)
     const shouldAdd = val !== undefined ? val : !isFav
@@ -392,7 +404,6 @@ export default function useStats(gameId) {
   }, [stats._favorites])
 
   const markDailyCompleted = useCallback(() => {
-    if (!currentUserId) return
     const today = getDailySeed()
     const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate() })()
     const prevStreak = sharedStats._dailyStreak || 0
@@ -408,18 +419,18 @@ export default function useStats(gameId) {
     notifyListeners()
   }, [])
 
-  const allStats = useMemo(() => currentUserId ? stats : {}, [stats])
-  const xp = currentUserId ? (stats._xp?.total || 0) : 0
-  const recent = useMemo(() => currentUserId ? (stats._recent || []) : [], [stats])
-  const favorites = useMemo(() => currentUserId ? (stats._favorites || []) : [], [stats])
-  const coins = currentUserId ? (stats._coins || 0) : 0
-  const ownedItems = useMemo(() => currentUserId ? (stats._ownedItems || []) : [], [stats])
-  const tournamentTickets = currentUserId ? (stats._tournamentTickets || 0) : 0
-  const activeTitle = currentUserId ? (stats._activeTitle || null) : null
-  const activeNameplate = currentUserId ? (stats._activeNameplate || null) : null
-  const activeNameplateEffect = currentUserId ? (stats._activeNameplateEffect || null) : null
-  const earnedAchievements = useMemo(() => currentUserId ? ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id) : [], [stats])
-  const newAchievements = useMemo(() => currentUserId ? earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id)) : [], [earnedAchievements, stats._seenAchievements])
+  const allStats = useMemo(() => stats, [stats])
+  const xp = stats._xp?.total || 0
+  const recent = useMemo(() => stats._recent || [], [stats])
+  const favorites = useMemo(() => stats._favorites || [], [stats])
+  const coins = stats._coins || 0
+  const ownedItems = useMemo(() => stats._ownedItems || [], [stats])
+  const tournamentTickets = stats._tournamentTickets || 0
+  const activeTitle = stats._activeTitle || null
+  const activeNameplate = stats._activeNameplate || null
+  const activeNameplateEffect = stats._activeNameplateEffect || null
+  const earnedAchievements = useMemo(() => ACHIEVEMENTS.filter(a => a.check(stats)).map(a => a.id), [stats])
+  const newAchievements = useMemo(() => earnedAchievements.filter(id => !(stats._seenAchievements || []).includes(id)), [earnedAchievements, stats._seenAchievements])
 
   const syncLeagueData = useCallback((playerData) => {
     if (!currentUserId) return
@@ -445,21 +456,19 @@ export default function useStats(gameId) {
   }, [])
 
   const markAchievementsSeen = useCallback(() => {
-    if (!currentUserId) return
     sharedStats = { ...sharedStats, _seenAchievements: earnedAchievements }
     scheduleSave()
     notifyListeners()
   }, [earnedAchievements])
 
   const addCoins = useCallback((amount) => {
-    if (!currentUserId || amount <= 0) return
+    if (amount <= 0) return
     sharedStats = { ...sharedStats, _coins: (sharedStats._coins || 0) + amount }
     scheduleSave()
     notifyListeners()
   }, [])
 
   const spendCoins = useCallback((amount) => {
-    if (!currentUserId) return
     const current = sharedStats._coins || 0
     if (current < amount) return
     sharedStats = { ...sharedStats, _coins: current - amount }
@@ -468,7 +477,6 @@ export default function useStats(gameId) {
   }, [])
 
   const purchaseItem = useCallback((itemId, price) => {
-    if (!currentUserId) return
     const current = sharedStats._coins || 0
     if (current < price) return
     if (itemId === 'ticket-tournament') {
@@ -490,21 +498,18 @@ export default function useStats(gameId) {
   }, [])
 
   const equipTitle = useCallback((titleId) => {
-    if (!currentUserId) return
     sharedStats = { ...sharedStats, _activeTitle: titleId }
     scheduleSave()
     notifyListeners()
   }, [])
 
   const equipNameplate = useCallback((nameplateId) => {
-    if (!currentUserId) return
     sharedStats = { ...sharedStats, _activeNameplate: nameplateId }
     scheduleSave()
     notifyListeners()
   }, [])
 
   const equipNameplateEffect = useCallback((nameplateId) => {
-    if (!currentUserId) return
     sharedStats = { ...sharedStats, _activeNameplateEffect: nameplateId }
     scheduleSave()
     notifyListeners()
@@ -521,12 +526,10 @@ export default function useStats(gameId) {
   }, [])
 
   const getHighScore = useCallback((key) => {
-    if (!currentUserId) return 0
     return sharedStats._highScores?.[key] || 0
   }, [])
 
   const setHighScore = useCallback((key, value) => {
-    if (!currentUserId) return
     const hs = sharedStats._highScores || {}
     sharedStats = {
       ...sharedStats,
@@ -537,14 +540,13 @@ export default function useStats(gameId) {
   }, [])
 
   const setLastLevel = useCallback((level) => {
-    if (!currentUserId) return
     sharedStats = { ...sharedStats, _lastLevel: level }
     scheduleSave()
     notifyListeners()
   }, [])
 
-  const totalPlayedCount = useMemo(() => currentUserId ? totalPlayed(stats) : 0, [stats])
-  const totalWonCount = useMemo(() => currentUserId ? totalWon(stats) : 0, [stats])
+  const totalPlayedCount = useMemo(() => totalPlayed(stats), [stats])
+  const totalWonCount = useMemo(() => totalWon(stats), [stats])
 
   return {
     gameStats, recordGame, clearStats, allStats,

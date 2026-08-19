@@ -725,7 +725,6 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
       <div className="nav-bar">
         <div className="nav-bar-scroll">
           <GamesDropdown onNavigate={onNavigateGame} />
-          <a className="nav-pill chattopia-pill" href="https://chattopia.up.railway.app" target="_blank" rel="noopener noreferrer" title="Chattopia" aria-label="Chattopia">💬<span className="nav-label">Chattopia</span></a>
           <button className="nav-pill" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
           <button className="nav-pill" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
           <button className="nav-pill" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>
@@ -1055,8 +1054,32 @@ function App() {
   useEffect(() => {
     function handleWin(e) {
       const { gameId, won, score } = e.detail || {}
-      if (!userId || !gameId) return
+      if (!gameId) return
       if (won) setShowConfetti(true)
+
+      if (!userId) {
+        if (won) {
+          const coinReward = calculateWinCoins(gameId, 0, score || 0)
+          addCoins(coinReward)
+          const currentXp = xp
+          const oldLevel = getLevel(currentXp).level
+          const xpGain = calculateWinXP(gameId, 0, score || 0)
+          const newXp = currentXp + xpGain
+          const newLevelInfo = getLevel(newXp)
+          if (newLevelInfo.level > oldLevel) {
+            const levelCoins = getLevelReward(newLevelInfo.level)
+            addCoins(levelCoins)
+            setLevelUpInfo({ level: newLevelInfo.level, coins: levelCoins, xpGain, coinReward })
+            setLastLevel(newLevelInfo.level)
+          }
+        } else {
+          const coinReward = calculateWinCoins(gameId, 0, score || 0)
+          const lossCoins = Math.round(coinReward / 4)
+          addCoins(lossCoins)
+        }
+        return
+      }
+
       import('./leagueService').then(({ updatePlayer, getPlayer, increment }) => {
         getPlayer(userId).then(p => {
           if (!p) return
@@ -1088,7 +1111,7 @@ function App() {
     }
     window.addEventListener('arcade-win', handleWin)
     return () => window.removeEventListener('arcade-win', handleWin)
-  }, [userId, syncLeagueData, setLastLevel])
+  }, [userId, syncLeagueData, setLastLevel, addCoins, xp])
 
   useEffect(() => {
     function handleResult(e) {
