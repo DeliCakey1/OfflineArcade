@@ -852,6 +852,7 @@ function App() {
   const [showUsernameModal, setShowUsernameModal] = useState(false)
   const [achievementToast, setAchievementToast] = useState(null)
   const [pendingAchievementRedirect, setPendingAchievementRedirect] = useState(false)
+  const [achievementReturnPage, setAchievementReturnPage] = useState(null)
   const [showGameTutorial, setShowGameTutorial] = useState(false)
 
   const {
@@ -1183,8 +1184,10 @@ function App() {
       if (isPlaying) {
         const names = newAchievements.map(a => a.name || 'Achievement').join(', ')
         setAchievementToast({ text: `Achievement unlocked: ${names}`, time: Date.now() })
+        setAchievementReturnPage(currentPage)
         setPendingAchievementRedirect(true)
       } else {
+        setAchievementReturnPage(currentPage)
         navigateTo('achievements')
       }
       markAchievementsSeen()
@@ -1579,10 +1582,10 @@ function App() {
   if (currentPage === 'achievements') {
     return (
       <Suspense fallback={loadingFallback}>
-        <PageBoundary onBack={() => navigateTo('home')}>
+        <PageBoundary onBack={() => navigateTo(achievementReturnPage || 'home')}>
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
-            <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => navigateTo('home')} />
+            <AchievementsPage earnedIds={ACHIEVEMENTS.filter(a => a.check(allStats)).map(a => a.id)} stats={allStats} onClose={() => navigateTo(achievementReturnPage || 'home')} />
           </div>
         </PageBoundary>
       </Suspense>
@@ -1725,34 +1728,6 @@ function App() {
         <PracticeModeToggle visible={!!activeGame} />
         {user && <FriendsChatPopup userId={user.uid} user={user} />}
       <Confetti active={showConfetti} onDone={hideConfetti} />
-      {levelUpInfo && (
-        <div className="level-modal-overlay" onClick={() => setLevelUpInfo(null)}>
-          <div className="level-modal" onClick={e => e.stopPropagation()}>
-            <div className="level-modal-icon">🎉</div>
-            <h2 className="level-modal-title">Level Up!</h2>
-            <div className="level-modal-level">Level {levelUpInfo.level}</div>
-            <div className="level-modal-rewards">
-              <div className="level-modal-reward">🪙 +{levelUpInfo.coins.toLocaleString()} coins</div>
-              <div className="level-modal-reward">⭐ +{levelUpInfo.xpGain.toLocaleString()} pts earned</div>
-            </div>
-            <button className="level-modal-btn" onClick={() => setLevelUpInfo(null)}>Awesome!</button>
-          </div>
-        </div>
-      )}
-        {levelUpInfo && (
-          <div className="level-modal-overlay" onClick={() => setLevelUpInfo(null)}>
-            <div className="level-modal" onClick={e => e.stopPropagation()}>
-              <div className="level-modal-icon">🎉</div>
-              <h2 className="level-modal-title">Level Up!</h2>
-              <div className="level-modal-level">Level {levelUpInfo.level}</div>
-              <div className="level-modal-rewards">
-                <div className="level-modal-reward">🪙 +{levelUpInfo.coins.toLocaleString()} coins</div>
-                <div className="level-modal-reward">⭐ +{levelUpInfo.xpGain.toLocaleString()} pts earned</div>
-              </div>
-              <button className="level-modal-btn" onClick={() => setLevelUpInfo(null)}>Awesome!</button>
-            </div>
-          </div>
-        )}
         {confirmNav && <ConfirmModal message="You're in the middle of a game. Are you sure you want to leave?" onConfirm={confirmNavAction} onCancel={() => setConfirmNav(null)} />}
         {showConfirmClear && <ConfirmModal message="This will permanently delete all your stats. Are you sure?" confirmText="Clear Stats" cancelText="Cancel" onConfirm={() => { clearStats(); setShowConfirmClear(false) }} onCancel={() => setShowConfirmClear(false)} />}
         {showUsernameModal && user && (
@@ -1914,6 +1889,20 @@ function App() {
           onUsernameSet={(u) => { setUserUsername(u) }}
           onClose={() => setShowUsernameModal(false)}
         />
+      )}
+      {levelUpInfo && (
+        <div className="level-modal-overlay" onClick={() => setLevelUpInfo(null)}>
+          <div className="level-modal" onClick={e => e.stopPropagation()}>
+            <div className="level-modal-icon">🎉</div>
+            <h2 className="level-modal-title">Level Up!</h2>
+            <div className="level-modal-level">Level {levelUpInfo.level}</div>
+            <div className="level-modal-rewards">
+              <div className="level-modal-reward">🪙 +{levelUpInfo.coins.toLocaleString()} coins</div>
+              <div className="level-modal-reward">⭐ +{levelUpInfo.xpGain.toLocaleString()} pts earned</div>
+            </div>
+            <button className="level-modal-btn" onClick={() => setLevelUpInfo(null)}>Awesome!</button>
+          </div>
+        </div>
       )}
       {achievementToast && (
         <div className="achievement-toast" key={achievementToast.time}>
