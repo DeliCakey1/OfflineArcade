@@ -54,7 +54,7 @@ const ThemePicker = lazy(() => import('./components/ThemePicker'))
 const AccessibilityPanel = lazy(() => import('./components/AccessibilityPanel'))
 import { onAuthChange, signInWithGoogle, signInWithGitHub, signInWithApple, handleRedirectResult, signOut } from './auth'
 import { isMuted, toggleMute, getVolume, setVolume } from './useSound'
-import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow, setCurrentUserId, clearCurrentUserId } from './useStats'
+import useStats, { ALL_GAME_IDS, ACHIEVEMENTS, getDailyGame, getTimeUntilTomorrow, setCurrentUserId, clearCurrentUserId, getCurrentXp } from './useStats'
 import { calculateWinXP, calculateWinCoins, RANK_PROMO_DEMO, LEAGUE_RANKS, GAME_XP, GAME_COINS, SCORE_BASED_GAMES, getLevel, getLevelReward } from './leagues'
 import { isAdminLoggedIn } from './adminAuth'
 import { THEMES, THEME_ORDER } from './themes'
@@ -1062,15 +1062,14 @@ function App() {
         if (won) {
           const coinReward = calculateWinCoins(gameId, 0, score || 0)
           addCoins(coinReward)
-          const currentXp = xp
-          const oldLevel = getLevel(currentXp).level
-          const xpGain = calculateWinXP(gameId, 0, score || 0)
-          const newXp = currentXp + xpGain
-          const newLevelInfo = getLevel(newXp)
+          const xpEarnedInGame = e.detail?.xpEarned || 0
+          const totalXp = getCurrentXp()
+          const oldLevel = getLevel(totalXp - xpEarnedInGame).level
+          const newLevelInfo = getLevel(totalXp)
           if (newLevelInfo.level > oldLevel) {
             const levelCoins = getLevelReward(newLevelInfo.level)
             addCoins(levelCoins)
-            setLevelUpInfo({ level: newLevelInfo.level, coins: levelCoins, xpGain, coinReward })
+            setLevelUpInfo({ level: newLevelInfo.level, coins: levelCoins, xpGain: xpEarnedInGame, coinReward })
             setLastLevel(newLevelInfo.level)
           }
         } else {

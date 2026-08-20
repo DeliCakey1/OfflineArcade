@@ -33,6 +33,10 @@ export function clearCurrentUserId() {
   loadFromLocal()
 }
 
+export function getCurrentXp() {
+  return sharedStats._xp?.total || 0
+}
+
 function notifyListeners() {
   for (const fn of statsListeners) {
     try { fn({ ...sharedStats }) } catch {}
@@ -359,19 +363,6 @@ export default function useStats(gameId) {
     } else {
       isWin = !!won
     }
-    try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId: gid, won: isWin, score } })) } catch {}
-    try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId: gid, won: isWin } })) } catch {}
-    try {
-      const dailyGame = getDailyGame(ALL_GAME_IDS)
-      if (gid === dailyGame.gameId) {
-        const submitScore = isScoreBased ? (score > 0 ? score : 0) : (isWin ? 1 : 0)
-        if (submitScore > 0) {
-          import('./socialService').then(({ submitDailyScore }) => {
-            submitDailyScore(gid, submitScore, Date.now()).catch(() => {})
-          }).catch(() => {})
-        }
-      }
-    } catch {}
     const current = sharedStats[gid] || getEmptyGameStats()
     const xpEarned = isScoreBased ? (isWin ? Math.round(score * (GAME_XP[gid] || 20) / 20) : 0) : (isWin ? 10 + Math.min(streak, 10) * 2 : 0)
     const prevXp = sharedStats._xp?.total || 0
@@ -387,6 +378,26 @@ export default function useStats(gameId) {
       _xp: { total: prevXp + xpEarned },
       _recent: newRecent,
     }
+    if (isWin) {
+      const last = sharedStats._lastLevel || 0
+      const lvl = getLevel(sharedStats._xp.total).level
+      if (lvl > last) sharedStats._lastLevel = lvl
+    }
+    notifyListeners()
+    scheduleSave()
+    try { window.dispatchEvent(new CustomEvent('arcade-win', { detail: { gameId: gid, won: isWin, score, xpEarned } })) } catch {}
+    try { window.dispatchEvent(new CustomEvent('arcade-game-complete', { detail: { gameId: gid, won: isWin } })) } catch {}
+    try {
+      const dailyGame = getDailyGame(ALL_GAME_IDS)
+      if (gid === dailyGame.gameId) {
+        const submitScore = isScoreBased ? (score > 0 ? score : 0) : (isWin ? 1 : 0)
+        if (submitScore > 0) {
+          import('./socialService').then(({ submitDailyScore }) => {
+            submitDailyScore(gid, submitScore, Date.now()).catch(() => {})
+          }).catch(() => {})
+        }
+      }
+    } catch {}
     scheduleSave()
     notifyListeners()
   }, [])
