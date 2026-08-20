@@ -487,6 +487,17 @@ export async function updateUsername(userId, newUsername) {
   return trimmed
 }
 
+export async function updatePresence(status) {
+  const { doc, updateDoc } = await f()
+  const { db } = await f()
+  const { getAuthInstance } = await import('./firebase')
+  const auth = await getAuthInstance()
+  const uid = auth?.currentUser?.uid
+  if (!uid) return
+  const ref = doc(db, PLAYERS, uid)
+  await updateDoc(ref, { presence: { lastSeen: Date.now(), status }, lastActive: Date.now() })
+}
+
 export async function subscribeToPlayer(userId, callback) {
   const { doc, onSnapshot } = await f()
   const { db } = await f()

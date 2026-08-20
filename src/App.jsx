@@ -43,6 +43,7 @@ const SpaceInvaders = lazy(() => import('./components/SpaceInvaders'))
 const Asteroids = lazy(() => import('./components/Asteroids'))
 const FruitSlice = lazy(() => import('./components/FruitSlice'))
 const Centipede = lazy(() => import('./components/Centipede'))
+const Lobby = lazy(() => import('./components/Lobby'))
 const AboutUs = lazy(() => import('./components/AboutUs'))
 const DownloadPage = lazy(() => import('./components/DownloadPage'))
 const LeagueScreen = lazy(() => import('./components/LeagueScreen'))
@@ -703,7 +704,7 @@ function UserSearchModal({ onClose }) {
   )
 }
 
-function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, onLeaderboard, onFriends, user, playerName, userUsername, onSignIn, onSignOut, coins, tournamentTickets, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor, levelInfo }) {
+function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, onStats, onAchievements, onShop, onSearch, onLeaderboard, onFriends, onLobby, user, playerName, userUsername, onSignIn, onSignOut, coins, tournamentTickets, xp, leaguePos, nameplateEffectClass, nameplateStyle, nameplateBorderStyle, nameplateNeonColor, levelInfo }) {
   const { level, xpInLevel, xpNeeded } = levelInfo || {}
   const progressPct = xpNeeded > 0 ? Math.min(100, Math.round((xpInLevel / xpNeeded) * 100)) : 0
   return (
@@ -756,6 +757,7 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <button className="nav-pill" onClick={onLeagues} title="Leagues" aria-label="Leagues">⚔️<span className="nav-label">Leagues</span></button>
           <button className="nav-pill" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
           <button className="nav-pill" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>
+          <button className="nav-pill" onClick={onLobby} title="Lobby" aria-label="Lobby">🟢<span className="nav-label">Lobby</span></button>
           <button className="nav-pill" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
           <button className="nav-pill" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
           <button className="nav-pill" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
@@ -1018,6 +1020,20 @@ function App() {
   }, [user])
 
   useEffect(() => {
+    if (!user) return
+    let alive = true
+    let timer = null
+    import('./leagueService').then(({ updatePresence }) => {
+      if (!alive) return
+      updatePresence('online').catch(() => {})
+      timer = setInterval(() => { updatePresence('online').catch(() => {}) }, 30000)
+    })
+    const handleBeforeUnload = () => { import('./leagueService').then(({ updatePresence }) => { updatePresence('offline').catch(() => {}) }) }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => { alive = false; clearInterval(timer); window.removeEventListener('beforeunload', handleBeforeUnload); import('./leagueService').then(({ updatePresence }) => { updatePresence('offline').catch(() => {}) }) }
+  }, [user])
+
+  useEffect(() => {
     handleRedirectResult().catch(() => {})
     let unsubFn = () => {}
     onAuthChange((u) => {
@@ -1099,6 +1115,9 @@ function App() {
             addCoins(levelCoins)
             setLevelUpInfo({ level: newLevelInfo.level, coins: levelCoins, xpGain: xpEarnedInGame, coinReward })
             setLastLevel(newLevelInfo.level)
+            import('./communityGoals').then(({ addActivityEntry }) => {
+              addActivityEntry('level_up', 'guest', playerName || 'Guest', { level: newLevelInfo.level }).catch(() => {})
+            }).catch(() => {})
           }
         } else {
           const coinReward = calculateWinCoins(gameId, 0, score || 0)
@@ -1125,6 +1144,9 @@ function App() {
               syncLeagueData({ ...p, xp: newXp, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward + levelCoins })
               setLevelUpInfo({ level: newLevelInfo.level, coins: levelCoins, xpGain, coinReward })
               setLastLevel(newLevelInfo.level)
+              import('./communityGoals').then(({ addActivityEntry }) => {
+                addActivityEntry('level_up', userId, playerName || p.name || 'Player', { level: newLevelInfo.level }).catch(() => {})
+              }).catch(() => {})
             } else {
               syncLeagueData({ ...p, xp: newXp, wins: (p.wins || 0) + 1, coins: (p.coins || 0) + coinReward })
             }
@@ -1153,8 +1175,15 @@ function App() {
 
   useEffect(() => {
     function handleGameComplete(e) {
+      const { gameId, won } = e.detail || {}
+      if (gameId && won) {
+        import('./communityGoals').then(({ addActivityEntry, incrementGoalProgress }) => {
+          const uname = playerName || user?.displayName || user?.email?.split('@')[0] || 'Player'
+          addActivityEntry('game_complete', userId || 'guest', uname, { gameId, score: e.detail?.score || 0 }).catch(() => {})
+          incrementGoalProgress(1).catch(() => {})
+        }).catch(() => {})
+      }
       if (!userId) return
-      const { won } = e.detail || {}
         import('./leagueService').then(({ getPlayer, updatePlayer, ensurePlayerInLeague, increment }) => {
           getPlayer(userId).then(p => {
             if (!p) return
@@ -1407,6 +1436,7 @@ function App() {
     onSearch: () => setShowUserSearch(true),
     onLeaderboard: () => navigateTo('leaderboard'),
     onFriends: () => navigateTo('friends'),
+    onLobby: () => navigateTo('lobby'),
     user,
     playerName,
     userUsername,
@@ -1705,6 +1735,19 @@ function App() {
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
             <FriendsPanel userId={user?.uid} user={user} onClose={() => navigateTo('home')} />
+          </div>
+        </PageBoundary>
+      </Suspense>
+    )
+  }
+
+  if (currentPage === 'lobby') {
+    return (
+      <Suspense fallback={loadingFallback}>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <Lobby user={user} onChallenge={(p) => navigateTo('friends')} onMessage={(p) => navigateTo('friends')} />
           </div>
         </PageBoundary>
       </Suspense>

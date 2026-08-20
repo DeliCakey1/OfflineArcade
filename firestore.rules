@@ -65,6 +65,23 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ===== activityFeed =====
+    match /activityFeed/{doc} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.type is string
+        && request.resource.data.username is string
+        && request.resource.data.createdAt is number;
+      allow delete: if false;
+    }
+
+    // ===== communityGoals =====
+    match /communityGoals/{doc} {
+      allow read: if true;
+      allow create, update: if false;
+    }
+
     // ===== friendRequests / messages (legacy) =====
     match /friendRequests/{doc} {
       allow read, write: if signedIn();
