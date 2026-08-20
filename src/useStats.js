@@ -374,7 +374,8 @@ export default function useStats(gameId) {
       isWin = !!won
     }
     const current = sharedStats[gid] || getEmptyGameStats()
-    const xpEarned = isScoreBased ? (isWin ? Math.round(score * (GAME_XP[gid] || 20) / 20) : 0) : (isWin ? 10 + Math.min(streak, 10) * 2 : 0)
+    const base = GAME_XP[gid] || 20
+    const xpEarned = isScoreBased ? (isWin ? Math.min(base, Math.max(1, Math.round(score * base / 150))) : 0) : (isWin ? 10 + Math.min(streak, 10) * 2 : 0)
     const prevXp = sharedStats._xp?.total || 0
     const recent = sharedStats._recent || []
     const newRecent = [gid, ...recent.filter(id => id !== gid)].slice(0, 8)
