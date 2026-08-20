@@ -4,6 +4,7 @@ const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 const url = require('url')
+const { Server: SocketIOServer } = require('socket.io')
 
 const PORT = process.env.PORT || 3000
 const DIST = path.join(__dirname, 'dist')
@@ -149,9 +150,20 @@ const server = http.createServer((req, res) => {
   }
 })
 
+const io = new SocketIOServer(server, {
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  transports: ['websocket', 'polling'],
+  pingInterval: 25000,
+  pingTimeout: 60000,
+})
+
+const initPvP = require('./src/server/pvpEngine')
+initPvP(io)
+
 server.listen(PORT, () => {
   console.log('Server running on port ' + PORT)
   console.log('Serving from: ' + DIST)
+  console.log('Socket.IO PvP server initialized')
   try {
     console.log('Files in dist:', fs.readdirSync(DIST))
   } catch (e) {

@@ -43,6 +43,9 @@ const SpaceInvaders = lazy(() => import('./components/SpaceInvaders'))
 const Asteroids = lazy(() => import('./components/Asteroids'))
 const FruitSlice = lazy(() => import('./components/FruitSlice'))
 const Centipede = lazy(() => import('./components/Centipede'))
+const PongPvP = lazy(() => import('./components/PongPvP'))
+const TypingPvP = lazy(() => import('./components/TypingPvP'))
+const RpsPvP = lazy(() => import('./components/RpsPvP'))
 const Lobby = lazy(() => import('./components/Lobby'))
 const AboutUs = lazy(() => import('./components/AboutUs'))
 const DownloadPage = lazy(() => import('./components/DownloadPage'))
@@ -94,6 +97,7 @@ const GAME_COMPONENTS = {
   sudoku: Sudoku, mathdash: MathDash, wordle: Wordle,
   pong: Pong, spaceinvaders: SpaceInvaders, asteroids: Asteroids,
   fruitslice: FruitSlice, centipede: Centipede,
+  'pong-pvp': PongPvP, 'typing-pvp': TypingPvP, 'rps-pvp': RpsPvP,
 }
 
 const GAMES = GAME_META.map(g => ({ ...g, component: GAME_COMPONENTS[g.id] }))
@@ -109,6 +113,7 @@ const FILTER_CATEGORIES = [
   { id: 'word', label: 'Word' },
   { id: 'number', label: 'Number' },
   { id: 'dice', label: 'Dice' },
+  { id: 'pvp', label: 'PvP' },
   { id: 'social', label: 'Social' },
 ]
 
@@ -147,6 +152,9 @@ const GAME_CATEGORIES = {
   asteroids: ['arcade', 'canvas'],
   fruitslice: ['arcade', 'canvas'],
   centipede: ['arcade', 'canvas'],
+  'pong-pvp': ['arcade', 'pvp'],
+  'typing-pvp': ['reflex', 'pvp'],
+  'rps-pvp': ['strategy', 'pvp'],
 }
 
 function getSaved(key, fallback) {

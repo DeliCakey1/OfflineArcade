@@ -169,6 +169,21 @@ const TUTORIALS = {
     rules: ['Shoot the centipede as it moves across the grid', 'Destroyed segments become mushrooms', 'Dodge the spider!', 'The centipede splits when you hit a segment'],
     tips: ['Aim for the head for maximum points', 'Watch the spider — it can appear suddenly'],
   },
+  'pong-pvp': {
+    title: 'Pong PvP',
+    rules: ['Real-time 1v1 Pong against another player', 'Move your mouse to control your paddle', 'First to 7 points wins!'],
+    tips: ['Watch your opponent\'s paddle movement', 'Aim for the corners to make it harder to return'],
+  },
+  'typing-pvp': {
+    title: 'Typing PvP',
+    rules: ['Race against a real player to type the sentence', 'Type the full sentence and press Enter to finish', 'Higher WPM wins!'],
+    tips: ['Accuracy matters as much as speed', 'Finish early to put pressure on your opponent'],
+  },
+  'rps-pvp': {
+    title: 'RPS PvP',
+    rules: ['Real-time best-of-5 Rock Paper Scissors', 'Choose your weapon before time runs out', 'First to 3 wins!'],
+    tips: ['Watch for patterns in your opponent\'s picks', 'Don\'t pick the same thing twice in a row'],
+  },
 }
 
 export default TUTORIALS

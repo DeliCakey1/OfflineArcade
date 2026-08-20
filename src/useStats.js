@@ -169,6 +169,7 @@ export const ALL_GAME_IDS = [
   'reaction', 'typing', 'simon', 'slots', 'blackjack', 'whack', 'snake', 'tetris',
   'breakout', 'flappy', 'minesweeper', 'lightsout', 'mastermind', 'dodge', 'mergeblitz', 'connect4',
   'sudoku', 'mathdash', 'wordle', 'asteroids', 'fruitslice', 'centipede', 'pong', 'spaceinvaders',
+  'pong-pvp', 'typing-pvp', 'rps-pvp',
 ]
 
 export const ACHIEVEMENTS = [

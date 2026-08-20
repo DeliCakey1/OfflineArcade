@@ -33,4 +33,7 @@ export const GAMES = [
   { id: 'spaceinvaders', label: 'Space Invaders', emoji: '👾', desc: 'Shoot the alien fleet before they reach Earth!', color: '#00ff41', category: 'arcade' },
   { id: 'asteroids', label: 'Asteroids', emoji: '☄️', desc: 'Blast the asteroids! Navigate and survive!', color: '#00d4ff', category: 'arcade' },
   { id: 'fruitslice', label: 'Fruit Slice', emoji: '🍉', desc: 'Slice the fruits, dodge the bombs!', color: '#ff2d7b', category: 'arcade' },
+  { id: 'pong-pvp', label: 'Pong PvP', emoji: '🏓', desc: 'Real-time 1v1 Pong! Race your opponent to 7 points!', color: '#00d4ff', category: 'pvp' },
+  { id: 'typing-pvp', label: 'Typing PvP', emoji: '⌨️', desc: 'Race against a real player to type faster!', color: '#8b5cf6', category: 'pvp' },
+  { id: 'rps-pvp', label: 'RPS PvP', emoji: '✊', desc: 'Real-time best-of-5 Rock Paper Scissors!', color: '#ff2d7b', category: 'pvp' },
 ]

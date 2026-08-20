@@ -115,6 +115,9 @@ export const GAME_XP = {
   centipede: 20,
   pong: 16,
   spaceinvaders: 24,
+  'pong-pvp': 20,
+  'typing-pvp': 20,
+  'rps-pvp': 16,
 }
 
 export const GAME_COINS = {
@@ -152,6 +155,9 @@ export const GAME_COINS = {
   centipede: 6,
   pong: 6,
   spaceinvaders: 8,
+  'pong-pvp': 10,
+  'typing-pvp': 10,
+  'rps-pvp': 8,
 }
 
 export const SCORE_BASED_GAMES = ['snake', 'tetris', 'breakout', 'flappy', 'minesweeper', 'mathdash', 'typing', 'mergeblitz', 'asteroids', 'fruitslice', 'centipede', 'spaceinvaders']
