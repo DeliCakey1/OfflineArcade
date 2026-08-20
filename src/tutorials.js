@@ -156,8 +156,8 @@ const TUTORIALS = {
   },
   asteroids: {
     title: 'Asteroids',
-    rules: ['Aim with mouse position, click to shoot', 'Destroy asteroids by shooting them', 'Large asteroids split into smaller ones', 'Don\'t let asteroids hit your ship!'],
-    tips: ['Keep moving — stationary ships get hit', 'Clear edges first to create safe space'],
+    rules: ['Aim with mouse or arrow keys, click/Space to shoot', 'Destroy asteroids by shooting them', 'Large asteroids split into smaller ones', 'Don\'t let asteroids hit your ship!'],
+    tips: ['Keep moving — stationary ships get hit', 'Clear edges first to create safe space', 'Arrow keys + Space works great for keyboard play'],
   },
   fruitslice: {
     title: 'Fruit Slice',

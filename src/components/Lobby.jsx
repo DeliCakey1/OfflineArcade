@@ -442,7 +442,7 @@ function useWeeklyGoal() {
   return goal
 }
 
-export default function Lobby({ user, onChallenge, onMessage }) {
+export default function Lobby({ user, onChallenge, onMessage, onHome }) {
   const { players, loading: playersLoading } = useOnlinePlayers()
   const goal = useWeeklyGoal()
   const [activeTab, setActiveTab] = useState('activity')
@@ -456,12 +456,25 @@ export default function Lobby({ user, onChallenge, onMessage }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 20, flexWrap: 'wrap', gap: 8,
       }}>
-        <h1 style={{
-          margin: 0, fontSize: 22, fontWeight: 700,
-          color: 'var(--text, #e8e0ff)',
-        }}>
-          🏟️ Lobby
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {onHome && (
+            <button onClick={onHome} style={{
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8, padding: '6px 12px', color: 'var(--text, #e8e0ff)',
+              fontSize: 13, cursor: 'pointer', fontFamily: 'Fredoka, sans-serif',
+              transition: 'background 0.15s',
+            }}
+              onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.12)'}
+              onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.06)'}
+            >← Home</button>
+          )}
+          <h1 style={{
+            margin: 0, fontSize: 22, fontWeight: 700,
+            color: 'var(--text, #e8e0ff)',
+          }}>
+            🏟️ Lobby
+          </h1>
+        </div>
         <div className="lobby-online-badge" style={{
           display: 'inline-flex', alignItems: 'center', gap: 6,
           background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)',

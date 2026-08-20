@@ -72,6 +72,8 @@ export default function Asteroids({ onPlayingChange }) {
       bullets: [],
       frame: 0,
       mouseX: W / 2,
+      mouseY: H / 2,
+      keys: {},
       invincibleUntil: 0,
       wave: 1,
       stars: [],
@@ -124,7 +126,18 @@ export default function Asteroids({ onPlayingChange }) {
 
     const ship = g.ship
     const mouseRelX = g.mouseX - W / 2
-    ship.angle = Math.atan2(mouseRelX, W / 2) * 0.5
+    const mouseRelY = g.mouseY - H / 2
+    const mouseAngle = Math.atan2(mouseRelY, mouseRelX)
+    const keys = g.keys
+
+    let targetAngle = mouseAngle
+    if (keys.ArrowLeft || keys.KeyA) targetAngle -= 0.08
+    if (keys.ArrowRight || keys.KeyD) targetAngle += 0.08
+
+    let angleDiff = targetAngle - ship.angle
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
+    ship.angle += angleDiff * 0.12
 
     ship.x += Math.cos(ship.angle) * d.shipSpeed * 0.15
     ship.y += Math.sin(ship.angle) * d.shipSpeed * 0.15
@@ -280,9 +293,12 @@ export default function Asteroids({ onPlayingChange }) {
       if (!canvas) return
       const rect = canvas.getBoundingClientRect()
       const g = gameRef.current
-      if (g) g.mouseX = ((e.clientX || e.touches?.[0]?.clientX || 0) - rect.left) * (W / rect.width)
+      if (g) {
+        g.mouseX = ((e.clientX || e.touches?.[0]?.clientX || 0) - rect.left) * (W / rect.width)
+        g.mouseY = ((e.clientY || e.touches?.[0]?.clientY || 0) - rect.top) * (H / rect.height)
+      }
     }
-    function handleTap(e) {
+    function shoot() {
       const g = gameRef.current
       if (!g || gameOverRef.current) return
       const d = DIFFICULTIES.find(x => x.name === diffRef.current) || DIFFICULTIES[1]
@@ -295,8 +311,22 @@ export default function Asteroids({ onPlayingChange }) {
       })
       sound('click')
     }
+    function handleTap(e) {
+      shoot()
+    }
+    function onKeyDown(e) {
+      const g = gameRef.current
+      if (g) g.keys[e.code] = true
+      if (e.code === 'Space') { e.preventDefault(); shoot() }
+    }
+    function onKeyUp(e) {
+      const g = gameRef.current
+      if (g) g.keys[e.code] = false
+    }
     window.addEventListener('mousemove', handleMove)
     window.addEventListener('touchmove', handleMove, { passive: true })
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
     const canvas = canvasRef.current
     if (canvas) {
       canvas.addEventListener('click', handleTap)
@@ -305,6 +335,8 @@ export default function Asteroids({ onPlayingChange }) {
     return () => {
       window.removeEventListener('mousemove', handleMove)
       window.removeEventListener('touchmove', handleMove)
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
       if (canvas) {
         canvas.removeEventListener('click', handleTap)
         canvas.removeEventListener('touchstart', handleTap)
@@ -327,7 +359,7 @@ export default function Asteroids({ onPlayingChange }) {
           ))}
         </div>
         <div className="rps-history-item" style={{ marginTop: 16, textAlign: 'center' }}>
-          <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>Mouse to aim · Click to shoot</span>
+          <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>Mouse / Arrow keys to aim · Click / Space to shoot</span>
         </div>
       </div>
     )

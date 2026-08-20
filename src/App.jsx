@@ -1755,7 +1755,7 @@ function App() {
         <PageBoundary onBack={() => navigateTo('home')}>
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
-            <Lobby user={user} onChallenge={(p) => navigateTo('friends')} onMessage={(p) => navigateTo('friends')} />
+            <Lobby user={user} onChallenge={(p) => navigateTo('friends')} onMessage={(p) => navigateTo('friends')} onHome={handleHome} />
           </div>
         </PageBoundary>
       </Suspense>

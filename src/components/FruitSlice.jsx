@@ -108,26 +108,23 @@ export default function FruitSlice({ onPlayingChange }) {
       f.rotation += f.rotSpeed
     }
 
-    const prevLen = g.fruits.length
+    const unslicedBefore = g.fruits.filter(f => !f.sliced).length
     g.fruits = g.fruits.filter(f => {
       if (f.sliced) return f.sliceTime < 40
       return f.y < H + 50
     })
-    const missed = prevLen - g.fruits.length
+    const unslicedAfter = g.fruits.filter(f => !f.sliced).length
+    const missed = unslicedBefore - unslicedAfter
     if (missed > 0) {
-      const unslicedMissed = g.fruits.filter(f => !f.sliced).length
-      const actualMiss = missed
-      if (actualMiss > 0) {
-        missesRef.current += actualMiss
-        if (missesRef.current >= d.maxMisses) {
-          gameOverRef.current = true
-          setGameOver(true)
-          sound('death')
-          const finalScore = scoreRef.current
-          if (finalScore > bestScore) { setBestScore(finalScore); saveHighScore('fruitslice', finalScore) }
-          recordGame(finalScore, 0)
-          return
-        }
+      missesRef.current += missed
+      if (missesRef.current >= d.maxMisses) {
+        gameOverRef.current = true
+        setGameOver(true)
+        sound('death')
+        const finalScore = scoreRef.current
+        if (finalScore > bestScore) { setBestScore(finalScore); saveHighScore('fruitslice', finalScore) }
+        recordGame(finalScore, 0)
+        return
       }
     }
 
