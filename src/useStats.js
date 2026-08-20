@@ -8,6 +8,14 @@ let sharedStats = {}
 let loadPromise = null
 let saveTimer = null
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (!currentUserId && sharedStats && Object.keys(sharedStats).length > 0) {
+      saveToLocal()
+    }
+  })
+}
+
 export function setCurrentUserId(uid) {
   currentUserId = uid
   if (uid) {
@@ -18,9 +26,11 @@ export function setCurrentUserId(uid) {
 }
 
 export function clearCurrentUserId() {
+  if (!currentUserId && sharedStats && Object.keys(sharedStats).length > 0) {
+    saveToLocal()
+  }
   currentUserId = null
-  sharedStats = {}
-  notifyListeners()
+  loadFromLocal()
 }
 
 function notifyListeners() {
