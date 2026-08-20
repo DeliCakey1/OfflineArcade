@@ -307,6 +307,14 @@ export const ACHIEVEMENTS = [
   { id: 'spaceinvaders-50', name: 'Galactic Defender', emoji: '👾', desc: 'Score in 50 Space Invaders games', category: 'games', rarity: 'uncommon', check: s => (s.spaceinvaders?.won || 0) >= 50, progress: s => ({ current: Math.min(s.spaceinvaders?.won || 0, 50), max: 50 }) },
   { id: 'centipede-10', name: 'Bug Zapper', emoji: '🐛', desc: 'Score in 10 Centipede games', category: 'games', rarity: 'common', check: s => (s.centipede?.won || 0) >= 10, progress: s => ({ current: Math.min(s.centipede?.won || 0, 10), max: 10 }) },
   { id: 'centipede-50', name: 'Pest Control', emoji: '🐛', desc: 'Score in 50 Centipede games', category: 'games', rarity: 'uncommon', check: s => (s.centipede?.won || 0) >= 50, progress: s => ({ current: Math.min(s.centipede?.won || 0, 50), max: 50 }) },
+
+  // ── Clans & Challenges ──
+  { id: 'clan-create', name: 'Clan Founder', emoji: '⚔️', desc: 'Create a clan', category: 'clans', rarity: 'uncommon', check: s => s._clanCreated === true, progress: s => ({ current: s._clanCreated ? 1 : 0, max: 1 }) },
+  { id: 'clan-10wins', name: 'Clan Warrior', emoji: '🛡️', desc: 'Win 10 games while in a clan', category: 'clans', rarity: 'common', check: s => (s._clanWins || 0) >= 10, progress: s => ({ current: Math.min(s._clanWins || 0, 10), max: 10 }) },
+  { id: 'clan-50wins', name: 'Clan Champion', emoji: '🏆', desc: 'Win 50 games while in a clan', category: 'clans', rarity: 'rare', check: s => (s._clanWins || 0) >= 50, progress: s => ({ current: Math.min(s._clanWins || 0, 50), max: 50 }) },
+  { id: 'challenge-1', name: 'Challenger', emoji: '⚔️', desc: 'Send your first challenge', category: 'clans', rarity: 'common', check: s => (s._challengesSent || 0) >= 1, progress: s => ({ current: Math.min(s._challengesSent || 0, 1), max: 1 }) },
+  { id: 'challenge-10', name: 'Rival', emoji: '🔥', desc: 'Win 10 challenges', category: 'clans', rarity: 'uncommon', check: s => (s._challengeWins || 0) >= 10, progress: s => ({ current: Math.min(s._challengeWins || 0, 10), max: 10 }) },
+  { id: 'challenge-big-bet', name: 'High Roller', emoji: '💰', desc: 'Win a challenge with 1000+ coin bet', category: 'clans', rarity: 'rare', check: s => s._bigBetWin === true, progress: s => ({ current: s._bigBetWin ? 1 : 0, max: 1 }) },
 ]
 
 function maxStreak(s) {

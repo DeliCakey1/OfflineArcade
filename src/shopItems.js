@@ -39,6 +39,9 @@ export const TITLES = [
   { id: 'title-true-champion', name: 'True Champion', emoji: '🏆', price: 25000, rarity: 'champion', championOnly: true },
   { id: 'title-reigning-king', name: 'Reigning King', emoji: '👑', price: 30000, rarity: 'champion', championOnly: true },
   { id: 'title-owner-dev', name: 'Owner/Dev', emoji: '⚙️', price: 0, rarity: 'legendary', adminOnly: true },
+  { id: 'title-season-god', name: 'Season God', emoji: '🏆', price: 0, rarity: 'legendary', seasonReward: true },
+  { id: 'title-season-phoenix', name: 'Phoenix Rising', emoji: '🔥', price: 0, rarity: 'epic', seasonReward: true },
+  { id: 'title-season-cosmic', name: 'Cosmic Voyager', emoji: '🌌', price: 0, rarity: 'epic', seasonReward: true },
 ]
 
 export const NAMEPLATE_COLORS = [

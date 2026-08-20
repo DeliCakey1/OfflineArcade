@@ -347,5 +347,43 @@ service cloud.firestore {
             || isPermittedCrossPlayerUpdate());
       allow delete: if false;
     }
+
+    // ===== clans =====
+    match /clans/{clanId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.leader == request.auth.uid
+        && request.resource.data.members is list
+        && request.resource.data.memberCount is number
+        && request.resource.data.name is string
+        && request.resource.data.tag is string;
+      allow update: if signedIn()
+        && (resource.data.leader == request.auth.uid
+            || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'clanXP', 'weeklyXP', 'wins', 'losses'
+            ]));
+      allow delete: if signedIn() && resource.data.leader == request.auth.uid;
+    }
+
+    // ===== challenges =====
+    match /challenges/{challengeId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.challenger.userId == request.auth.uid
+        && request.resource.data.challenged.userId is string
+        && request.resource.data.gameId is string
+        && request.resource.data.status == 'pending';
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'result']);
+      allow delete: if false;
+    }
+
+    // ===== seasonRewards =====
+    match /seasonRewards/{seasonId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && isAdmin();
+      allow update: if signedIn();
+      allow delete: if false;
+    }
   }
 }
