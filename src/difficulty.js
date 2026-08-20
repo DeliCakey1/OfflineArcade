@@ -6,6 +6,11 @@ const DIFFICULTY_CURVES = {
   dodge: { spawnRateStart: 1200, spawnRateMin: 400, spawnDecay: 15, obstacleSpeedStart: 2, obstacleSpeedMax: 6 },
   mergeblitz: { timeStart: 90, timeBonusPerMerge: 1, comboDecayMs: 2000 },
   whack: { moleSpeedStart: 1200, moleSpeedMin: 400, moleSpeedDecay: 20, moleCountStart: 2, moleCountMax: 5 },
+  pong: { ballSpeedStart: 5, ballSpeedMax: 10, accelPerRally: 0.3, aiSpeedStart: 0.08, aiSpeedMax: 0.18 },
+  spaceinvaders: { alienSpeedStart: 0.8, alienSpeedMax: 2.5, shootChanceStart: 0.004, shootChanceMax: 0.01 },
+  asteroids: { asteroidSpeedStart: 1.5, asteroidSpeedMax: 4, bulletSpeedStart: 7, bulletSpeedMax: 10 },
+  fruitslice: { fruitSpeedStart: 4, fruitSpeedMax: 7, spawnRateStart: 60, spawnRateMin: 30 },
+  centipede: { centipedeSpeedStart: 90, centipedeSpeedMin: 30, spiderChanceStart: 0.002, spiderChanceMax: 0.008 },
 }
 
 export function getAdaptiveDifficulty(gameId, stats) {

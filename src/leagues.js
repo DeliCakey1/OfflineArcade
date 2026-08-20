@@ -110,6 +110,11 @@ export const GAME_XP = {
   sudoku: 22,
   mathdash: 18,
   wordle: 20,
+  asteroids: 24,
+  fruitslice: 24,
+  centipede: 20,
+  pong: 16,
+  spaceinvaders: 24,
 }
 
 export const GAME_COINS = {
@@ -142,9 +147,14 @@ export const GAME_COINS = {
   sudoku: 10,
   mathdash: 8,
   wordle: 8,
+  asteroids: 6,
+  fruitslice: 8,
+  centipede: 6,
+  pong: 6,
+  spaceinvaders: 8,
 }
 
-export const SCORE_BASED_GAMES = ['snake', 'tetris', 'breakout', 'flappy', 'minesweeper', 'mathdash', 'typing', 'mergeblitz']
+export const SCORE_BASED_GAMES = ['snake', 'tetris', 'breakout', 'flappy', 'minesweeper', 'mathdash', 'typing', 'mergeblitz', 'asteroids', 'fruitslice', 'centipede', 'spaceinvaders']
 
 export function calculateWinXP(gameId, streak = 0, score = 0) {
   if (SCORE_BASED_GAMES.includes(gameId)) {

@@ -28,4 +28,9 @@ export const GAMES = [
   { id: 'sudoku', label: 'Sudoku', emoji: '🔢', desc: 'Fill the 9×9 grid with numbers 1-9!', color: '#22c55e', category: 'brain' },
   { id: 'mathdash', label: 'Math Dash', emoji: '➕', desc: 'Solve as many math problems as you can before time runs out!', color: '#b946ff', category: 'reflex' },
   { id: 'wordle', label: 'Wordle', emoji: '📝', desc: 'Guess the hidden word in limited tries!', color: '#14b8a6', category: 'brain' },
+  { id: 'centipede', label: 'Centipede', emoji: '🐛', desc: 'Shoot the centipede! Destroy segments, dodge spiders!', color: '#ff2d7b', category: 'arcade' },
+  { id: 'pong', label: 'Pong', emoji: '🏓', desc: 'Classic paddle duel! Beat the AI to 7 points!', color: '#ffffff', category: 'arcade' },
+  { id: 'spaceinvaders', label: 'Space Invaders', emoji: '👾', desc: 'Shoot the alien fleet before they reach Earth!', color: '#00ff41', category: 'arcade' },
+  { id: 'asteroids', label: 'Asteroids', emoji: '☄️', desc: 'Blast the asteroids! Navigate and survive!', color: '#00d4ff', category: 'arcade' },
+  { id: 'fruitslice', label: 'Fruit Slice', emoji: '🍉', desc: 'Slice the fruits, dodge the bombs!', color: '#ff2d7b', category: 'arcade' },
 ]

@@ -168,7 +168,7 @@ export const ALL_GAME_IDS = [
   'rps', 'ssg', 'gtn', 'gtn-hc', 'hol', 'dice', 'coin', 'memory', 'word', 'merge',
   'reaction', 'typing', 'simon', 'slots', 'blackjack', 'whack', 'snake', 'tetris',
   'breakout', 'flappy', 'minesweeper', 'lightsout', 'mastermind', 'dodge', 'mergeblitz', 'connect4',
-  'sudoku', 'mathdash', 'wordle',
+  'sudoku', 'mathdash', 'wordle', 'asteroids', 'fruitslice', 'centipede', 'pong', 'spaceinvaders',
 ]
 
 export const ACHIEVEMENTS = [
@@ -296,6 +296,16 @@ export const ACHIEVEMENTS = [
   { id: 'mathdash-50', name: 'Equation Engine', emoji: '🧮', desc: 'Win 50 Math Dash games', category: 'games', rarity: 'uncommon', check: s => (s.mathdash?.won || 0) >= 50, progress: s => ({ current: Math.min(s.mathdash?.won || 0, 50), max: 50 }) },
   { id: 'wordle-10', name: 'Word Smith', emoji: '📝', desc: 'Win 10 Wordle games', category: 'games', rarity: 'common', check: s => (s.wordle?.won || 0) >= 10, progress: s => ({ current: Math.min(s.wordle?.won || 0, 10), max: 10 }) },
   { id: 'wordle-50', name: 'Vocabulary King', emoji: '👑', desc: 'Win 50 Wordle games', category: 'games', rarity: 'uncommon', check: s => (s.wordle?.won || 0) >= 50, progress: s => ({ current: Math.min(s.wordle?.won || 0, 50), max: 50 }) },
+  { id: 'asteroids-10', name: 'Space Blaster', emoji: '🚀', desc: 'Score in 10 Asteroids games', category: 'games', rarity: 'common', check: s => (s.asteroids?.won || 0) >= 10, progress: s => ({ current: Math.min(s.asteroids?.won || 0, 10), max: 10 }) },
+  { id: 'asteroids-50', name: 'Asteroid Buster', emoji: '☄️', desc: 'Score in 50 Asteroids games', category: 'games', rarity: 'uncommon', check: s => (s.asteroids?.won || 0) >= 50, progress: s => ({ current: Math.min(s.asteroids?.won || 0, 50), max: 50 }) },
+  { id: 'fruitslice-10', name: 'Fruit Ninja', emoji: '🔪', desc: 'Score in 10 Fruit Slice games', category: 'games', rarity: 'common', check: s => (s.fruitslice?.won || 0) >= 10, progress: s => ({ current: Math.min(s.fruitslice?.won || 0, 10), max: 10 }) },
+  { id: 'fruitslice-50', name: 'Blade Master', emoji: '🔪', desc: 'Score in 50 Fruit Slice games', category: 'games', rarity: 'uncommon', check: s => (s.fruitslice?.won || 0) >= 50, progress: s => ({ current: Math.min(s.fruitslice?.won || 0, 50), max: 50 }) },
+  { id: 'pong-10', name: 'Paddle Pro', emoji: '🏓', desc: 'Win 10 Pong games', category: 'games', rarity: 'common', check: s => (s.pong?.won || 0) >= 10, progress: s => ({ current: Math.min(s.pong?.won || 0, 10), max: 10 }) },
+  { id: 'pong-50', name: 'Pong Champion', emoji: '🏓', desc: 'Win 50 Pong games', category: 'games', rarity: 'uncommon', check: s => (s.pong?.won || 0) >= 50, progress: s => ({ current: Math.min(s.pong?.won || 0, 50), max: 50 }) },
+  { id: 'spaceinvaders-10', name: 'Alien Hunter', emoji: '👾', desc: 'Score in 10 Space Invaders games', category: 'games', rarity: 'common', check: s => (s.spaceinvaders?.won || 0) >= 10, progress: s => ({ current: Math.min(s.spaceinvaders?.won || 0, 10), max: 10 }) },
+  { id: 'spaceinvaders-50', name: 'Galactic Defender', emoji: '👾', desc: 'Score in 50 Space Invaders games', category: 'games', rarity: 'uncommon', check: s => (s.spaceinvaders?.won || 0) >= 50, progress: s => ({ current: Math.min(s.spaceinvaders?.won || 0, 50), max: 50 }) },
+  { id: 'centipede-10', name: 'Bug Zapper', emoji: '🐛', desc: 'Score in 10 Centipede games', category: 'games', rarity: 'common', check: s => (s.centipede?.won || 0) >= 10, progress: s => ({ current: Math.min(s.centipede?.won || 0, 10), max: 10 }) },
+  { id: 'centipede-50', name: 'Pest Control', emoji: '🐛', desc: 'Score in 50 Centipede games', category: 'games', rarity: 'uncommon', check: s => (s.centipede?.won || 0) >= 50, progress: s => ({ current: Math.min(s.centipede?.won || 0, 50), max: 50 }) },
 ]
 
 function maxStreak(s) {

@@ -144,6 +144,31 @@ const TUTORIALS = {
     rules: ['Guess a 5-letter word in 6 tries', 'Green = correct letter in correct spot', 'Yellow = correct letter in wrong spot', 'Gray = letter not in the word'],
     tips: ['Start with vowels (AEIOU)', 'Use common consonants (STLNR) in your second guess'],
   },
+  pong: {
+    title: 'Pong',
+    rules: ['Move your paddle to hit the ball', 'Score by getting the ball past the AI', 'First to 7 points wins!'],
+    tips: ['Watch the ball angle to predict where it will go', 'Hit the ball at an angle for tricky bounces'],
+  },
+  spaceinvaders: {
+    title: 'Space Invaders',
+    rules: ['Move your ship left and right', 'Shoot the alien invaders before they reach you', 'Use shields for cover — they regenerate between waves'],
+    tips: ['Prioritize the lowest aliens first', 'Stay under shields when aliens are low'],
+  },
+  asteroids: {
+    title: 'Asteroids',
+    rules: ['Aim with mouse position, click to shoot', 'Destroy asteroids by shooting them', 'Large asteroids split into smaller ones', 'Don\'t let asteroids hit your ship!'],
+    tips: ['Keep moving — stationary ships get hit', 'Clear edges first to create safe space'],
+  },
+  fruitslice: {
+    title: 'Fruit Slice',
+    rules: ['Swipe across fruits to slice them', 'Slice as many fruits as you can', 'Avoid the bombs! Slicing a bomb ends the game', 'Missing 3 fruits also ends the game'],
+    tips: ['Swipe in long arcs for multi-fruit slices', 'Watch for bombs mixed in with fruit clusters'],
+  },
+  centipede: {
+    title: 'Centipede',
+    rules: ['Shoot the centipede as it moves across the grid', 'Destroyed segments become mushrooms', 'Dodge the spider!', 'The centipede splits when you hit a segment'],
+    tips: ['Aim for the head for maximum points', 'Watch the spider — it can appear suddenly'],
+  },
 }
 
 export default TUTORIALS

@@ -38,6 +38,11 @@ const ConnectFour = lazy(() => import('./components/ConnectFour'))
 const Sudoku = lazy(() => import('./components/Sudoku'))
 const MathDash = lazy(() => import('./components/MathDash'))
 const Wordle = lazy(() => import('./components/Wordle'))
+const Pong = lazy(() => import('./components/Pong'))
+const SpaceInvaders = lazy(() => import('./components/SpaceInvaders'))
+const Asteroids = lazy(() => import('./components/Asteroids'))
+const FruitSlice = lazy(() => import('./components/FruitSlice'))
+const Centipede = lazy(() => import('./components/Centipede'))
 const AboutUs = lazy(() => import('./components/AboutUs'))
 const DownloadPage = lazy(() => import('./components/DownloadPage'))
 const LeagueScreen = lazy(() => import('./components/LeagueScreen'))
@@ -86,12 +91,15 @@ const GAME_COMPONENTS = {
   minesweeper: Minesweeper, lightsout: LightsOut, mastermind: Mastermind,
   dodge: Dodge, mergeblitz: MergeBlitz, connect4: ConnectFour,
   sudoku: Sudoku, mathdash: MathDash, wordle: Wordle,
+  pong: Pong, spaceinvaders: SpaceInvaders, asteroids: Asteroids,
+  fruitslice: FruitSlice, centipede: Centipede,
 }
 
 const GAMES = GAME_META.map(g => ({ ...g, component: GAME_COMPONENTS[g.id] }))
 
 const FILTER_CATEGORIES = [
   { id: 'all', label: 'All' },
+  { id: 'arcade', label: 'Arcade' },
   { id: 'canvas', label: 'Canvas' },
   { id: 'card', label: 'Card' },
   { id: 'puzzle', label: 'Puzzle' },
@@ -104,20 +112,40 @@ const FILTER_CATEGORIES = [
 ]
 
 const GAME_CATEGORIES = {
-  breakout: ['canvas', 'reflex'], flappy: ['canvas', 'reflex'],
-  snake: ['canvas', 'reflex'], tetris: ['puzzle', 'reflex'],
-  memory: ['puzzle'], minesweeper: ['puzzle', 'strategy'],
-  whack: ['reflex'], simon: ['reflex', 'memory'],
-  reaction: ['reflex'], typing: ['reflex', 'word'],
-  number: ['number', 'puzzle'], higherlower: ['card', 'strategy'],
-  rock: ['strategy'], dice: ['dice'], coinflip: ['dice'],
-  word: ['word', 'puzzle'], guessnumber: ['number', 'strategy'],
-  guess_hotcold: ['number', 'strategy'], wordscramble: ['word', 'puzzle'],
-  mathdash: ['number', 'reflex'], sudoku: ['number', 'puzzle'],
-  lightsout: ['puzzle'], mastermind: ['strategy', 'puzzle'],
-  dodge: ['canvas', 'reflex'], mergeblitz: ['puzzle', 'reflex'],
-  connect4: ['strategy', 'social'], slots: ['card', 'dice'],
-  blackjack: ['card', 'strategy'], splitsteal: ['social', 'strategy'],
+  rps: ['strategy'],
+  ssg: ['social', 'strategy'],
+  gtn: ['number', 'strategy'],
+  'gtn-hc': ['number', 'strategy'],
+  hol: ['card', 'strategy'],
+  dice: ['dice'],
+  coin: ['dice'],
+  memory: ['puzzle'],
+  word: ['word', 'puzzle'],
+  merge: ['number', 'puzzle'],
+  reaction: ['reflex'],
+  typing: ['reflex', 'word'],
+  simon: ['reflex'],
+  slots: ['card', 'dice'],
+  blackjack: ['card', 'strategy'],
+  whack: ['reflex'],
+  snake: ['canvas', 'reflex'],
+  tetris: ['puzzle', 'reflex'],
+  breakout: ['canvas', 'reflex', 'arcade'],
+  flappy: ['canvas', 'reflex'],
+  minesweeper: ['puzzle', 'strategy'],
+  lightsout: ['puzzle'],
+  mastermind: ['strategy', 'puzzle'],
+  dodge: ['canvas', 'reflex'],
+  mergeblitz: ['puzzle', 'reflex'],
+  connect4: ['strategy', 'social'],
+  sudoku: ['number', 'puzzle'],
+  mathdash: ['number', 'reflex'],
+  wordle: ['word', 'puzzle'],
+  pong: ['arcade'],
+  spaceinvaders: ['arcade', 'canvas'],
+  asteroids: ['arcade', 'canvas'],
+  fruitslice: ['arcade', 'canvas'],
+  centipede: ['arcade', 'canvas'],
 }
 
 function getSaved(key, fallback) {
