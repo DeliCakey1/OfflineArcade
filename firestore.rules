@@ -385,5 +385,38 @@ service cloud.firestore {
       allow update: if signedIn();
       allow delete: if false;
     }
+
+    // ===== worldPlayers =====
+    match /worldPlayers/{playerId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == playerId
+        && request.resource.data.x is number
+        && request.resource.data.y is number
+        && request.resource.data.lastSeen is number;
+      allow delete: if false;
+    }
+
+    // ===== worldSpaces =====
+    match /worldSpaces/{spaceId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update: if signedIn()
+        && (resource.data.ownerId == request.auth.uid
+            || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastUpdated']));
+      allow delete: if false;
+    }
+
+    // ===== trades =====
+    match /trades/{tradeId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.from.userId == request.auth.uid
+        && request.resource.data.to.userId is string
+        && request.resource.data.status == 'pending';
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt']);
+      allow delete: if false;
+    }
   }
 }

@@ -52,6 +52,8 @@ const SeasonRewardsModal = lazy(() => import('./components/SeasonRewardsModal'))
 const ChallengeModal = lazy(() => import('./components/ChallengeModal'))
 const ChallengeNotification = lazy(() => import('./components/ChallengeNotification'))
 const ChallengeHistory = lazy(() => import('./components/ChallengeHistory'))
+const WorldMap = lazy(() => import('./components/WorldMap'))
+const TradeNotification = lazy(() => import('./components/TradeNotification'))
 const AboutUs = lazy(() => import('./components/AboutUs'))
 const DownloadPage = lazy(() => import('./components/DownloadPage'))
 const LeagueScreen = lazy(() => import('./components/LeagueScreen'))
@@ -772,6 +774,7 @@ function SettingsBar({ onHome, onNavigateGame, onCloak, onSettings, onLeagues, o
           <button className="nav-pill" onClick={onLeaderboard} title="Daily Leaderboard" aria-label="Leaderboard">📋<span className="nav-label">Daily</span></button>
           <button className="nav-pill" onClick={onFriends} title="Friends" aria-label="Friends">👥<span className="nav-label">Friends</span></button>
           <button className="nav-pill" onClick={onLobby} title="Lobby" aria-label="Lobby">🟢<span className="nav-label">Lobby</span></button>
+          <button className="nav-pill" onClick={onWorld} title="World" aria-label="World">🌍<span className="nav-label">World</span></button>
           <button className="nav-pill" onClick={onStats} title="Stats" aria-label="Stats">📊<span className="nav-label">Stats</span></button>
           <button className="nav-pill" onClick={onAchievements} title="Achievements" aria-label="Achievements">🏅<span className="nav-label">Achievements</span></button>
           <button className="nav-pill" onClick={onShop} title="Shop" aria-label="Shop">🛒<span className="nav-label">Shop</span></button>
@@ -813,6 +816,7 @@ function App() {
     if (path === '/friends') return 'friends'
     if (path === '/leaderboard') return 'leaderboard'
     if (path === '/clans') return 'clans'
+    if (path === '/world') return 'world'
     if (path === '/leagues') return 'leagues'
     if (path === '/stats') return 'stats'
     if (path === '/achievements') return 'achievements'
@@ -836,6 +840,7 @@ function App() {
   const [pendingChallenges, setPendingChallenges] = useState([])
   const [showSeasonRewards, setShowSeasonRewards] = useState(false)
   const [challengeTarget, setChallengeTarget] = useState(null)
+  const [pendingTrades, setPendingTrades] = useState([])
 
   useEffect(() => {
     let unsub = null
@@ -862,7 +867,16 @@ function App() {
   }, [userId])
 
   useEffect(() => {
-    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands', friends: '/friends', leaderboard: '/leaderboard', accessibility: '/accessibility', clans: '/clans' }
+    if (!userId) { setPendingTrades([]); return }
+    let unsub = null
+    import('./worldService').then(m => {
+      unsub = m.subscribeToTrades(userId, setPendingTrades)
+    }).catch(() => {})
+    return () => { if (unsub) unsub() }
+  }, [userId])
+
+  useEffect(() => {
+    const routes = { home: '/', settings: '/settings', signin: '/signin', leagues: '/leagues', stats: '/stats', achievements: '/achievements', shop: '/shop', admin: '/admin-panel', about: '/about-us', download: '/download', cloak: '/god-commands', friends: '/friends', leaderboard: '/leaderboard', accessibility: '/accessibility', clans: '/clans', world: '/world' }
     const path = activeGame ? `/play/${activeGame}` : (routes[currentPage] || '/')
     if (window.location.pathname !== path) {
       window.history.pushState({}, '', path)
@@ -880,6 +894,7 @@ function App() {
       if (path === '/friends') return 'friends'
       if (path === '/leaderboard') return 'leaderboard'
       if (path === '/clans') return 'clans'
+      if (path === '/world') return 'world'
       if (path === '/leagues') return 'leagues'
       if (path === '/stats') return 'stats'
       if (path === '/achievements') return 'achievements'
@@ -1477,6 +1492,7 @@ function App() {
     onLeaderboard: () => navigateTo('leaderboard'),
     onFriends: () => navigateTo('friends'),
     onLobby: () => navigateTo('lobby'),
+    onWorld: () => navigateTo('world'),
     onClans: () => navigateTo('clans'),
     user,
     playerName,
@@ -1659,6 +1675,19 @@ function App() {
           <div className="page-enter">
             {waveBar && <div className="wave-bar" aria-hidden="true" />}
             <ClanPage userId={userId} username={playerName} onHome={handleHome} />
+          </div>
+        </PageBoundary>
+      </Suspense>
+    )
+  }
+
+  if (currentPage === 'world') {
+    return (
+      <Suspense fallback={loadingFallback}>
+        <PageBoundary onBack={() => navigateTo('home')}>
+          <div className="page-enter">
+            {waveBar && <div className="wave-bar" aria-hidden="true" />}
+            <WorldMap userId={userId} username={playerName} onHome={handleHome} />
           </div>
         </PageBoundary>
       </Suspense>
@@ -2042,6 +2071,13 @@ function App() {
         }}
         onDeclined={(id) => setPendingChallenges(prev => prev.filter(c => c.id !== id))}
       />
+      <Suspense fallback={null}>
+        <TradeNotification
+          trades={pendingTrades}
+          onAccepted={() => setPendingTrades(prev => prev.filter(t => t.status !== 'completed'))}
+          onDeclined={(id) => setPendingTrades(prev => prev.filter(t => t.id !== id))}
+        />
+      </Suspense>
       {showSeasonRewards && user && (
         <SeasonRewardsModal userId={user.uid} onClose={() => setShowSeasonRewards(false)} />
       )}
