@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arcade-v16'
+const CACHE_NAME = 'arcade-v17'
 const PRECACHE = [
   '/',
   '/index.html',
